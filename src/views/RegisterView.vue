@@ -1,4 +1,3 @@
-<!-- src/views/RegisterView.vue -->
 <script setup lang="ts">
 import { ref, computed, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
@@ -51,8 +50,9 @@ let timer: number | null = null;
 
 // Feature flags
 const canRegister = computed(() => server.features?.Registration === true);
-const isEmailEnabled = computed(() => server.features?.Email === true);
-const requiresEmail = computed(() => isEmailEnabled.value); // Usually tied to Email feature
+
+const isEmailServiceEnabled = computed(() => server.features?.Email === true);
+const requiresVerification = computed(() => isEmailServiceEnabled.value);
 
 /**
  * Handle Sending Verification Code
@@ -77,8 +77,7 @@ async function handleSendCode() {
       }
     }, 1000);
   } catch (e: any) {
-    const errorMsg = e.response?.data?.Message || e.message || t('auth.sendCodeFailed');
-    ui.notify(errorMsg, 'error');
+    ui.notify(e.message || t('auth.sendCodeFailed'), 'error');
   } finally {
     isSendingCode.value = false;
   }
@@ -94,21 +93,20 @@ async function handleRegister() {
     ui.notify(t('auth.passwordMismatch'), 'error');
     return;
   }
-  
+
   isLoading.value = true;
   try {
     await auth.register({
       AccountName: form.value.accountName,
       Email: form.value.email,
       Password: form.value.password,
-      Code: form.value.code
+      Code: requiresVerification.value ? form.value.code : undefined
     });
 
     ui.notify(t('auth.registerSuccess'), 'success');
     await router.push('/dashboard');
   } catch (e: any) {
-    const errorMsg = e.response?.data?.Message || e.message || t('auth.registerFailed');
-    ui.notify(errorMsg, 'error');
+    ui.notify(e.message || t('auth.registerFailed'), 'error');
   } finally {
     isLoading.value = false;
   }
@@ -149,7 +147,7 @@ const languages = [
           <ArrowLeft class="size-3.5 opacity-60" />
           <span class="text-xs font-bold">{{ t('auth.backToLogin') }}</span>
         </Button>
-
+        <!-- Lang/Theme Controls omitted for brevity, keeping existing code -->
         <DropdownMenu>
           <DropdownMenuTrigger as-child>
             <Button variant="ghost" size="sm" class="gap-2 rounded-full px-4 border border-border/40">
@@ -220,8 +218,8 @@ const languages = [
               </div>
             </div>
 
-            <!-- Email (Conditional) -->
-            <div v-if="isEmailEnabled" class="space-y-2">
+            <!-- Email-->
+            <div class="space-y-2">
               <Label class="text-[10px] uppercase font-black tracking-widest opacity-40 ml-1">{{ t('common.email') }}</Label>
               <div class="relative">
                 <Mail class="absolute left-4 top-1/2 -translate-y-1/2 size-4 opacity-30" />
@@ -264,8 +262,8 @@ const languages = [
               </div>
             </div>
 
-            <!-- Verification Code (Conditional) -->
-            <div v-if="requiresEmail" class="space-y-2">
+            <!-- Verification Code (Conditional based on SMTP availability) -->
+            <div v-if="requiresVerification" class="space-y-2">
               <Label class="text-[10px] uppercase font-black tracking-widest opacity-40 ml-1">{{ t('auth.verificationCode') }}</Label>
               <div class="flex gap-2">
                 <div class="relative flex-1">

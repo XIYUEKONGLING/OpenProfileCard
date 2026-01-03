@@ -1,5 +1,4 @@
 import { useAuthStore } from '../stores/auth';
-import type { ApiResponse } from './types';
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
@@ -33,14 +32,36 @@ export async function httpClient<T>(endpoint: string, options: RequestOptions = 
     if (response.status === 401 && requiresAuth) {
         const success = await authStore.refreshSession();
         if (success) return httpClient<T>(endpoint, options);
-        authStore.logout();
+        await authStore.logout();
         throw new Error('Unauthorized');
     }
 
-    const json: ApiResponse<T> = await response.json();
-    if (!response.ok || !json.Status) {
-        throw new Error(json.Message || 'API_ERROR');
+    let json: any;
+    const text = await response.text();
+    try {
+        json = text ? JSON.parse(text) : {};
+    } catch (e) {
+        throw new Error(`Invalid JSON response: ${response.status} ${response.statusText}`);
     }
 
-    return json.Data as T;
+    if (!response.ok) {
+        if (json.errors && typeof json.errors === 'object') {
+            const errorMessages = Object.entries(json.errors)
+                .map(([field, msgs]) => `${field}: ${(msgs as any[]).join(', ')}`)
+                .join(' | ');
+            throw new Error(errorMessages || json.title || 'Validation Error');
+        }
+
+        if (json.title || json.detail) {
+            throw new Error(json.detail || json.title);
+        }
+
+        throw new Error(json.Message || `Request failed with status ${response.status}`);
+    }
+
+    if (json.Status === false) {
+        throw new Error(json.Message || 'Operation Failed');
+    }
+
+    return (json.Status !== undefined && json.Data !== undefined) ? json.Data : json;
 }
