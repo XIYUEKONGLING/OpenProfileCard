@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { AssetDto } from '../../api/types';
+import type { AssetDto } from '@/api/types';
 
 const props = defineProps<{
   asset?: AssetDto | null;

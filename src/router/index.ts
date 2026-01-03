@@ -4,29 +4,7 @@ import { useAuthStore } from '../stores/auth';
 const router = createRouter({
     history: createWebHistory(),
     routes: [
-        {
-            path: '/login',
-            component: () => import('../views/auth/Login.vue'),
-            meta: { guest: true }
-        },
-        {
-            path: '/dashboard',
-            component: () => import('../layouts/DashboardLayout.vue'),
-            meta: { requiresAuth: true },
-            children: [
-                { path: '', component: () => import('../views/dashboard/ConsoleHome.vue') },
-                {
-                    path: 'admin',
-                    component: () => import('../views/admin/AdminDashboard.vue'),
-                    meta: { requiresAdmin: true }
-                }
-            ]
-        },
-        {
-            path: '/:username',
-            component: () => import('../views/public/PublicProfile.vue')
-        },
-        { path: '/', redirect: '/dashboard' }
+        
     ]
 });
 
