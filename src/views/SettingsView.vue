@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
 import { useI18n } from '@/i18n';
 import { useAuthStore } from '@/stores/auth';
 import { useServerStore } from '@/stores/server';
@@ -47,7 +46,6 @@ const { t } = useI18n();
 const auth = useAuthStore();
 const server = useServerStore();
 const ui = useUIStore();
-const router = useRouter();
 
 // --- State ---
 const isLoading = ref(false);
@@ -80,6 +78,13 @@ const isPersonal = computed(() => auth.user?.Type === 'Personal');
 const isEmailServiceEnabled = computed(() => server.features?.Email === true);
 const requiresVerification = computed(() => server.features?.EmailVerification === true);
 const isPendingDeletion = computed(() => auth.user?.Status === AccountStatus.PendingDeletion);
+
+const canDeleteAccount = computed(() => {
+  const isSystemType = auth.user?.Type === 'System';
+  const isRootRole = auth.user?.Role === -1;
+
+  return !isSystemType && !isRootRole;
+});
 
 // --- API Actions ---
 
@@ -212,8 +217,8 @@ const changePassword = async () => {
 
     // Force Logout
     auth.logout();
-    // router.push('/login');
     window.location.reload();
+    // window.location.href = '/login?reason=secure';
   } catch (e: any) {
     ui.notify(e.message, 'error');
   } finally {
@@ -233,6 +238,7 @@ const requestDeleteAccount = async () => {
     showDeleteModal.value = false;
     auth.logout();
     window.location.reload();
+    // window.location.href = '/login?reason=deleted';
   } catch(e: any) {
     ui.notify(e.message, 'error');
   }
@@ -410,7 +416,7 @@ onMounted(() => {
         </Card>
 
         <!-- Danger Zone (Delete / Restore) -->
-        <Card class="border-destructive/30 overflow-hidden">
+        <Card v-if="canDeleteAccount" class="border-destructive/30 overflow-hidden">
           <CardHeader
               :class="[
                 isPendingDeletion ? 'bg-orange-500/10' : 'bg-destructive/10', 
