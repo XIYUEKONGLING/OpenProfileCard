@@ -112,7 +112,7 @@ const blockReason = computed(() => {
     case AccountStatus.Deactivated: // Deactivated
       return {
         title: t('common.notice'),
-        desc: 'This account has been deactivated.',
+        desc: t('dashboard.accountDeactivated'),
         icon: Shield,
         color: 'text-brand-blue'
       };

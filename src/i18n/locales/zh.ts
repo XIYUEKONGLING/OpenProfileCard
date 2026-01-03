@@ -101,6 +101,7 @@ export const zh = {
         accountBannedDesc: '该账户已被永久封禁。',
         accountPendingDeletion: '等待删除',
         accountPendingDeletionDesc: '您的账户已进入删除倒计时。如需继续使用，请尽快恢复账户。',
+        accountDeactivated: '该账户已被停用。',
         contactSupport: '联系支持',
         restoreAccount: '恢复账户'
     },

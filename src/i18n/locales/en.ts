@@ -101,6 +101,7 @@ export const en = {
         accountBannedDesc: 'This account has been permanently banned.',
         accountPendingDeletion: 'Pending Deletion',
         accountPendingDeletionDesc: 'Your account is scheduled for deletion. Please restore your account to regain access.',
+        accountDeactivated: 'This account has been deactivated.',
         contactSupport: 'Contact Support',
         restoreAccount: 'Restore Account'
     },
