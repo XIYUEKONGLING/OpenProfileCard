@@ -48,14 +48,13 @@ export async function httpClient<T>(endpoint: string, options: RequestOptions = 
         if (json.errors && typeof json.errors === 'object') {
             const errorMessages = Object.entries(json.errors)
                 .map(([field, msgs]) => `${field}: ${(msgs as any[]).join(', ')}`)
-                .join(' | ');
+                .join('\n');
+
             throw new Error(errorMessages || json.title || 'Validation Error');
         }
-
         if (json.title || json.detail) {
             throw new Error(json.detail || json.title);
         }
-
         throw new Error(json.Message || `Request failed with status ${response.status}`);
     }
 

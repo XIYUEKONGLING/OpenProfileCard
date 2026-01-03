@@ -175,3 +175,9 @@ html {
   scrollbar-gutter: stable;
   scrollbar-width: thin;
 }
+
+[data-sonner-toast] [data-title],
+[data-sonner-toast] [data-description] {
+  white-space: pre-line; 
+  word-break: break-word;
+}
