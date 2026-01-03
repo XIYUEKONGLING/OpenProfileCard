@@ -98,6 +98,14 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
+    async function resetPassword(payload: any) {
+        await httpClient('/auth/reset-password', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+            requiresAuth: false
+        });
+    }
+
     return {
         token,
         user,
@@ -108,6 +116,7 @@ export const useAuthStore = defineStore('auth', () => {
         sendCode,
         fetchMe,
         refreshSession,
-        logout
+        logout,
+        resetPassword
     };
 });
