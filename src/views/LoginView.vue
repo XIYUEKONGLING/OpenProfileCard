@@ -34,7 +34,10 @@ const ui = useUIStore();
 const form = ref({ login: '', password: '' });
 const isLoading = ref(false);
 
+// Logic helpers based on server features
 const isStaticMode = computed(() => server.info?.Static === true && server.info?.Dynamic === false);
+const canRegister = computed(() => !isStaticMode.value && server.features?.Registration === true);
+const canResetPassword = computed(() => !isStaticMode.value && server.features?.Email === true);
 
 async function handleLogin() {
   if (isStaticMode.value) return;
@@ -65,6 +68,7 @@ const languages = [
 </script>
 
 <template>
+  <!-- Background Layers -->
   <div class="fixed inset-0 bg-background transition-colors duration-500 -z-10">
     <div class="absolute inset-0 bg-linear-to-tr from-brand-blue/5 via-transparent to-brand-purple/5"></div>
     <div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_-20%,rgba(120,119,198,0.1),rgba(255,255,255,0))]"></div>
@@ -72,7 +76,7 @@ const languages = [
 
   <div class="min-h-screen flex flex-col items-center justify-center p-6 relative">
 
-    <!-- Controls Section -->
+    <!-- Top Controls (Language & Theme) -->
     <div class="absolute top-8 right-8 flex items-center gap-2">
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
@@ -135,6 +139,7 @@ const languages = [
     <Card class="w-full max-w-105 glass-card border-none shadow-2xl rounded-4xl overflow-hidden">
       <CardContent class="p-10">
 
+        <!-- Static Mode Warning -->
         <div v-if="isStaticMode" class="mb-8 p-4 rounded-2xl bg-destructive/10 border border-destructive/20 flex gap-4 text-destructive">
           <AlertCircle class="size-5 shrink-0" />
           <div class="text-xs font-bold leading-relaxed uppercase">
@@ -143,6 +148,7 @@ const languages = [
         </div>
 
         <form @submit.prevent="handleLogin" class="space-y-6" :class="{ 'opacity-20 pointer-events-none': isStaticMode }">
+          <!-- Username Field -->
           <div class="space-y-2.5">
             <Label class="text-[10px] uppercase font-black tracking-widest opacity-40 ml-1">{{ t('common.username') }}</Label>
             <Input
@@ -153,10 +159,18 @@ const languages = [
             />
           </div>
 
+          <!-- Password Field -->
           <div class="space-y-2.5">
             <div class="flex justify-between items-center px-1">
               <Label class="text-[10px] uppercase font-black tracking-widest opacity-40">{{ t('common.password') }}</Label>
-              <button type="button" class="text-[10px] font-black uppercase text-brand-blue hover:underline">{{ t('auth.forgotPassword') }}</button>
+              <!-- Forgot Password: Only show if Email feature is enabled -->
+              <button
+                  v-if="canResetPassword"
+                  type="button"
+                  class="text-[10px] font-black uppercase text-brand-blue hover:underline"
+              >
+                {{ t('auth.forgotPassword') }}
+              </button>
             </div>
             <Input
                 v-model="form.password"
@@ -177,8 +191,9 @@ const languages = [
               {{ t('auth.signIn') }}
             </Button>
 
+            <!-- Register: Only show if Registration feature is enabled -->
             <Button
-                v-if="!isStaticMode"
+                v-if="canRegister"
                 variant="outline"
                 type="button"
                 class="w-full h-12 rounded-xl border-border/60 font-bold hover:bg-muted/50 transition-all"
