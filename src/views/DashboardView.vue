@@ -26,8 +26,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle
 } from '@/components/ui/card';
 
 // Icons
@@ -265,8 +263,9 @@ const copyToClipboard = async (text: string, id: string) => {
 
         <Tabs default-value="overview" class="w-full">
           <!-- Sticky Tab Bar with Rounded Tops -->
+          <!-- scrollbar-hide added to class to prevent visible scrollbar -->
           <div class="sticky top-0 z-30 bg-background/95 backdrop-blur-md pb-0 pt-2 -mt-2 border-b border-border/60">
-            <TabsList class="w-full justify-start h-auto p-0 bg-transparent rounded-none gap-2 overflow-x-auto scrollbar-none">
+            <TabsList class="scrollbar-hide w-full justify-start h-auto p-0 bg-transparent rounded-none gap-2 overflow-x-auto">
 
               <TabsTrigger
                   value="overview"
@@ -518,7 +517,7 @@ const copyToClipboard = async (text: string, id: string) => {
                 </Card>
               </div>
               <div v-else class="text-sm text-muted-foreground italic border border-dashed p-4 rounded-lg text-center">
-                No cryptographic keys or certificates listed.
+                {{ t('dashboard.noCertificates') }}
               </div>
             </section>
 
@@ -560,6 +559,15 @@ const copyToClipboard = async (text: string, id: string) => {
 
 <style scoped>
 @reference '../style.css';
+
+/* Hide Scrollbar for Tabs List */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Chrome, Safari and Opera */
+}
 
 :deep(.prose) {
   font-size: 0.95rem;

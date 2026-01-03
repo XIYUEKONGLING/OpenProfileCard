@@ -21,6 +21,11 @@ export const en = {
         copy: 'Copy',
         copied: 'Copied',
         settings: 'Settings',
+        theme: 'Theme',
+        language: 'Language',
+        light: 'Light',
+        dark: 'Dark',
+        system: 'System'
     },
     auth: {
         loginTitle: 'Open Profile Card',
@@ -56,7 +61,7 @@ export const en = {
         overview: 'Overview',
         projects: 'Projects',
         experience: 'Experience',
-        resources: 'Resources', // Renamed from Gallery
+        resources: 'Resources',
         gallery: 'Gallery',
         certificates: 'Certificates & Keys',
         sponsorships: 'Sponsorships',
@@ -85,7 +90,8 @@ export const en = {
         joined: 'Joined {date}',
         updatedRecently: 'Updated recently',
         fingerprint: 'Fingerprint',
-        expiresAt: 'Expires: {date}'
+        expiresAt: 'Expires: {date}',
+        noCertificates: 'No cryptographic keys or certificates listed.'
     },
     profile: {
         noBio: 'No bio provided yet.',

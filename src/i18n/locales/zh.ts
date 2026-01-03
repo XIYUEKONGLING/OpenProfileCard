@@ -20,7 +20,12 @@ export const zh = {
         website: '网站',
         copy: '复制',
         copied: '已复制',
-        settings: '设置'
+        settings: '设置',
+        theme: '主题',
+        language: '语言',
+        light: '浅色',
+        dark: '深色',
+        system: '跟随系统'
     },
     auth: {
         loginTitle: 'Open Profile Card',
@@ -85,7 +90,8 @@ export const zh = {
         joined: '加入于 {date}',
         updatedRecently: '最近更新',
         fingerprint: '指纹',
-        expiresAt: '过期时间: {date}'
+        expiresAt: '过期时间: {date}',
+        noCertificates: '暂无任何加密密钥或证书。'
     },
     profile: {
         noBio: '这个人很懒，什么都没有写。',
