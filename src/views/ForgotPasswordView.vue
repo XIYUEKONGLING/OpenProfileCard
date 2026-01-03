@@ -201,7 +201,7 @@ const languages = [
           <form v-else @submit.prevent="handleResetPassword" class="space-y-5">
             <!-- Email -->
             <div class="space-y-2">
-              <Label class="text-[10px] uppercase font-black tracking-widest opacity-40 ml-1">{{ t('common.email') }}</Label>
+              <Label class="text-[10px] uppercase font-black tracking-widest text-muted-foreground ml-1">{{ t('common.email') }}</Label>
               <div class="relative">
                 <Mail class="absolute left-4 top-1/2 -translate-y-1/2 size-4 opacity-30" />
                 <Input
@@ -216,7 +216,7 @@ const languages = [
 
             <!-- New Password -->
             <div class="space-y-2">
-              <Label class="text-[10px] uppercase font-black tracking-widest opacity-40 ml-1">{{ t('auth.newPassword') }}</Label>
+              <Label class="text-[10px] uppercase font-black tracking-widest text-muted-foreground ml-1">{{ t('auth.newPassword') }}</Label>
               <div class="relative">
                 <Lock class="absolute left-4 top-1/2 -translate-y-1/2 size-4 opacity-30" />
                 <Input
@@ -229,7 +229,7 @@ const languages = [
               </div>
 
               <div class="space-y-2">
-                <Label class="text-[10px] uppercase font-black tracking-widest opacity-40 ml-1">{{ t('auth.confirmPassword') }}</Label>
+                <Label class="text-[10px] uppercase font-black tracking-widest text-muted-foreground ml-1">{{ t('auth.confirmPassword') }}</Label>
                 <div class="relative">
                   <Lock class="absolute left-4 top-1/2 -translate-y-1/2 size-4 opacity-30" />
                   <Input
@@ -245,7 +245,7 @@ const languages = [
 
             <!-- Verification Code -->
             <div class="space-y-2">
-              <Label class="text-[10px] uppercase font-black tracking-widest opacity-40 ml-1">{{ t('auth.verificationCode') }}</Label>
+              <Label class="text-[10px] uppercase font-black tracking-widest text-muted-foreground ml-1">{{ t('auth.verificationCode') }}</Label>
               <div class="flex gap-2">
                 <div class="relative flex-1">
                   <ShieldCheck class="absolute left-4 top-1/2 -translate-y-1/2 size-4 opacity-30" />

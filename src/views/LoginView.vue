@@ -168,7 +168,7 @@ const languages = [
           <form @submit.prevent="handleLogin" class="space-y-6" :class="{ 'opacity-20 pointer-events-none': isStaticMode }">
             <!-- Username Field -->
             <div class="space-y-2.5">
-              <Label class="text-[10px] uppercase font-black tracking-widest opacity-40 ml-1">{{ t('common.username') }}</Label>
+              <Label class="text-[10px] uppercase font-black tracking-widest text-muted-foreground ml-1">{{ t('common.username') }}</Label>
               <Input
                   v-model="form.login"
                   class="h-12 rounded-xl bg-muted/50 border-none focus:bg-background transition-all px-4 shadow-none"
@@ -180,7 +180,7 @@ const languages = [
             <!-- Password Field -->
             <div class="space-y-2.5">
               <div class="flex justify-between items-center px-1">
-                <Label class="text-[10px] uppercase font-black tracking-widest opacity-40">{{ t('common.password') }}</Label>
+                <Label class="text-[10px] uppercase font-black tracking-widest text-muted-foreground">{{ t('common.password') }}</Label>
                 <button
                     v-if="canResetPassword"
                     type="button"
