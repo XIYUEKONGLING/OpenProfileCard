@@ -25,7 +25,7 @@ const stats = [
     <!-- Welcome Header -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
       <div>
-        <h2 class="text-3xl font-black tracking-tight">Welcome back, {{ auth.user?.Username }}!</h2>
+        <h2 class="text-3xl font-black tracking-tight">Welcome back, {{ auth.user?.AccountName }}!</h2>
         <p class="text-muted-foreground font-medium mt-1">Here's what's happening with your profile cards.</p>
       </div>
       <Button class="rounded-xl h-12 px-6 bg-foreground text-background font-black hover:opacity-90 transition-all gap-2">
@@ -49,14 +49,14 @@ const stats = [
       </Card>
     </div>
 
-    <!-- Placeholder for "My Cards" or "Recent Activity" -->
+    <!-- Empty Layout Placeholder -->
     <div class="space-y-6">
       <h3 class="text-xl font-black tracking-tight">{{ t('dashboard.myCards') }}</h3>
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <!-- Card Placeholder -->
-        <div v-for="i in 2" :key="i" class="h-64 rounded-4xl border-2 border-dashed border-border/40 flex flex-col items-center justify-center text-muted-foreground bg-muted/5 transition-colors hover:bg-muted/10">
-          <p class="font-bold text-sm">No cards found in this section</p>
-        </div>
+
+      <div class="w-full min-h-100 rounded-4xl border-2 border-dashed border-border/40 flex items-center justify-center bg-muted/5">
+        <p class="text-muted-foreground font-bold text-sm opacity-50">
+          Card Layout Area
+        </p>
       </div>
     </div>
   </div>

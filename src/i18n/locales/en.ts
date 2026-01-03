@@ -18,6 +18,7 @@ export const en = {
         signUp: 'Sign Up',
         register: 'Create New Account',
         loginFailed: 'Authentication failed, please check your credentials',
+        logoutSuccess: 'Logged out successfully',
         forgotPassword: 'Forgot password?',
         resetPassword: 'Reset Password',
         resetPasswordTitle: 'Reset Your Password',

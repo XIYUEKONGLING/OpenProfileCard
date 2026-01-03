@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useServerStore } from '@/stores/server';
+import { useUIStore } from '@/stores/ui';
 import { useI18n } from '@/i18n';
 
 import {
@@ -21,6 +22,7 @@ import AssetView from '@/components/ui/AssetView.vue';
 const { t } = useI18n();
 const auth = useAuthStore();
 const server = useServerStore();
+const ui = useUIStore();
 const router = useRouter();
 const route = useRoute();
 
@@ -33,9 +35,10 @@ const navigation = [
   { name: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
 
-const handleLogout = () => {
-  auth.logout();
-  router.push('/login');
+const handleLogout = async () => {
+  await auth.logout();
+  ui.notify(t('auth.logoutSuccess'), 'success');
+  await router.push('/login');
 };
 </script>
 
@@ -83,10 +86,10 @@ const handleLogout = () => {
       <div class="mt-auto pt-6 border-t border-border/40 space-y-4">
         <div class="flex items-center gap-3 px-2">
           <div class="size-10 rounded-full bg-muted border border-border flex items-center justify-center overflow-hidden">
-            <span class="text-xs font-black">{{ auth.user?.Username?.charAt(0).toUpperCase() }}</span>
+            <span class="text-xs font-black">{{ auth.user?.AccountName?.charAt(0).toUpperCase() }}</span>
           </div>
           <div class="flex-1 min-w-0">
-            <p class="text-sm font-black truncate">{{ auth.user?.Username }}</p>
+            <p class="text-sm font-black truncate">{{ auth.user?.AccountName }}</p>
             <p class="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Member</p>
           </div>
         </div>
@@ -111,7 +114,7 @@ const handleLogout = () => {
 
     <!-- Main Content Area -->
     <main class="flex-1 overflow-y-auto p-4 md:p-10">
-      <div class="max-w-6xl mx-auto">
+      <div class="max-w-6xl mx-auto min-h-full">
         <router-view v-slot="{ Component }">
           <transition name="fade" mode="out-in">
             <component :is="Component" :key="route.fullPath" />

@@ -18,6 +18,7 @@ export const zh = {
         signUp: '立即注册',
         register: '创建新账号',
         loginFailed: '认证失败，请检查凭据',
+        logoutSuccess: '已安全退出登录',
         forgotPassword: '忘记密码？',
         resetPassword: '重置密码',
         resetPasswordTitle: '重置您的密码',
