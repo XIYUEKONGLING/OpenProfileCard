@@ -146,12 +146,19 @@
 /* --------------------------- 
    Animations
    --------------------------- */
-.fade-enter-active, .fade-leave-active {
-  transition: opacity 0.5s ease;
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.15s ease, transform 0.15s ease; /* 0.3s */
 }
 
-.fade-enter-from, .fade-leave-to {
+.fade-enter-from {
   opacity: 0;
+  transform: translateY(4px);
+}
+
+.fade-leave-to {
+  opacity: 0;
+  transform: translateY(-4px);
 }
 
 @keyframes fade-in {
