@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import ToastProvider from './components/ui/ToastProvider.vue';
 import { useServerStore } from './stores/server';
 
 const server = useServerStore();
@@ -13,7 +12,5 @@ const server = useServerStore();
         <component :is="Component" />
       </transition>
     </router-view>
-
-    <ToastProvider />
   </div>
 </template>

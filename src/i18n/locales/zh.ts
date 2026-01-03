@@ -9,8 +9,7 @@ export const zh = {
         logout: '退出登录',
     },
     auth: {
-        loginTitle: '身份枢纽登录',
-        loginSubtitle: '管理您的数字化商务名片',
+        loginTitle: 'Open Profile Card',
         signIn: '登录',
         register: '注册账号',
         loginFailed: '登录失败，请检查账号或密码',

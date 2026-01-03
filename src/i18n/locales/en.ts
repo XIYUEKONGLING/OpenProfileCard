@@ -9,8 +9,7 @@ export const en = {
         logout: 'Logout',
     },
     auth: {
-        loginTitle: 'Sign in to Identity Hub',
-        loginSubtitle: 'Manage your digital business cards',
+        loginTitle: 'Open Profile Card',
         signIn: 'Sign In',
         register: 'Create an account',
         loginFailed: 'Login failed, please check your credentials',
