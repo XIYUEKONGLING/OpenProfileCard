@@ -98,19 +98,19 @@ export const useAuthStore = defineStore('auth', () => {
     }
 
     async function logout() {
+        const payload: RefreshTokenRequestDto | null = (token.value && refreshToken.value)
+            ? { AccessToken: token.value, RefreshToken: refreshToken.value }
+            : null;
+
         try {
-            if (token.value && refreshToken.value) {
-                const payload: RefreshTokenRequestDto = {
-                    AccessToken: token.value,
-                    RefreshToken: refreshToken.value
-                };
+            if (payload) {
                 await httpClient('/auth/logout', {
                     method: 'POST',
                     body: JSON.stringify(payload)
                 });
             }
         } catch (error) {
-            console.error('Logout API failed:', error);
+            console.warn('Logout API failed (session might already be invalidated):', error);
         } finally {
             token.value = null;
             refreshToken.value = null;
@@ -119,6 +119,7 @@ export const useAuthStore = defineStore('auth', () => {
             localStorage.removeItem('rt');
         }
     }
+
 
     async function resetPassword(payload: ResetPasswordRequestDto) {
         await httpClient('/auth/reset-password', {
