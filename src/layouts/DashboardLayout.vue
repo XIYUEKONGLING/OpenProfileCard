@@ -329,7 +329,7 @@ const themeOptions = [
       <div class="w-full max-w-screen-2xl mx-auto min-h-full">
         <router-view v-slot="{ Component }">
           <transition name="fade" mode="out-in">
-            <component :is="Component" :key="route.fullPath" />
+            <component :is="Component" :key="route.path" />
           </transition>
         </router-view>
       </div>

@@ -6,7 +6,7 @@ import { useRoute } from 'vue-router';
 
 const server = useServerStore();
 const themeStore = useThemeStore();
-const route = useRoute();
+useRoute();
 </script>
 
 <template>
@@ -20,7 +20,7 @@ const route = useRoute();
   <div :class="{ 'opacity-0': !server.isInitialized }" class="transition-opacity duration-700 min-h-screen">
     <router-view v-slot="{ Component }">
       <transition name="fade" mode="out-in">
-        <component :is="Component" :key="route.fullPath" />
+        <component :is="Component" />
       </transition>
     </router-view>
   </div>
