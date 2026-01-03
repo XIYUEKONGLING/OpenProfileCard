@@ -7,15 +7,19 @@ export const en = {
         password: 'Password',
         edit: 'Edit',
         logout: 'Logout',
+        success: 'Operation successful',
+        notice: 'System Notice',
+        or: 'Or'
     },
     auth: {
         loginTitle: 'Open Profile Card',
-        signIn: 'Sign In',
-        register: 'Create an account',
-        loginFailed: 'Login failed, please check your credentials',
+        signIn: 'Sign In Now',
+        register: 'Create New Account',
+        loginFailed: 'Authentication failed, please check your credentials',
+        forgotPassword: 'Forgot password?'
     },
     dashboard: {
-        title: 'Console',
+        title: 'Dashboard',
         overview: 'Overview',
         myCards: 'My Cards',
         adminPanel: 'Admin Panel',

@@ -7,12 +7,16 @@ export const zh = {
         password: '密码',
         edit: '编辑',
         logout: '退出登录',
+        success: '操作成功',
+        notice: '系统提示',
+        or: '或者'
     },
     auth: {
         loginTitle: 'Open Profile Card',
-        signIn: '登录',
-        register: '注册账号',
-        loginFailed: '登录失败，请检查账号或密码',
+        signIn: '立即登录',
+        register: '创建新账号',
+        loginFailed: '认证失败，请检查凭据',
+        forgotPassword: '忘记密码？'
     },
     dashboard: {
         title: '控制台',

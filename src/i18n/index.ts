@@ -3,7 +3,13 @@ import { zh } from './locales/zh';
 import { en } from './locales/en';
 
 const locales: Record<string, any> = { zh, en };
-const currentLocale = ref(localStorage.getItem('lang') || 'zh');
+
+const getBrowserLang = () => {
+    const lang = navigator.language.split('-')[0];
+    return locales[lang] ? lang : 'en';
+};
+
+const currentLocale = ref(localStorage.getItem('lang') || getBrowserLang());
 
 export function useI18n() {
     const t = (path: string, args?: Record<string, string | number>) => {
@@ -27,9 +33,5 @@ export function useI18n() {
         document.documentElement.lang = lang;
     };
 
-    return {
-        t,
-        setLocale,
-        locale: readonly(currentLocale)
-    };
+    return { t, setLocale, locale: readonly(currentLocale) };
 }
