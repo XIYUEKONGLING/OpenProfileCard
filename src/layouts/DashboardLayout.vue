@@ -114,7 +114,8 @@ const handleLogout = async () => {
 
     <!-- Main Content Area -->
     <main class="flex-1 overflow-y-auto p-4 md:p-10">
-      <div class="max-w-6xl mx-auto min-h-full">
+      <!-- <div class="max-w-6xl mx-auto min-h-full"> -->
+      <div class="w-full max-w-screen-2xl mx-auto min-h-full">
         <router-view v-slot="{ Component }">
           <transition name="fade" mode="out-in">
             <component :is="Component" :key="route.fullPath" />
