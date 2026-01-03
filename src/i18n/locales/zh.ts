@@ -18,6 +18,8 @@ export const zh = {
         viewAll: '查看全部',
         noDescription: '暂无描述',
         website: '网站',
+        copy: '复制',
+        copied: '已复制',
         settings: '设置'
     },
     auth: {
@@ -54,7 +56,10 @@ export const zh = {
         overview: '概览',
         projects: '项目',
         experience: '经历',
+        resources: '资源',
         gallery: '图库',
+        certificates: '证书与密钥',
+        sponsorships: '赞助',
         myCards: '我的名片',
         adminPanel: '管理面板',
         accountStatus: '账号状态',
@@ -78,7 +83,9 @@ export const zh = {
         tellWorldDesc: '使用 Markdown 编写简介、列出技能或链接到您最喜欢的项目。',
         createReadme: '创建个人简介',
         joined: '加入于 {date}',
-        updatedRecently: '最近更新'
+        updatedRecently: '最近更新',
+        fingerprint: '指纹',
+        expiresAt: '过期时间: {date}'
     },
     profile: {
         noBio: '这个人很懒，什么都没有写。',

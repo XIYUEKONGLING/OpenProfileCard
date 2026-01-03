@@ -18,7 +18,9 @@ export const en = {
         viewAll: 'View All',
         noDescription: 'No description provided.',
         website: 'Website',
-        settings: 'Settings'
+        copy: 'Copy',
+        copied: 'Copied',
+        settings: 'Settings',
     },
     auth: {
         loginTitle: 'Open Profile Card',
@@ -54,7 +56,10 @@ export const en = {
         overview: 'Overview',
         projects: 'Projects',
         experience: 'Experience',
+        resources: 'Resources', // Renamed from Gallery
         gallery: 'Gallery',
+        certificates: 'Certificates & Keys',
+        sponsorships: 'Sponsorships',
         myCards: 'My Cards',
         adminPanel: 'Admin Panel',
         accountStatus: 'Account Status',
@@ -78,7 +83,9 @@ export const en = {
         tellWorldDesc: 'Use Markdown to write a short bio, list your skills, or link to your favorite projects.',
         createReadme: 'Create Profile README',
         joined: 'Joined {date}',
-        updatedRecently: 'Updated recently'
+        updatedRecently: 'Updated recently',
+        fingerprint: 'Fingerprint',
+        expiresAt: 'Expires: {date}'
     },
     profile: {
         noBio: 'No bio provided yet.',

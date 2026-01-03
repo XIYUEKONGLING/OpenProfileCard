@@ -3,6 +3,7 @@ import { ref, onMounted, computed } from 'vue';
 import { useI18n } from '@/i18n';
 import { httpClient } from '@/api/client';
 import { useAuthStore } from '@/stores/auth';
+import { useUIStore } from '@/stores/ui';
 import { renderMarkdown } from '@/lib/markdown';
 import type {
   ProfileDto,
@@ -11,7 +12,9 @@ import type {
   EducationExperienceDto,
   OrganizationDto,
   GalleryItemDto,
-  SocialLinkDto
+  SocialLinkDto,
+  CertificateDto,
+  SponsorshipItemDto
 } from '@/api/types';
 
 // UI Components
@@ -22,7 +25,9 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Card,
-  CardContent
+  CardContent,
+  CardHeader,
+  CardTitle
 } from '@/components/ui/card';
 
 // Icons
@@ -30,11 +35,13 @@ import {
   MapPin, Link as LinkIcon, Building2, Clock,
   Edit2, Plus, Briefcase,
   FolderGit2, Image as ImageIcon,
-  Settings, Shield, BookOpen
+  Settings, Shield, BookOpen, Key,
+  Heart, Copy, Check
 } from 'lucide-vue-next';
 
 const { t, locale } = useI18n();
 const auth = useAuthStore();
+const ui = useUIStore();
 
 // --- State ---
 const isLoading = ref(true);
@@ -45,6 +52,10 @@ const education = ref<EducationExperienceDto[]>([]);
 const orgs = ref<OrganizationDto[]>([]);
 const gallery = ref<GalleryItemDto[]>([]);
 const socials = ref<SocialLinkDto[]>([]);
+const certificates = ref<CertificateDto[]>([]);
+const sponsorships = ref<SponsorshipItemDto[]>([]);
+
+const copiedId = ref<string | null>(null);
 
 // --- Computed ---
 const renderedContent = computed(() => renderMarkdown(profile.value?.Content));
@@ -69,7 +80,9 @@ const fetchData = async () => {
       eduData,
       orgsData,
       galleryData,
-      socialsData
+      socialsData,
+      certsData,
+      sponsorshipsData
     ] = await Promise.all([
       httpClient<ProfileDto>('/me/profile'),
       httpClient<ProjectDto[]>('/me/projects'),
@@ -77,7 +90,9 @@ const fetchData = async () => {
       httpClient<EducationExperienceDto[]>('/me/education'),
       httpClient<OrganizationDto[]>('/api/orgs'),
       httpClient<GalleryItemDto[]>('/me/gallery'),
-      httpClient<SocialLinkDto[]>('/me/socials')
+      httpClient<SocialLinkDto[]>('/me/socials'),
+      httpClient<CertificateDto[]>('/me/certificates'),
+      httpClient<SponsorshipItemDto[]>('/me/sponsorships')
     ]);
 
     profile.value = profileData;
@@ -87,6 +102,8 @@ const fetchData = async () => {
     orgs.value = orgsData || [];
     gallery.value = galleryData || [];
     socials.value = socialsData || [];
+    certificates.value = certsData || [];
+    sponsorships.value = sponsorshipsData || [];
 
   } catch (error) {
     console.error('Failed to load dashboard data', error);
@@ -107,6 +124,19 @@ const formatDate = (dateString?: string) => {
     return date.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long' });
   }
   return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+};
+
+const copyToClipboard = async (text: string, id: string) => {
+  try {
+    await navigator.clipboard.writeText(text);
+    copiedId.value = id;
+    ui.notify(t('common.copied'), 'success');
+    setTimeout(() => {
+      copiedId.value = null;
+    }, 2000);
+  } catch (e) {
+    console.error(e);
+  }
 };
 </script>
 
@@ -192,6 +222,13 @@ const formatDate = (dateString?: string) => {
           </div>
         </div>
 
+        <!-- Social Links (Mini List) -->
+        <div v-if="socials.length > 0" class="flex flex-wrap gap-2">
+          <a v-for="social in socials" :key="social.Id" :href="social.Url" target="_blank" class="size-8 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition-colors border border-border">
+            <AssetView :asset="social.Icon" class-name="size-4" />
+          </a>
+        </div>
+
         <Separator />
 
         <!-- Organizations -->
@@ -227,12 +264,13 @@ const formatDate = (dateString?: string) => {
       <main class="lg:col-span-8 xl:col-span-9 min-w-0">
 
         <Tabs default-value="overview" class="w-full">
-          <!-- Sticky Tab Bar -->
-          <div class="sticky top-0 z-30 bg-background/80 backdrop-blur-md pb-4 pt-2 -mt-2">
-            <TabsList class="w-full justify-start h-auto p-0 bg-transparent border-b border-border/60 rounded-none gap-6 overflow-x-auto scrollbar-none">
+          <!-- Sticky Tab Bar with Rounded Tops -->
+          <div class="sticky top-0 z-30 bg-background/95 backdrop-blur-md pb-0 pt-2 -mt-2 border-b border-border/60">
+            <TabsList class="w-full justify-start h-auto p-0 bg-transparent rounded-none gap-2 overflow-x-auto scrollbar-none">
+
               <TabsTrigger
                   value="overview"
-                  class="rounded-none border-b-2 border-transparent data-[state=active]:border-brand-purple data-[state=active]:text-foreground text-muted-foreground px-1 py-3 font-bold text-sm transition-all"
+                  class="relative rounded-t-lg rounded-b-none border border-transparent data-[state=active]:border-border/60 data-[state=active]:border-b-background data-[state=active]:bg-background text-muted-foreground px-4 py-3 font-bold text-sm transition-all -mb-px hover:text-foreground"
               >
                 <BookOpen class="size-4 mr-2" />
                 {{ t('dashboard.overview') }}
@@ -240,7 +278,7 @@ const formatDate = (dateString?: string) => {
 
               <TabsTrigger
                   value="projects"
-                  class="rounded-none border-b-2 border-transparent data-[state=active]:border-brand-purple data-[state=active]:text-foreground text-muted-foreground px-1 py-3 font-bold text-sm transition-all"
+                  class="relative rounded-t-lg rounded-b-none border border-transparent data-[state=active]:border-border/60 data-[state=active]:border-b-background data-[state=active]:bg-background text-muted-foreground px-4 py-3 font-bold text-sm transition-all -mb-px hover:text-foreground"
               >
                 <FolderGit2 class="size-4 mr-2" />
                 {{ t('dashboard.projects') }}
@@ -249,24 +287,26 @@ const formatDate = (dateString?: string) => {
 
               <TabsTrigger
                   value="experience"
-                  class="rounded-none border-b-2 border-transparent data-[state=active]:border-brand-purple data-[state=active]:text-foreground text-muted-foreground px-1 py-3 font-bold text-sm transition-all"
+                  class="relative rounded-t-lg rounded-b-none border border-transparent data-[state=active]:border-border/60 data-[state=active]:border-b-background data-[state=active]:bg-background text-muted-foreground px-4 py-3 font-bold text-sm transition-all -mb-px hover:text-foreground"
               >
                 <Briefcase class="size-4 mr-2" />
                 {{ t('dashboard.experience') }}
               </TabsTrigger>
 
               <TabsTrigger
-                  value="assets"
-                  class="rounded-none border-b-2 border-transparent data-[state=active]:border-brand-purple data-[state=active]:text-foreground text-muted-foreground px-1 py-3 font-bold text-sm transition-all"
+                  value="resources"
+                  class="relative rounded-t-lg rounded-b-none border border-transparent data-[state=active]:border-border/60 data-[state=active]:border-b-background data-[state=active]:bg-background text-muted-foreground px-4 py-3 font-bold text-sm transition-all -mb-px hover:text-foreground"
               >
-                <ImageIcon class="size-4 mr-2" />
-                {{ t('dashboard.gallery') }}
+                <div class="flex items-center gap-2">
+                  <ImageIcon class="size-4" />
+                  {{ t('dashboard.resources') }}
+                </div>
               </TabsTrigger>
             </TabsList>
           </div>
 
           <!-- TAB: Overview (README) -->
-          <TabsContent value="overview" class="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500 pt-2">
+          <TabsContent value="overview" class="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500 pt-6">
 
             <!-- README Card -->
             <div class="flex flex-col gap-4">
@@ -283,7 +323,7 @@ const formatDate = (dateString?: string) => {
                     <div v-html="renderedContent"></div>
                   </div>
 
-                  <!-- Empty State for README -->
+                  <!-- Empty State -->
                   <div v-else class="flex flex-col items-center justify-center py-10 text-center gap-4">
                     <div class="size-16 rounded-2xl bg-muted/50 flex items-center justify-center">
                       <BookOpen class="size-8 text-muted-foreground/40" />
@@ -316,10 +356,6 @@ const formatDate = (dateString?: string) => {
                     <p class="text-sm text-muted-foreground line-clamp-2 flex-1 mb-3">
                       {{ proj.Summary || t('common.noDescription') }}
                     </p>
-                    <div class="flex items-center gap-4 text-xs font-medium text-muted-foreground">
-                      <span class="flex items-center gap-1"><span class="size-2 rounded-full bg-yellow-400"></span> Mock Lang</span>
-                      <span v-if="proj.Url" class="hover:text-foreground transition-colors">{{ t('common.website') }}</span>
-                    </div>
                   </CardContent>
                 </Card>
               </div>
@@ -327,16 +363,13 @@ const formatDate = (dateString?: string) => {
           </TabsContent>
 
           <!-- TAB: Projects (List View) -->
-          <TabsContent value="projects" class="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500 pt-2">
+          <TabsContent value="projects" class="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-500 pt-6">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-muted/30 p-4 rounded-xl border border-border/50">
               <div>
                 <h3 class="font-bold">{{ t('dashboard.repositories') }}</h3>
                 <p class="text-xs text-muted-foreground">{{ t('dashboard.repoSubtitle') }}</p>
               </div>
               <div class="flex gap-2">
-                <div class="relative flex-1 sm:w-64">
-                  <!-- Search input could go here -->
-                </div>
                 <Button class="font-bold gap-2 bg-brand-purple hover:bg-brand-purple/90 text-white">
                   <Plus class="size-4" /> {{ t('common.create') }}
                 </Button>
@@ -365,16 +398,11 @@ const formatDate = (dateString?: string) => {
                   </Button>
                 </div>
               </Card>
-
-              <div v-if="projects.length === 0" class="text-center py-12 border-2 border-dashed border-border/50 rounded-xl">
-                <p class="text-muted-foreground font-medium">{{ t('dashboard.noProjects') }}</p>
-              </div>
             </div>
           </TabsContent>
 
           <!-- TAB: Experience (Timeline) -->
-          <TabsContent value="experience" class="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500 pt-2">
-
+          <TabsContent value="experience" class="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500 pt-6">
             <!-- Work -->
             <section>
               <div class="flex items-center justify-between mb-6">
@@ -388,9 +416,7 @@ const formatDate = (dateString?: string) => {
 
               <div class="relative pl-4 sm:pl-8 space-y-10 before:absolute before:left-2 sm:before:left-4 before:top-2 before:bottom-2 before:w-0.5 before:bg-linear-to-b before:from-border before:to-transparent">
                 <div v-for="job in work" :key="job.Id" class="relative group">
-                  <!-- Dot -->
                   <div class="absolute -left-6.25 sm:-left-8.25 top-1.5 size-3.5 rounded-full bg-background border-[3px] border-muted-foreground group-hover:border-brand-purple transition-colors shadow-[0_0_0_4px_rgba(0,0,0,0)] group-hover:shadow-[0_0_0_4px_var(--color-muted)]"></div>
-
                   <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
                     <div class="flex items-center gap-3">
                       <div class="size-10 rounded-lg border bg-white dark:bg-black p-1 shrink-0 flex items-center justify-center">
@@ -405,14 +431,9 @@ const formatDate = (dateString?: string) => {
                       {{ formatDate(job.StartDate) }} - {{ formatDate(job.EndDate) }}
                     </span>
                   </div>
-                  <div v-if="job.Description" class="text-sm text-muted-foreground mt-3 leading-relaxed pl-[52px]">
-                    {{ job.Description }}
-                  </div>
                 </div>
               </div>
             </section>
-
-            <Separator />
 
             <!-- Education -->
             <section>
@@ -432,7 +453,7 @@ const formatDate = (dateString?: string) => {
                     </div>
                     <div>
                       <h4 class="font-bold">{{ edu.SchoolName }}</h4>
-                      <p class="text-sm font-medium text-foreground/70">{{ edu.Degree }} <span v-if="edu.Major">• {{ edu.Major }}</span></p>
+                      <p class="text-sm font-medium text-foreground/70">{{ edu.Degree }}</p>
                       <p class="text-xs text-muted-foreground mt-2 font-mono">{{ formatDate(edu.StartDate) }} - {{ formatDate(edu.EndDate) }}</p>
                     </div>
                   </CardContent>
@@ -441,35 +462,93 @@ const formatDate = (dateString?: string) => {
             </section>
           </TabsContent>
 
-          <!-- TAB: Assets/Gallery -->
-          <TabsContent value="assets" class="animate-in fade-in slide-in-from-bottom-2 duration-500 pt-2">
-            <div class="flex justify-between items-center mb-4">
-              <h3 class="font-bold">{{ t('dashboard.galleryItems') }}</h3>
-              <Button size="sm"><Plus class="size-4 mr-2" /> {{ t('common.upload') }}</Button>
-            </div>
+          <!-- TAB: Resources (Gallery, Certificates, Sponsorships) -->
+          <TabsContent value="resources" class="animate-in fade-in slide-in-from-bottom-2 duration-500 pt-6 space-y-12">
 
-            <div v-if="gallery.length > 0" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-              <div v-for="item in gallery" :key="item.Id" class="group relative aspect-video rounded-xl overflow-hidden border border-border bg-muted">
-                <AssetView :asset="item.Image" class-name="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <div class="flex gap-2">
-                    <Button size="icon" variant="secondary" class="size-8 rounded-full"><Edit2 class="size-3" /></Button>
+            <!-- 1. Sponsorships (If any) -->
+            <section v-if="sponsorships.length > 0">
+              <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-lg flex items-center gap-2"><Heart class="size-4 text-pink-500" /> {{ t('dashboard.sponsorships') }}</h3>
+                <Button variant="ghost" size="sm"><Plus class="size-4 mr-2" /> {{ t('common.manage') }}</Button>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                <Card v-for="spon in sponsorships" :key="spon.Id" class="hover:border-pink-500/30 transition-colors">
+                  <CardContent class="p-4 flex items-center gap-4">
+                    <AssetView :asset="spon.Icon" class-name="size-10 rounded-lg" />
+                    <div class="min-w-0">
+                      <div class="font-bold truncate">{{ spon.Platform }}</div>
+                      <a v-if="spon.Url" :href="spon.Url" target="_blank" class="text-xs text-muted-foreground hover:text-foreground truncate block">
+                        {{ spon.Url }}
+                      </a>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </section>
+
+            <!-- 2. Certificates & Keys -->
+            <section>
+              <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-lg flex items-center gap-2"><Key class="size-4 text-emerald-500" /> {{ t('dashboard.certificates') }}</h3>
+                <Button size="sm" variant="outline"><Plus class="size-4 mr-2" /> {{ t('common.add') }}</Button>
+              </div>
+
+              <div v-if="certificates.length > 0" class="flex flex-col gap-3">
+                <Card v-for="cert in certificates" :key="cert.Id" class="border-border/60">
+                  <CardContent class="p-4">
+                    <div class="flex items-start justify-between gap-4">
+                      <div class="space-y-1 min-w-0">
+                        <div class="flex items-center gap-2">
+                          <h4 class="font-bold font-mono">{{ cert.Name }}</h4>
+                          <Badge variant="outline" class="text-[10px]">{{ cert.Type }}</Badge>
+                        </div>
+                        <div class="flex items-center gap-2 bg-muted/50 p-1.5 rounded-md w-fit">
+                          <code class="text-xs text-muted-foreground font-mono break-all">{{ cert.Fingerprint }}</code>
+                          <button @click="copyToClipboard(cert.Fingerprint, cert.Id)" class="hover:text-foreground text-muted-foreground transition-colors">
+                            <Check v-if="copiedId === cert.Id" class="size-3 text-emerald-500" />
+                            <Copy v-else class="size-3" />
+                          </button>
+                        </div>
+                      </div>
+                      <div class="text-right text-xs text-muted-foreground">
+                        <div v-if="cert.ExpiresAt">{{ t('dashboard.expiresAt', { date: formatDate(cert.ExpiresAt) }) }}</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+              <div v-else class="text-sm text-muted-foreground italic border border-dashed p-4 rounded-lg text-center">
+                No cryptographic keys or certificates listed.
+              </div>
+            </section>
+
+            <!-- 3. Gallery -->
+            <section>
+              <div class="flex justify-between items-center mb-4">
+                <h3 class="font-bold text-lg flex items-center gap-2"><ImageIcon class="size-4 text-brand-blue" /> {{ t('dashboard.galleryItems') }}</h3>
+                <Button size="sm"><Plus class="size-4 mr-2" /> {{ t('common.upload') }}</Button>
+              </div>
+
+              <div v-if="gallery.length > 0" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div v-for="item in gallery" :key="item.Id" class="group relative aspect-video rounded-xl overflow-hidden border border-border bg-muted">
+                  <AssetView :asset="item.Image" class-name="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                  <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <div class="flex gap-2">
+                      <Button size="icon" variant="secondary" class="size-8 rounded-full"><Edit2 class="size-3" /></Button>
+                    </div>
+                  </div>
+                  <div v-if="item.Caption" class="absolute bottom-0 left-0 right-0 p-2 bg-linear-to-t from-black/80 to-transparent text-white text-xs font-bold truncate">
+                    {{ item.Caption }}
                   </div>
                 </div>
-                <div v-if="item.Caption" class="absolute bottom-0 left-0 right-0 p-2 bg-linear-to-t from-black/80 to-transparent text-white text-xs font-bold truncate">
-                  {{ item.Caption }}
-                </div>
               </div>
-            </div>
 
-            <div v-else class="text-center py-16 border-2 border-dashed border-border rounded-xl bg-muted/10">
-              <div class="size-12 rounded-full bg-muted flex items-center justify-center mx-auto mb-4">
-                <ImageIcon class="size-6 text-muted-foreground" />
+              <div v-else class="text-center py-10 border-2 border-dashed border-border rounded-xl bg-muted/10">
+                <h3 class="font-bold">{{ t('dashboard.noAssets') }}</h3>
+                <p class="text-sm text-muted-foreground mt-1 mb-4">{{ t('dashboard.noAssetsDesc') }}</p>
+                <Button variant="outline">{{ t('dashboard.uploadFirst') }}</Button>
               </div>
-              <h3 class="font-bold">{{ t('dashboard.noAssets') }}</h3>
-              <p class="text-sm text-muted-foreground mt-1 mb-4">{{ t('dashboard.noAssetsDesc') }}</p>
-              <Button variant="outline">{{ t('dashboard.uploadFirst') }}</Button>
-            </div>
+            </section>
           </TabsContent>
 
         </Tabs>
@@ -488,7 +567,6 @@ const formatDate = (dateString?: string) => {
 }
 
 :deep(.prose a) {
-  /* @apply text-brand-blue no-underline hover:underline;  <-- OLD (Caused error) */
   color: var(--color-brand-blue);
   text-decoration: none;
 }
