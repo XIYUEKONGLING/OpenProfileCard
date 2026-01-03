@@ -4,12 +4,24 @@ import { useI18n } from '@/i18n';
 import { useServerStore } from '@/stores/server';
 import { useAuthStore } from '@/stores/auth';
 import { useUIStore } from '@/stores/ui';
+
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import AssetView from '@/components/ui/AssetView.vue';
-import { Loader2, Monitor, Sun, Moon, Check, ChevronDown, Languages } from 'lucide-vue-next';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu';
+
+// Icons
+import {
+  Loader2, Sun, Moon, Monitor,
+  Languages, ChevronDown, Check, AlertCircle
+} from 'lucide-vue-next';
 
 const { t, setLocale, locale } = useI18n();
 const server = useServerStore();
@@ -30,14 +42,14 @@ async function handleLogin() {
       Password: form.value.password
     });
     ui.notify(t('common.success'), 'success');
-  } catch (e: any) {
+  } catch (e) {
     ui.notify(t('auth.loginFailed'), 'error');
   } finally {
     isLoading.value = false;
   }
 }
 
-const themeOptions = [
+const themeConfigs = [
   { mode: 'light', icon: Sun, label: 'Light' },
   { mode: 'dark', icon: Moon, label: 'Dark' },
   { mode: 'auto', icon: Monitor, label: 'System' }
@@ -50,96 +62,147 @@ const languages = [
 </script>
 
 <template>
-  <div class="bg-mesh"></div>
-  <div class="min-h-screen flex flex-col items-center justify-center p-6 sm:p-12 relative">
+  <!-- Background Layer -->
+  <div class="fixed inset-0 bg-background transition-colors duration-500 -z-10">
+    <div class="absolute inset-0 bg-linear-to-tr from-brand-blue/5 via-transparent to-brand-purple/5"></div>
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_-20%,rgba(120,119,198,0.1),rgba(255,255,255,0))]"></div>
+  </div>
 
-    <div class="absolute top-8 right-8 flex items-center gap-3">
-      <!-- Language -->
-      <div class="relative group">
-        <button class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-foreground/5 hover:bg-foreground/10 text-xs font-bold transition-all">
-          <Languages class="size-3.5" />
-          {{ languages.find(l => l.code === locale)?.label }}
-          <ChevronDown class="size-3 opacity-50" />
-        </button>
-        <div class="absolute right-0 mt-2 w-32 glass-card rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-50 p-1">
-          <button v-for="lang in languages" :key="lang.code"
-                  @click="setLocale(lang.code as any)"
-                  class="flex items-center justify-between w-full px-3 py-2 text-xs rounded-lg hover:bg-foreground/5 transition-colors"
-                  :class="{ 'text-brand-blue font-bold': locale === lang.code }"
+  <div class="min-h-screen flex flex-col items-center justify-center p-6 relative">
+
+    <!-- Header Controls -->
+    <div class="absolute top-8 right-8 flex items-center gap-2">
+      <!-- Language Dropdown -->
+      <DropdownMenu>
+        <DropdownMenuTrigger as-child>
+          <Button variant="ghost" size="sm" class="gap-2 rounded-full px-4 h-9 border border-border/40">
+            <Languages class="size-3.5 opacity-60" />
+            <span class="text-xs font-bold">{{ languages.find(l => l.code === locale)?.label }}</span>
+            <ChevronDown class="size-3 opacity-40" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" class="w-40">
+          <DropdownMenuItem
+              v-for="lang in languages" :key="lang.code"
+              @click="setLocale(lang.code as any)"
+              class="justify-between"
           >
             {{ lang.label }}
-            <Check v-if="locale === lang.code" class="size-3" />
-          </button>
-        </div>
-      </div>
+            <Check v-if="locale === lang.code" class="size-3 text-brand-blue" />
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
-      <!-- Theme Switch -->
-      <div class="flex bg-foreground/5 p-1 rounded-full border border-foreground/5">
-        <button v-for="opt in themeOptions" :key="opt.mode"
-                @click="server.setTheme(opt.mode)"
-                class="p-1.5 rounded-full transition-all"
-                :class="server.theme === opt.mode ? 'bg-background shadow-sm text-foreground' : 'text-foreground/40 hover:text-foreground/60'"
-        >
-          <component :is="opt.icon" class="size-3.5" />
-        </button>
-      </div>
+      <!-- Theme Switcher (Triple State) -->
+      <DropdownMenu>
+        <DropdownMenuTrigger as-child>
+          <Button variant="ghost" size="icon" class="rounded-full border border-border/40 size-9">
+            <Sun v-if="server.theme === 'light'" class="size-4" />
+            <Moon v-else-if="server.theme === 'dark'" class="size-4" />
+            <Monitor v-else class="size-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" class="w-36">
+          <DropdownMenuItem
+              v-for="cfg in themeConfigs" :key="cfg.mode"
+              @click="server.setTheme(cfg.mode)"
+              class="gap-2"
+          >
+            <component :is="cfg.icon" class="size-3.5 opacity-60" />
+            {{ cfg.label }}
+            <Check v-if="server.theme === cfg.mode" class="size-3 ml-auto text-brand-blue" />
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
 
-    <!-- Header -->
-    <div class="flex flex-col items-center mb-12 text-center animate-in fade-in slide-in-from-bottom-4 duration-700">
-      <div class="size-20 mb-6 rounded-3xl glass-card p-0.5 shadow-2xl">
+    <!-- Branding Section (Above Card) -->
+    <div class="flex flex-col items-center text-center mb-10 animate-in fade-in slide-in-from-top-4 duration-1000">
+      <div class="size-24 rounded-[2.5rem] bg-white dark:bg-zinc-900 border border-border/50 shadow-2xl p-1 mb-6 overflow-hidden">
         <AssetView
             :asset="server.meta?.Logo"
             :fallback-name="server.meta?.SiteName"
-            class-name="w-full h-full rounded-[22px]"
+            class-name="w-full h-full rounded-[2.2rem]"
         />
       </div>
-      <h1 class="text-3xl font-black tracking-tight mb-2">{{ server.meta?.SiteName }}</h1>
-      <p class="text-sm font-medium text-foreground/40 max-w-70 leading-relaxed">
+      <!-- Case sensitive SiteName & Description -->
+      <h1 class="text-3xl font-black tracking-tight text-foreground">{{ server.meta?.SiteName }}</h1>
+      <p class="text-muted-foreground mt-2 font-medium max-w-[320px]">
         {{ server.meta?.SiteDescription }}
       </p>
     </div>
 
     <!-- Login Card -->
-    <Card class="w-full max-w-100 glass-card border-none p-1 shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-1000">
-      <CardContent class="p-8">
-        <form @submit.prevent="handleLogin" class="space-y-6" :class="{ 'opacity-30 pointer-events-none': isStaticMode }">
+    <Card class="w-full max-w-105 glass-card border-none shadow-2xl rounded-4xl overflow-hidden">
+      <CardContent class="p-10">
 
-          <div class="space-y-2">
-            <Label class="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">{{ t('common.username') }}</Label>
-            <Input v-model="form.login" class="h-12 bg-foreground/5 border-transparent focus:bg-background transition-all rounded-xl px-4" placeholder="Email or username" required />
+        <div v-if="isStaticMode" class="mb-8 p-4 rounded-2xl bg-destructive/10 border border-destructive/20 flex gap-4 text-destructive">
+          <AlertCircle class="size-5 shrink-0" />
+          <div class="text-xs font-bold leading-relaxed">
+            SYSTEM NOTICE: This instance is in Static Mode. All dynamic operations including Login are currently disabled.
+          </div>
+        </div>
+
+        <form @submit.prevent="handleLogin" class="space-y-6" :class="{ 'opacity-20 pointer-events-none': isStaticMode }">
+          <div class="space-y-2.5">
+            <Label class="text-[10px] uppercase font-black tracking-widest opacity-40 ml-1">{{ t('common.username') }}</Label>
+            <Input
+                v-model="form.login"
+                class="h-12 rounded-xl bg-muted/50 border-none focus:bg-background transition-all px-4"
+                placeholder="Your identity"
+                required
+            />
           </div>
 
-          <div class="space-y-2">
-            <div class="flex justify-between">
-              <Label class="text-[10px] font-black uppercase tracking-widest opacity-40 ml-1">{{ t('common.password') }}</Label>
-              <button type="button" class="text-[10px] font-black uppercase text-brand-blue">{{ t('auth.forgotPassword') }}</button>
+          <div class="space-y-2.5">
+            <div class="flex justify-between items-center px-1">
+              <Label class="text-[10px] uppercase font-black tracking-widest opacity-40">{{ t('common.password') }}</Label>
+              <button type="button" class="text-[10px] font-black uppercase text-brand-blue hover:underline">{{ t('auth.forgotPassword') }}</button>
             </div>
-            <Input v-model="form.password" type="password" class="h-12 bg-foreground/5 border-transparent focus:bg-background transition-all rounded-xl px-4" placeholder="••••••••" required />
+            <Input
+                v-model="form.password"
+                type="password"
+                class="h-12 rounded-xl bg-muted/50 border-none focus:bg-background transition-all px-4"
+                placeholder="••••••••"
+                required
+            />
           </div>
 
-          <div class="pt-2 space-y-4">
-            <Button type="submit" class="w-full h-12 rounded-xl primary-btn" :disabled="isLoading || isStaticMode">
+          <div class="pt-4 space-y-4">
+            <Button
+                type="submit"
+                class="w-full h-12 rounded-xl bg-foreground text-background font-black hover:opacity-90 active:scale-[0.98] transition-all shadow-xl shadow-foreground/10"
+                :disabled="isLoading || isStaticMode"
+            >
               <Loader2 v-if="isLoading" class="size-4 animate-spin mr-2" />
               {{ t('auth.signIn') }}
             </Button>
 
-            <Button v-if="!isStaticMode" variant="ghost" class="w-full h-12 rounded-xl border border-foreground/5 hover:bg-foreground/5 font-bold">
+            <Button
+                v-if="!isStaticMode"
+                variant="outline"
+                type="button"
+                class="w-full h-12 rounded-xl border-border/60 font-bold hover:bg-muted/50 transition-all"
+            >
               {{ t('auth.register') }}
             </Button>
           </div>
         </form>
-
-        <div v-if="isStaticMode" class="mt-4 p-4 rounded-xl bg-destructive/10 text-destructive text-[11px] font-bold leading-tight flex gap-3">
-          <Monitor class="size-4 shrink-0" />
-          READ-ONLY MODE: LOGIN IS DISABLED BY SERVER CONFIGURATION.
-        </div>
       </CardContent>
     </Card>
 
-    <!-- Copyright -->
-    <footer class="mt-12 text-[10px] font-bold opacity-20 tracking-[0.2em] uppercase">
+    <!-- Case sensitive Copyright -->
+    <footer class="mt-12 text-[10px] font-bold text-muted-foreground/30 uppercase tracking-[0.3em]">
       {{ server.meta?.Copyright }}
     </footer>
   </div>
 </template>
+
+<style scoped>
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(40px) saturate(150%);
+  -webkit-backdrop-filter: blur(40px) saturate(150%);
+  border: 1px solid var(--glass-border);
+}
+</style>

@@ -8,7 +8,6 @@ export const useServerStore = defineStore('server', () => {
     const meta = ref<SiteMetadataDto | null>(null);
     const info = ref<ServerInfoDto | null>(null);
     const isInitialized = ref(false);
-
     const theme = ref<ThemeMode>((localStorage.getItem('theme') as ThemeMode) || 'auto');
 
     function setTheme(mode: ThemeMode) {
@@ -18,11 +17,13 @@ export const useServerStore = defineStore('server', () => {
     }
 
     function applyTheme() {
+        const root = document.documentElement;
         const isDark = theme.value === 'auto'
             ? window.matchMedia('(prefers-color-scheme: dark)').matches
             : theme.value === 'dark';
 
-        document.documentElement.classList.toggle('dark', isDark);
+        root.classList.toggle('dark', isDark);
+        document.querySelector('meta[name="theme-color"]')?.setAttribute('content', isDark ? '#09090b' : '#ffffff');
     }
 
     async function detectServer(): Promise<void> {
@@ -40,7 +41,7 @@ export const useServerStore = defineStore('server', () => {
             console.error('SERVER_INIT_ERR', e);
         } finally {
             isInitialized.value = true;
-            applyTheme(); // 初始化时应用主题
+            applyTheme();
         }
     }
 
