@@ -137,7 +137,7 @@ const themeOptions = [
                 <Monitor v-else class="size-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" class="w-32">
+            <DropdownMenuContent align="end" class="w-48">
               <DropdownMenuItem v-for="opt in themeOptions" :key="opt.mode" @click="themeStore.setTheme(opt.mode)">
                 <component :is="opt.icon" class="mr-2 size-3" />
                 {{ opt.label }}

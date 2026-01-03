@@ -115,9 +115,9 @@ onUnmounted(() => {
 });
 
 const themeOptions = [
-  { mode: 'light', icon: Sun, label: 'Light' },
-  { mode: 'dark', icon: Moon, label: 'Dark' },
-  { mode: 'auto', icon: Monitor, label: 'System' }
+  { mode: 'light', icon: Sun, label: t('common.light') },
+  { mode: 'dark', icon: Moon, label: t('common.dark') },
+  { mode: 'auto', icon: Monitor, label: t('common.system') }
 ] as const;
 
 const languages = [
