@@ -1,4 +1,3 @@
-// src/stores/auth.ts
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { httpClient } from '../api/client';
@@ -8,45 +7,27 @@ import type {
     LoginRequestDto,
     RegisterRequestDto,
     SendCodeRequestDto,
+    ResetPasswordRequestDto,
     AccountRole,
-    AccountType, RefreshTokenRequestDto
+    AccountType,
+    RefreshTokenRequestDto
 } from '@/api/types';
 
 export const useAuthStore = defineStore('auth', () => {
-    // 基础状态
     const token = ref<string | null>(localStorage.getItem('at'));
     const refreshToken = ref<string | null>(localStorage.getItem('rt'));
     const user = ref<AccountDto | null>(null);
 
-    // --- 计算属性 (基于 user 对象即时计算) ---
-
-    /** 是否已登录 */
     const isAuthenticated = computed(() => !!token.value);
 
-    /** 当前用户角色 (-1: Root, 0: User, 1000: Admin) */
     const role = computed<AccountRole | null>(() => user.value?.Role ?? null);
-
-    /** 账号类型数值 */
     const type = computed<AccountType | null>(() => user.value?.Type ?? null);
 
-    /** 是否为超级管理员 (Root) */
     const isRoot = computed(() => user.value?.Role === -1);
-
-    /** 是否为管理员 (Admin 或 Root) */
     const isAdmin = computed(() => user.value?.Role === 1000 || user.value?.Role === -1);
 
-    /**
-     * 辅助函数：检查是否具备特定角色
-     * 比如: v-if="auth.hasRole(1000)"
-     */
     const hasRole = (r: AccountRole) => user.value?.Role === r;
 
-    // --- 逻辑操作 ---
-
-    /**
-     * 获取当前用户信息（包含权限/角色）
-     * 对应 GET /api/me
-     */
     async function fetchMe() {
         if (!token.value) return;
         try {
@@ -139,7 +120,7 @@ export const useAuthStore = defineStore('auth', () => {
         }
     }
 
-    async function resetPassword(payload: any) {
+    async function resetPassword(payload: ResetPasswordRequestDto) {
         await httpClient('/auth/reset-password', {
             method: 'POST',
             body: JSON.stringify(payload),
