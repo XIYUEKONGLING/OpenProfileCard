@@ -2,9 +2,11 @@
 import { ref, computed } from 'vue';
 import { useI18n } from '@/i18n';
 import { useServerStore } from '@/stores/server';
+import { useThemeStore } from '@/stores/theme';
 import { useAuthStore } from '@/stores/auth';
 import { useUIStore } from '@/stores/ui';
 
+// UI Components
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -25,6 +27,7 @@ import {
 
 const { t, setLocale, locale } = useI18n();
 const server = useServerStore();
+const themeStore = useThemeStore();
 const auth = useAuthStore();
 const ui = useUIStore();
 
@@ -49,7 +52,7 @@ async function handleLogin() {
   }
 }
 
-const themeConfigs = [
+const themeOptions = [
   { mode: 'light', icon: Sun, label: 'Light' },
   { mode: 'dark', icon: Moon, label: 'Dark' },
   { mode: 'auto', icon: Monitor, label: 'System' }
@@ -62,7 +65,6 @@ const languages = [
 </script>
 
 <template>
-  <!-- Background Layer -->
   <div class="fixed inset-0 bg-background transition-colors duration-500 -z-10">
     <div class="absolute inset-0 bg-linear-to-tr from-brand-blue/5 via-transparent to-brand-purple/5"></div>
     <div class="absolute inset-0 bg-[radial-gradient(circle_at_50%_-20%,rgba(120,119,198,0.1),rgba(255,255,255,0))]"></div>
@@ -70,12 +72,11 @@ const languages = [
 
   <div class="min-h-screen flex flex-col items-center justify-center p-6 relative">
 
-    <!-- Header Controls -->
+    <!-- Controls Section -->
     <div class="absolute top-8 right-8 flex items-center gap-2">
-      <!-- Language Dropdown -->
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
-          <Button variant="ghost" size="sm" class="gap-2 rounded-full px-4 h-9 border border-border/40">
+          <Button variant="ghost" size="sm" class="gap-2 rounded-full px-4 border border-border/40">
             <Languages class="size-3.5 opacity-60" />
             <span class="text-xs font-bold">{{ languages.find(l => l.code === locale)?.label }}</span>
             <ChevronDown class="size-3 opacity-40" />
@@ -93,30 +94,29 @@ const languages = [
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <!-- Theme Switcher (Triple State) -->
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
           <Button variant="ghost" size="icon" class="rounded-full border border-border/40 size-9">
-            <Sun v-if="server.theme === 'light'" class="size-4" />
-            <Moon v-else-if="server.theme === 'dark'" class="size-4" />
+            <Sun v-if="themeStore.theme === 'light'" class="size-4" />
+            <Moon v-else-if="themeStore.theme === 'dark'" class="size-4" />
             <Monitor v-else class="size-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" class="w-36">
           <DropdownMenuItem
-              v-for="cfg in themeConfigs" :key="cfg.mode"
-              @click="server.setTheme(cfg.mode)"
+              v-for="opt in themeOptions" :key="opt.mode"
+              @click="themeStore.setTheme(opt.mode)"
               class="gap-2"
           >
-            <component :is="cfg.icon" class="size-3.5 opacity-60" />
-            {{ cfg.label }}
-            <Check v-if="server.theme === cfg.mode" class="size-3 ml-auto text-brand-blue" />
+            <component :is="opt.icon" class="size-3.5 opacity-60" />
+            {{ opt.label }}
+            <Check v-if="themeStore.theme === opt.mode" class="size-3 ml-auto text-brand-blue" />
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </div>
 
-    <!-- Branding Section (Above Card) -->
+    <!-- Branding Section -->
     <div class="flex flex-col items-center text-center mb-10 animate-in fade-in slide-in-from-top-4 duration-1000">
       <div class="size-24 rounded-[2.5rem] bg-white dark:bg-zinc-900 border border-border/50 shadow-2xl p-1 mb-6 overflow-hidden">
         <AssetView
@@ -125,7 +125,6 @@ const languages = [
             class-name="w-full h-full rounded-[2.2rem]"
         />
       </div>
-      <!-- Case sensitive SiteName & Description -->
       <h1 class="text-3xl font-black tracking-tight text-foreground">{{ server.meta?.SiteName }}</h1>
       <p class="text-muted-foreground mt-2 font-medium max-w-[320px]">
         {{ server.meta?.SiteDescription }}
@@ -138,8 +137,8 @@ const languages = [
 
         <div v-if="isStaticMode" class="mb-8 p-4 rounded-2xl bg-destructive/10 border border-destructive/20 flex gap-4 text-destructive">
           <AlertCircle class="size-5 shrink-0" />
-          <div class="text-xs font-bold leading-relaxed">
-            SYSTEM NOTICE: This instance is in Static Mode. All dynamic operations including Login are currently disabled.
+          <div class="text-xs font-bold leading-relaxed uppercase">
+            System Notice: Static Mode Active. Login is restricted.
           </div>
         </div>
 
@@ -149,7 +148,7 @@ const languages = [
             <Input
                 v-model="form.login"
                 class="h-12 rounded-xl bg-muted/50 border-none focus:bg-background transition-all px-4"
-                placeholder="Your identity"
+                placeholder="Username"
                 required
             />
           </div>
@@ -191,7 +190,6 @@ const languages = [
       </CardContent>
     </Card>
 
-    <!-- Case sensitive Copyright -->
     <footer class="mt-12 text-[10px] font-bold text-muted-foreground/30 uppercase tracking-[0.3em]">
       {{ server.meta?.Copyright }}
     </footer>

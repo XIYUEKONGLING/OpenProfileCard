@@ -4,6 +4,7 @@ import App from './App.vue';
 import router from './router/index';
 import { useServerStore } from './stores/server';
 import './style.css';
+import {useThemeStore} from "@/stores/theme.ts";
 
 /**
  * Bootstrap the application
@@ -15,7 +16,10 @@ async function startApp(): Promise<void> {
     app.use(pinia);
 
     // Initialize server state (Detect Dynamic vs Static mode)
+    const themeStore = useThemeStore();
     const serverStore = useServerStore();
+
+    themeStore.init();
     await serverStore.detectServer();
 
     app.use(router);
