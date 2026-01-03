@@ -64,9 +64,13 @@ const fetchOrgs = async () => {
 };
 
 const handleLogout = async () => {
-  await auth.logout();
-  ui.notify(t('auth.logoutSuccess'), 'success');
-  await router.push('/login');
+  try {
+    await auth.logout();
+    ui.notify(t('auth.logoutSuccess'), 'success');
+    window.location.href = '/login';
+  } catch (error) {
+    window.location.href = '/login';
+  }
 };
 
 onMounted(() => {

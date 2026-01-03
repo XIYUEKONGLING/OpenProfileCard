@@ -211,8 +211,9 @@ const changePassword = async () => {
     ui.notify(t('settings.passwordChangedLogout'), 'success');
 
     // Force Logout
-    await auth.logout();
-    router.push('/login');
+    auth.logout();
+    // router.push('/login');
+    window.location.reload();
   } catch (e: any) {
     ui.notify(e.message, 'error');
   } finally {
@@ -230,7 +231,7 @@ const requestDeleteAccount = async () => {
     await httpClient('/me', { method: 'DELETE' });
     ui.notify(t('settings.accountDeleted'), 'warning');
     showDeleteModal.value = false;
-    await auth.logout();
+    auth.logout();
     window.location.reload();
   } catch(e: any) {
     ui.notify(e.message, 'error');
