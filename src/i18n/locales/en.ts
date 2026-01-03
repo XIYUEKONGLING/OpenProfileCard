@@ -10,7 +10,15 @@ export const en = {
         logout: 'Logout',
         success: 'Operation successful',
         notice: 'System Notice',
-        or: 'Or'
+        or: 'Or',
+        add: 'Add',
+        create: 'Create',
+        upload: 'Upload',
+        manage: 'Manage',
+        viewAll: 'View All',
+        noDescription: 'No description provided.',
+        website: 'Website',
+        settings: 'Settings'
     },
     auth: {
         loginTitle: 'Open Profile Card',
@@ -44,15 +52,38 @@ export const en = {
     dashboard: {
         title: 'Dashboard',
         overview: 'Overview',
+        projects: 'Projects',
+        experience: 'Experience',
+        gallery: 'Gallery',
         myCards: 'My Cards',
         adminPanel: 'Admin Panel',
         accountStatus: 'Account Status',
         followers: 'Followers',
         following: 'Following',
+        organizations: 'Organizations',
+        noOrgs: 'You are not part of any organization yet.',
+        createOrg: 'Create Organization',
+        recentProjects: 'Recent Projects',
+        repositories: 'Repositories',
+        repoSubtitle: 'Manage your projects and visibility settings.',
+        noProjects: 'No projects found.',
+        workExp: 'Work Experience',
+        education: 'Education',
+        galleryItems: 'Gallery Items',
+        noAssets: 'No assets found',
+        noAssetsDesc: 'Showcase your certifications, photos, or media assets.',
+        uploadFirst: 'Upload First Asset',
+        readme: 'Profile README',
+        tellWorld: 'Tell the world about yourself',
+        tellWorldDesc: 'Use Markdown to write a short bio, list your skills, or link to your favorite projects.',
+        createReadme: 'Create Profile README',
+        joined: 'Joined {date}',
+        updatedRecently: 'Updated recently'
     },
     profile: {
         noBio: 'No bio provided yet.',
         follow: 'Follow',
         unfollow: 'Unfollow',
+        editProfile: 'Edit Profile'
     }
 };

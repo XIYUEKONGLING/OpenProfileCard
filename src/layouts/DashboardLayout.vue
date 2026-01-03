@@ -30,9 +30,7 @@ const isMobileMenuOpen = ref(false);
 
 const navigation = [
   { name: t('dashboard.overview'), href: '/dashboard', icon: LayoutDashboard },
-  { name: t('dashboard.myCards'), href: '/dashboard/cards', icon: CreditCard },
-  { name: t('common.edit'), href: '/dashboard/profile', icon: User },
-  { name: 'Settings', href: '/dashboard/settings', icon: Settings },
+  { name: t('common.settings'), href: '/dashboard/settings', icon: Settings },
 ];
 
 const handleLogout = async () => {

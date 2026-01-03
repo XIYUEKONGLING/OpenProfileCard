@@ -10,7 +10,15 @@ export const zh = {
         logout: '退出登录',
         success: '操作成功',
         notice: '系统提示',
-        or: '或者'
+        or: '或者',
+        add: '添加',
+        create: '创建',
+        upload: '上传',
+        manage: '管理',
+        viewAll: '查看全部',
+        noDescription: '暂无描述',
+        website: '网站',
+        settings: '设置'
     },
     auth: {
         loginTitle: 'Open Profile Card',
@@ -44,15 +52,38 @@ export const zh = {
     dashboard: {
         title: '控制台',
         overview: '概览',
+        projects: '项目',
+        experience: '经历',
+        gallery: '图库',
         myCards: '我的名片',
         adminPanel: '管理面板',
         accountStatus: '账号状态',
         followers: '粉丝',
         following: '关注',
+        organizations: '组织',
+        noOrgs: '您尚未加入任何组织。',
+        createOrg: '创建新组织',
+        recentProjects: '最近项目',
+        repositories: '项目仓库',
+        repoSubtitle: '管理您的项目展示及可见性设置。',
+        noProjects: '暂无项目。',
+        workExp: '工作经历',
+        education: '教育经历',
+        galleryItems: '图库资源',
+        noAssets: '暂无资源',
+        noAssetsDesc: '展示您的证书、照片或媒体资源。',
+        uploadFirst: '上传第一个资源',
+        readme: '个人简介 (README)',
+        tellWorld: '向世界介绍自己',
+        tellWorldDesc: '使用 Markdown 编写简介、列出技能或链接到您最喜欢的项目。',
+        createReadme: '创建个人简介',
+        joined: '加入于 {date}',
+        updatedRecently: '最近更新'
     },
     profile: {
         noBio: '这个人很懒，什么都没有写。',
         follow: '关注',
         unfollow: '取消关注',
+        editProfile: '编辑资料'
     }
 };
