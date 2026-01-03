@@ -2,9 +2,10 @@ import { createApp } from 'vue';
 import { createPinia } from 'pinia';
 import App from './App.vue';
 import router from './router/index';
+import {useThemeStore} from "@/stores/theme.ts";
 import { useServerStore } from './stores/server';
 import './style.css';
-import {useThemeStore} from "@/stores/theme.ts";
+import 'vue-sonner/style.css'
 
 /**
  * Bootstrap the application
