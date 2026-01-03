@@ -27,3 +27,8 @@ export interface SendCodeRequestDto {
     Email: string;
     Type: VerificationType;
 }
+
+export interface RefreshTokenRequestDto {
+    AccessToken: string;
+    RefreshToken: string;
+}
