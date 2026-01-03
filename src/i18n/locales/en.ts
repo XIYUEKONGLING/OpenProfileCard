@@ -158,5 +158,12 @@ export const en = {
         showFollowingDesc: 'Display the list of people you follow on your public profile.',
         showLocalTime: 'Show Local Time',
         showLocalTimeDesc: 'Display your current local time based on your timezone.',
+
+        passwordChangedLogout: 'Password changed successfully. Logging out...',
+        accountRestored: 'Account restored successfully',
+        accountPendingDeletion: 'Account is pending deletion',
+        deleteModalTitle: 'Delete Account?',
+        deleteModalDesc: 'This action will deactivate your account and schedule it for deletion. All data will be permanently removed if not restored within the grace period.',
+        deleteConfirmLabel: 'Type {name} to confirm:',
     }
 };

@@ -158,5 +158,12 @@ export const zh = {
         showFollowingDesc: '在您的公开主页显示您关注的用户列表。',
         showLocalTime: '显示本地时间',
         showLocalTimeDesc: '根据您的时区设置显示当前的本地时间。',
+
+        passwordChangedLogout: '密码修改成功，正在注销...',
+        accountRestored: '账户已成功恢复',
+        accountPendingDeletion: '账户处于等待删除状态',
+        deleteModalTitle: '确定要删除账户吗？',
+        deleteModalDesc: '此操作将禁用您的账户并将其置于等待删除状态。如果您在宽限期内未恢复账户，所有数据将被永久删除。',
+        deleteConfirmLabel: '请输入 {name} 以确认：',
     }
 };

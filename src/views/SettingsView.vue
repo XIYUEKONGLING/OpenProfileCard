@@ -40,15 +40,14 @@ import {
   Shield,
   Star,
   AlertTriangle,
-  RotateCcw,
-  X
+  RotateCcw
 } from 'lucide-vue-next';
 
-const router = useRouter();
 const { t } = useI18n();
 const auth = useAuthStore();
 const server = useServerStore();
 const ui = useUIStore();
+const router = useRouter();
 
 // --- State ---
 const isLoading = ref(false);
@@ -72,27 +71,21 @@ const passwordForm = ref<ChangePasswordRequestDto>({
 });
 const confirmPassword = ref('');
 
-// Delete Modal State
+// Modal State
 const showDeleteModal = ref(false);
-const deleteConfirmInput = ref('');
-const isDeleting = ref(false);
+const deleteConfirmationInput = ref('');
 
 // --- Computed ---
 const isPersonal = computed(() => auth.user?.Type === 'Personal');
-
-// 账户状态检测
-const isPendingDeletion = computed(() => auth.user?.Status === AccountStatus.PendingDeletion);
-
-// Feature Flags
 const isEmailServiceEnabled = computed(() => server.features?.Email === true);
 const requiresVerification = computed(() => server.features?.EmailVerification === true);
+const isPendingDeletion = computed(() => auth.user?.Status === AccountStatus.PendingDeletion);
 
 // --- API Actions ---
 
 const fetchData = async () => {
   isLoading.value = true;
   try {
-    // 仅获取设置和邮箱，不再获取 Profile
     const [settingsData, emailData] = await Promise.all([
       httpClient<PersonalSettingsDto>('/me/settings'),
       httpClient<AccountEmailDto[]>('/me/emails')
@@ -101,6 +94,9 @@ const fetchData = async () => {
     settings.value = settingsData;
     settingsForm.value = { ...settingsData };
     emails.value = emailData || [];
+
+    // Ensure auth user status is up to date for Delete/Restore logic
+    await auth.fetchMe();
   } catch (error) {
     console.error(error);
   } finally {
@@ -129,17 +125,18 @@ const addEmail = async () => {
   if (!newEmail.value) return;
 
   try {
-    // 如果服务器强制验证，且用户还没填验证码，先发送验证码
-    if (requiresVerification.value && !verifyCode.value) {
-      await auth.sendCode({ Email: newEmail.value, Type: 'VerifyEmail' });
-      ui.notify(t('auth.codeSent'), 'success');
-      return;
+    // Logic: Verification Required vs Direct Add
+    if (requiresVerification.value) {
+      if (!verifyCode.value) {
+        await auth.sendCode({ Email: newEmail.value, Type: 'VerifyEmail' });
+        ui.notify(t('auth.codeSent'), 'success');
+        return;
+      }
     }
 
-    // 提交添加请求
     const payload: AddEmailRequestDto = {
       Email: newEmail.value,
-      Code: verifyCode.value || 'skipped' // 如果未启用验证，后端应允许绕过
+      Code: verifyCode.value || 'skipped'
     };
 
     await httpClient('/me/emails', {
@@ -148,13 +145,9 @@ const addEmail = async () => {
     });
 
     ui.notify(t('common.success'), 'success');
-
-    // Reset
     newEmail.value = '';
     verifyCode.value = '';
     showAddEmail.value = false;
-
-    // Refresh list
     emails.value = await httpClient<AccountEmailDto[]>('/me/emails');
   } catch (e: any) {
     ui.notify(e.message, 'error');
@@ -162,7 +155,7 @@ const addEmail = async () => {
 };
 
 const deleteEmail = async (email: string) => {
-  if (!confirm('Are you sure?')) return;
+  if (!confirm('Are you sure?')) return; // Could use custom modal here too, but simple confirm is often acceptable for lists
   try {
     await httpClient(`/me/emails/${email}`, { method: 'DELETE' });
     ui.notify(t('common.success'), 'success');
@@ -203,7 +196,7 @@ const verifyExistingEmail = async (email: string) => {
   emails.value = await httpClient<AccountEmailDto[]>('/me/emails');
 };
 
-// 3. Password Change (Force Logout)
+// 3. Password Change
 const changePassword = async () => {
   if (passwordForm.value.NewPassword !== confirmPassword.value) {
     ui.notify(t('auth.passwordMismatch'), 'error');
@@ -215,52 +208,43 @@ const changePassword = async () => {
       method: 'POST',
       body: JSON.stringify(passwordForm.value)
     });
-    ui.notify(t('auth.resetPasswordSuccess'), 'success');
+    ui.notify(t('settings.passwordChangedLogout'), 'success');
 
-    // 强制登出
+    // Force Logout
     await auth.logout();
     router.push('/login');
   } catch (e: any) {
     ui.notify(e.message, 'error');
+  } finally {
     isSaving.value = false;
   }
 };
 
-// 4. Account Deletion & Restoration
-const handleDeleteAccount = async () => {
-  if (deleteConfirmInput.value !== auth.user?.AccountName) {
+// 4. Account Lifecycle (Delete / Restore)
+const requestDeleteAccount = async () => {
+  if (deleteConfirmationInput.value !== auth.user?.AccountName) {
     ui.notify('Account name mismatch', 'error');
     return;
   }
-
-  isDeleting.value = true;
   try {
     await httpClient('/me', { method: 'DELETE' });
     ui.notify(t('settings.accountDeleted'), 'warning');
-
-    // 删除后通常也要强制登出，或者刷新状态显示“已删除”
     showDeleteModal.value = false;
-    await auth.fetchMe(); // 刷新本地用户状态为 PendingDeletion
-    // 也可以选择直接登出
-    // await auth.logout();
-    // router.push('/login');
+    await auth.logout();
+    window.location.reload();
   } catch(e: any) {
     ui.notify(e.message, 'error');
-  } finally {
-    isDeleting.value = false;
   }
 };
 
-const handleRestoreAccount = async () => {
-  isSaving.value = true;
+const restoreAccount = async () => {
   try {
     await httpClient('/me/restore', { method: 'POST' });
-    ui.notify(t('common.success'), 'success');
-    await auth.fetchMe(); // 刷新状态回 Active
+    ui.notify(t('settings.accountRestored'), 'success');
+    await auth.fetchMe(); // Refresh status
+    // Possibly reload to clear global blockers if they exist in DashboardView
   } catch(e: any) {
     ui.notify(e.message, 'error');
-  } finally {
-    isSaving.value = false;
   }
 };
 
@@ -278,9 +262,8 @@ onMounted(() => {
       <p class="text-muted-foreground">{{ t('settings.subtitle') }}</p>
     </div>
 
-    <!-- TABS -->
     <Tabs default-value="account" class="w-full">
-      <TabsList class="grid w-full grid-cols-2 lg:w-[300px]">
+      <TabsList class="grid w-full grid-cols-2 lg:w-80">
         <TabsTrigger value="account">{{ t('settings.account') }}</TabsTrigger>
         <TabsTrigger value="preferences">{{ t('settings.preferences') }}</TabsTrigger>
       </TabsList>
@@ -295,7 +278,7 @@ onMounted(() => {
             <CardDescription>{{ t('settings.emailDesc') }}</CardDescription>
           </CardHeader>
           <CardContent class="space-y-4">
-            <div v-for="email in emails" :key="email.Id" class="flex items-center justify-between p-3 border rounded-lg bg-card transition-colors hover:bg-muted/30">
+            <div v-for="email in emails" :key="email.Id" class="flex items-center justify-between p-3 border rounded-lg bg-card">
               <div class="flex flex-col gap-1">
                 <div class="flex items-center gap-2 font-medium">
                   <Mail class="size-4 text-muted-foreground" />
@@ -312,21 +295,21 @@ onMounted(() => {
                 <!-- Verify Action -->
                 <div v-if="!email.IsVerified && isEmailServiceEnabled" class="flex items-center gap-1">
                   <template v-if="requiresVerification">
-                    <div v-if="verifyEmailId === email.Id" class="flex items-center gap-1 animate-in slide-in-from-right-2">
-                      <Input
-                          v-model="verifyCode"
-                          class="w-24 h-8 text-xs"
-                          placeholder="Code"
-                      />
-                      <Button
-                          size="sm"
-                          variant="default"
-                          class="h-8"
-                          @click="verifyExistingEmail(email.Email)"
-                      >
-                        {{ t('common.save') }}
-                      </Button>
-                    </div>
+                    <Input
+                        v-if="verifyEmailId === email.Id"
+                        v-model="verifyCode"
+                        class="w-24 h-8 text-xs"
+                        placeholder="Code"
+                    />
+                    <Button
+                        v-if="verifyEmailId === email.Id"
+                        size="sm"
+                        variant="default"
+                        class="h-8"
+                        @click="verifyExistingEmail(email.Email)"
+                    >
+                      {{ t('common.save') }}
+                    </Button>
                     <Button
                         v-else
                         size="icon"
@@ -371,6 +354,7 @@ onMounted(() => {
                 <div class="flex gap-2">
                   <Input v-model="newEmail" placeholder="name@example.com" class="flex-1" />
 
+                  <!-- Show Code Input only if Verification is Required -->
                   <Input
                       v-if="requiresVerification && (verifyCode || newEmail)"
                       v-model="verifyCode"
@@ -390,6 +374,7 @@ onMounted(() => {
                 <p v-if="requiresVerification" class="text-[10px] text-muted-foreground">{{ t('settings.addEmailNote') }}</p>
               </div>
             </div>
+
             <Button v-else variant="outline" class="w-full border-dashed" @click="showAddEmail = true">
               + {{ t('settings.addEmail') }}
             </Button>
@@ -418,38 +403,39 @@ onMounted(() => {
           </CardContent>
           <CardFooter class="border-t bg-muted/20 px-6 py-4">
             <Button @click="changePassword" :disabled="isSaving" variant="secondary">
-              <Loader2 v-if="isSaving" class="mr-2 size-4 animate-spin" />
               {{ t('common.save') }}
             </Button>
           </CardFooter>
         </Card>
 
-        <!-- Danger Zone -->
+        <!-- Danger Zone (Delete / Restore) -->
         <Card class="border-destructive/30 overflow-hidden">
-          <CardHeader class="bg-destructive/5 border-b border-destructive/10">
-            <CardTitle class="text-destructive flex items-center gap-2">
+          <CardHeader :class="isPendingDeletion ? 'bg-orange-500/10' : 'bg-destructive/10'">
+            <CardTitle class="flex items-center gap-2" :class="isPendingDeletion ? 'text-orange-500' : 'text-destructive'">
               <AlertTriangle class="size-5" />
               {{ t('settings.dangerZone') }}
             </CardTitle>
           </CardHeader>
           <CardContent class="pt-6">
-            <!-- Case A: Account is Pending Deletion -->
+
+            <!-- Restore Logic -->
             <div v-if="isPendingDeletion" class="flex items-center justify-between">
-              <div class="space-y-1">
-                <h4 class="font-bold text-destructive">{{ t('dashboard.accountPendingDeletion') }}</h4>
-                <p class="text-sm text-muted-foreground">{{ t('dashboard.accountPendingDeletionDesc') }}</p>
+              <div>
+                <h4 class="font-bold">{{ t('settings.accountPendingDeletion') }}</h4>
+                <p class="text-sm text-muted-foreground mb-4">{{ t('dashboard.accountPendingDeletionDesc') }}</p>
               </div>
-              <Button variant="default" @click="handleRestoreAccount" :disabled="isSaving">
-                <RotateCcw class="size-4 mr-2" />
+              <Button variant="default" @click="restoreAccount" class="font-bold gap-2">
+                <RotateCcw class="size-4" />
                 {{ t('dashboard.restoreAccount') }}
               </Button>
             </div>
 
-            <!-- Case B: Active Account -->
+            <!-- Delete Logic -->
             <div v-else>
               <p class="text-sm text-muted-foreground mb-4">{{ t('settings.deleteAccountDesc') }}</p>
               <Button variant="destructive" @click="showDeleteModal = true">{{ t('settings.deleteAccount') }}</Button>
             </div>
+
           </CardContent>
         </Card>
       </TabsContent>
@@ -468,7 +454,7 @@ onMounted(() => {
                 <Label class="text-base">{{ t('settings.allowFollowers') }}</Label>
                 <p class="text-sm text-muted-foreground">{{ t('settings.allowFollowersDesc') }}</p>
               </div>
-              <input type="checkbox" v-model="settingsForm.AllowFollowers" class="size-5 accent-brand-blue rounded-md border-input bg-background" />
+              <input type="checkbox" v-model="settingsForm.AllowFollowers" class="size-5 accent-brand-blue" />
             </div>
             <Separator />
 
@@ -477,7 +463,7 @@ onMounted(() => {
                 <Label class="text-base">{{ t('settings.showFollowers') }}</Label>
                 <p class="text-sm text-muted-foreground">{{ t('settings.showFollowersDesc') }}</p>
               </div>
-              <input type="checkbox" v-model="settingsForm.ShowFollowersList" class="size-5 accent-brand-blue rounded-md border-input bg-background" />
+              <input type="checkbox" v-model="settingsForm.ShowFollowersList" class="size-5 accent-brand-blue" />
             </div>
             <Separator />
 
@@ -486,7 +472,7 @@ onMounted(() => {
                 <Label class="text-base">{{ t('settings.showFollowing') }}</Label>
                 <p class="text-sm text-muted-foreground">{{ t('settings.showFollowingDesc') }}</p>
               </div>
-              <input type="checkbox" v-model="settingsForm.ShowFollowingList" class="size-5 accent-brand-blue rounded-md border-input bg-background" />
+              <input type="checkbox" v-model="settingsForm.ShowFollowingList" class="size-5 accent-brand-blue" />
             </div>
 
             <template v-if="isPersonal">
@@ -496,7 +482,7 @@ onMounted(() => {
                   <Label class="text-base">{{ t('settings.showLocalTime') }}</Label>
                   <p class="text-sm text-muted-foreground">{{ t('settings.showLocalTimeDesc') }}</p>
                 </div>
-                <input type="checkbox" v-model="settingsForm.ShowLocalTime" class="size-5 accent-brand-blue rounded-md border-input bg-background" />
+                <input type="checkbox" v-model="settingsForm.ShowLocalTime" class="size-5 accent-brand-blue" />
               </div>
             </template>
 
@@ -511,63 +497,40 @@ onMounted(() => {
       </TabsContent>
     </Tabs>
 
-    <!-- MODERN DELETE MODAL -->
+    <!-- Custom Modal Implementation (Teleport to Body) -->
     <Teleport to="body">
-      <div v-if="showDeleteModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <!-- Backdrop -->
-        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" @click="showDeleteModal = false"></div>
-
-        <!-- Modal Content -->
-        <div class="glass-card relative w-full max-w-md rounded-2xl p-6 shadow-2xl animate-in zoom-in-95 duration-300 border-destructive/20 bg-background/90">
-          <button @click="showDeleteModal = false" class="absolute right-4 top-4 text-muted-foreground hover:text-foreground">
-            <X class="size-5" />
-          </button>
-
-          <div class="flex flex-col gap-4">
-            <div class="flex items-center gap-3 text-destructive">
-              <div class="p-2 bg-destructive/10 rounded-full">
-                <AlertTriangle class="size-6" />
+      <Transition name="fade">
+        <div v-if="showDeleteModal" class="fixed inset-0 z-100 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          <div class="w-full max-w-md bg-background border border-border rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+            <div class="p-6">
+              <div class="flex items-center gap-3 mb-4 text-destructive">
+                <div class="size-10 rounded-full bg-destructive/10 flex items-center justify-center">
+                  <AlertTriangle class="size-5" />
+                </div>
+                <div>
+                  <h3 class="font-bold text-lg text-foreground">{{ t('settings.deleteModalTitle') }}</h3>
+                  <p class="text-xs text-destructive font-bold uppercase tracking-wide">{{ t('settings.dangerZone') }}</p>
+                </div>
               </div>
-              <h3 class="text-lg font-black tracking-tight">{{ t('settings.deleteAccount') }}</h3>
+
+              <p class="text-sm text-muted-foreground mb-4">
+                {{ t('settings.deleteModalDesc') }}
+              </p>
+
+              <div class="space-y-2">
+                <Label>{{ t('settings.deleteConfirmLabel', { name: auth.user?.AccountName }) }}</Label>
+                <Input v-model="deleteConfirmationInput" :placeholder="auth.user?.AccountName" class="border-destructive/50 focus:border-destructive" />
+              </div>
             </div>
-
-            <p class="text-sm text-muted-foreground leading-relaxed">
-              {{ t('settings.deleteAccountDesc') }}
-            </p>
-
-            <div class="space-y-2 pt-2">
-              <Label class="text-xs font-bold uppercase tracking-wider">{{ t('settings.deleteConfirmPrompt') }}</Label>
-              <Input
-                  v-model="deleteConfirmInput"
-                  :placeholder="auth.user?.AccountName"
-                  class="bg-destructive/5 border-destructive/20 focus-visible:ring-destructive/50"
-              />
-            </div>
-
-            <div class="flex justify-end gap-3 mt-4">
+            <div class="bg-muted/50 p-4 flex justify-end gap-3 border-t border-border">
               <Button variant="ghost" @click="showDeleteModal = false">{{ t('common.cancel') }}</Button>
-              <Button
-                  variant="destructive"
-                  @click="handleDeleteAccount"
-                  :disabled="deleteConfirmInput !== auth.user?.AccountName || isDeleting"
-              >
-                <Loader2 v-if="isDeleting" class="size-4 animate-spin mr-2" />
-                Confirm Deletion
+              <Button variant="destructive" @click="requestDeleteAccount" :disabled="deleteConfirmationInput !== auth.user?.AccountName">
+                {{ t('settings.deleteAccount') }}
               </Button>
             </div>
           </div>
         </div>
-      </div>
+      </Transition>
     </Teleport>
-
   </div>
 </template>
-
-<style scoped>
-.glass-card {
-  background: var(--glass-bg);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
-  border: 1px solid var(--glass-border);
-}
-</style>
