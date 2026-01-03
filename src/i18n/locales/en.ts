@@ -4,6 +4,7 @@ export const en = {
         cancel: 'Cancel',
         loading: 'Loading...',
         username: 'Username',
+        email: 'Email',
         password: 'Password',
         edit: 'Edit',
         logout: 'Logout',
@@ -14,9 +15,23 @@ export const en = {
     auth: {
         loginTitle: 'Open Profile Card',
         signIn: 'Sign In Now',
+        signUp: 'Sign Up',
         register: 'Create New Account',
         loginFailed: 'Authentication failed, please check your credentials',
-        forgotPassword: 'Forgot password?'
+        forgotPassword: 'Forgot password?',
+        createAccount: 'Create Account',
+        backToLogin: 'Back to Login',
+        usernamePlaceholder: 'Alphanumeric or underscore',
+        confirmPassword: 'Confirm Password',
+        passwordMismatch: 'Passwords do not match',
+        verificationCode: 'Verification Code',
+        sendCode: 'Send Code',
+        sendCodeFailed: 'Failed to send code',
+        codeSent: 'Code has been sent to your email',
+        alreadyHaveAccount: 'Already have an account?',
+        registrationDisabled: 'Registration is currently disabled',
+        registerSuccess: 'Welcome! Registration complete.',
+        registerFailed: 'Registration failed'
     },
     dashboard: {
         title: 'Dashboard',

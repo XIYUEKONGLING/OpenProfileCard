@@ -4,6 +4,7 @@ export const zh = {
         cancel: '取消',
         loading: '加载中...',
         username: '用户名',
+        email: '电子邮箱',
         password: '密码',
         edit: '编辑',
         logout: '退出登录',
@@ -14,9 +15,23 @@ export const zh = {
     auth: {
         loginTitle: 'Open Profile Card',
         signIn: '立即登录',
+        signUp: '立即注册',
         register: '创建新账号',
         loginFailed: '认证失败，请检查凭据',
-        forgotPassword: '忘记密码？'
+        forgotPassword: '忘记密码？',
+        createAccount: '创建新账户',
+        backToLogin: '返回登录',
+        usernamePlaceholder: '支持字母、数字或下划线',
+        confirmPassword: '确认密码',
+        passwordMismatch: '两次输入的密码不一致',
+        verificationCode: '验证码',
+        sendCode: '获取验证码',
+        sendCodeFailed: '发送失败',
+        codeSent: '验证码已发送至您的邮箱',
+        alreadyHaveAccount: '已经有账户了？',
+        registrationDisabled: '当前系统已关闭注册功能',
+        registerSuccess: '注册成功，欢迎加入',
+        registerFailed: '注册失败，请检查填写信息'
     },
     dashboard: {
         title: '控制台',
