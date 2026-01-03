@@ -1,33 +1,36 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-import type { ServerInfoDto } from '../api/types';
+import type { ServerResponseDto, SiteMetadataDto } from '../api/types';
 
 export const useServerStore = defineStore('server', () => {
-    const info = ref<ServerInfoDto | null>(null);
+    const meta = ref<SiteMetadataDto | null>(null);
     const isInitialized = ref(false);
 
     /**
-     * Probes the server to identify deployment mode
-     * Supports both direct API endpoints and static .json mirrors
+     * Fetches server info and site metadata (Title, Logo, etc.)
      */
     async function detectServer(): Promise<void> {
-        const endpoints = ['/api/info', '/api/info.json', '/api.json', '/api'];
+        const baseUrl = import.meta.env.VITE_API_BASE_URL;
 
-        for (const url of endpoints) {
-            try {
-                const response = await fetch(url);
-                if (response.ok) {
-                    const data = await response.json();
-                    // Backend DTOs use PascalCase
-                    info.value = data.Data || data;
-                    break;
+        try {
+            // Fetch combined index or standalone meta
+            const response = await fetch(`${baseUrl}`);
+            if (response.ok) {
+                const result = await response.json();
+                const data: ServerResponseDto = result.Data || result;
+
+                meta.value = data.SiteMeta;
+
+                // Update browser tab title dynamically from backend
+                if (meta.value?.SiteName) {
+                    document.title = meta.value.SiteName;
                 }
-            } catch (e) {
-                // Silently continue to next endpoint
             }
+        } catch (e) {
+            console.error('Metadata fetch failed', e);
         }
         isInitialized.value = true;
     }
 
-    return { info, isInitialized, detectServer };
+    return { meta, isInitialized, detectServer };
 });

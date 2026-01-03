@@ -1,72 +1,70 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue';
 import { httpClient } from '../../api/client';
-import type { UserAdminDto } from '../../api/types';
+import { useUIStore } from '../../stores/ui';
+import type { UserAdminDto, PagedResponse } from '../../api/types';
 
 const users = ref<UserAdminDto[]>([]);
 const loading = ref(true);
+const ui = useUIStore();
 
 /**
- * Load user list for administrative purposes
+ * Fetch records from administrative endpoint
  */
-onMounted(async () => {
+async function loadData() {
   try {
-    const response = await httpClient<{ Data: UserAdminDto[] }>('/admin/users');
-    // Handle both raw array or paged response depending on backend logic
-    users.value = Array.isArray(response) ? response : (response as any).Data || [];
-  } catch (e) {
-    console.error('Admin access failed', e);
+    const response = await httpClient<PagedResponse<UserAdminDto>>('/admin/users');
+    users.value = response.Data ?? [];
+  } catch (e: any) {
+    ui.notify(e.message ?? 'FETCH_FAILED', 'error');
   } finally {
     loading.value = false;
   }
-});
+}
+
+onMounted(() => loadData());
 </script>
 
 <template>
-  <div class="space-y-10">
-    <header>
-      <h2 class="text-4xl font-black tracking-tight text-white uppercase italic">Admin Panel</h2>
-      <p class="text-gray-500 mt-2 font-medium">Global system management and user oversight.</p>
+  <div class="space-y-12">
+    <header class="flex justify-between items-center">
+      <h2 class="text-5xl font-black tracking-tighter text-white uppercase italic">Users</h2>
+      <button class="px-6 py-3 bg-white text-black font-black rounded-2xl hover:bg-blue-500 hover:text-white transition-all">Provision</button>
     </header>
 
     <div class="bg-white/2 border border-white/5 rounded-[2.5rem] overflow-hidden backdrop-blur-md">
       <div class="overflow-x-auto">
-        <table class="w-full text-left border-collapse">
+        <table class="w-full text-left">
           <thead>
-          <tr class="border-b border-white/5 text-[10px] font-bold text-gray-500 uppercase tracking-widest">
-            <th class="px-8 py-6">Account</th>
-            <th class="px-8 py-6">Type</th>
-            <th class="px-8 py-6">Status</th>
-            <th class="px-8 py-6">Last Login</th>
-            <th class="px-8 py-6 text-right">Actions</th>
+          <tr class="border-b border-white/5 text-[10px] font-black text-gray-500 uppercase tracking-[0.3em]">
+            <th class="px-10 py-8">Account Identity</th>
+            <th class="px-10 py-8">Status</th>
+            <th class="px-10 py-8 text-right">Control</th>
           </tr>
           </thead>
           <tbody class="text-sm font-bold">
-          <tr v-for="u in users" :key="u.Id" class="border-b border-white/2 hover:bg-white/1 transition-colors">
-            <td class="px-8 py-6">
-              <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-lg bg-white/5 flex items-center justify-center">{{ u.AccountName[0].toUpperCase() }}</div>
+          <tr v-for="u in users" :key="u.Id" class="border-b border-white/2 hover:bg-white/1 transition-colors group">
+            <td class="px-10 py-8">
+              <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center border border-white/5">
+                  <!-- Safe TypeScript access -->
+                  <span class="text-white/30">{{ u.AccountName?.[0]?.toUpperCase() ?? '?' }}</span>
+                </div>
                 <div>
                   <p class="text-white">{{ u.AccountName }}</p>
-                  <p class="text-[10px] text-gray-500 font-medium">{{ u.Email }}</p>
+                  <p class="text-[10px] text-gray-500 font-medium tracking-tighter">{{ u.Email }}</p>
                 </div>
               </div>
             </td>
-            <td class="px-8 py-6 text-xs">{{ u.Type }}</td>
-            <td class="px-8 py-6">
+            <td class="px-10 py-8">
               <span class="px-3 py-1 bg-green-500/10 text-green-500 rounded-full text-[10px] uppercase font-black">{{ u.Status }}</span>
             </td>
-            <td class="px-8 py-6 text-gray-500 font-mono text-xs">{{ u.LastLogin }}</td>
-            <td class="px-8 py-6 text-right">
-              <button class="text-blue-500 hover:text-blue-400 mr-4">Manage</button>
-              <button class="text-red-500 hover:text-red-400">Suspend</button>
+            <td class="px-10 py-8 text-right">
+              <button class="text-blue-500 uppercase text-[10px] font-black tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Edit</button>
             </td>
           </tr>
           </tbody>
         </table>
-      </div>
-      <div v-if="loading" class="p-20 text-center text-gray-600 font-bold uppercase tracking-widest animate-pulse">
-        Fetching records...
       </div>
     </div>
   </div>

@@ -72,9 +72,12 @@ const onLogout = () => {
 </template>
 
 <style scoped>
+@reference "../style.css";
+
 .nav-item {
   @apply flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-bold text-gray-500 transition-all hover:bg-white/5 hover:text-white;
 }
+
 .nav-item.active {
   @apply bg-white/5 text-white shadow-xl ring-1 ring-white/10;
 }
