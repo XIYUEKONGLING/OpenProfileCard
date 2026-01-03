@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import { useRouter } from 'vue-router';
 import { useI18n } from '@/i18n';
 import { useServerStore } from '@/stores/server';
 import { useThemeStore } from '@/stores/theme';
@@ -25,6 +26,7 @@ import {
   Languages, ChevronDown, Check, AlertCircle
 } from 'lucide-vue-next';
 
+const router = useRouter();
 const { t, setLocale, locale } = useI18n();
 const server = useServerStore();
 const themeStore = useThemeStore();
@@ -34,26 +36,41 @@ const ui = useUIStore();
 const form = ref({ login: '', password: '' });
 const isLoading = ref(false);
 
-// Logic helpers based on server features
+// Feature flags from server state
 const isStaticMode = computed(() => server.info?.Static === true && server.info?.Dynamic === false);
 const canRegister = computed(() => !isStaticMode.value && server.features?.Registration === true);
 const canResetPassword = computed(() => !isStaticMode.value && server.features?.Email === true);
 
+/**
+ * Handle Login Action
+ */
 async function handleLogin() {
   if (isStaticMode.value) return;
   isLoading.value = true;
+
   try {
     await auth.login({
       Login: form.value.login,
       Password: form.value.password
     });
+
+    // Notify success
     ui.notify(t('common.success'), 'success');
-  } catch (e) {
-    ui.notify(t('auth.loginFailed'), 'error');
+
+    // Redirection
+    await router.push('/dashboard');
+  } catch (e: any) {
+    // Extract error message from API response (Standard for fetch/axios wrappers)
+    const errorMsg = e.response?.data?.Message || e.message || t('auth.loginFailed');
+    ui.notify(errorMsg, 'error');
   } finally {
     isLoading.value = false;
   }
 }
+
+// Navigation helpers
+const goToRegister = () => router.push('/register');
+const goToForgotPassword = () => router.push('/forgot-password');
 
 const themeOptions = [
   { mode: 'light', icon: Sun, label: 'Light' },
@@ -76,7 +93,7 @@ const languages = [
 
   <div class="min-h-screen flex flex-col items-center justify-center p-6 relative">
 
-    <!-- Top Controls (Language & Theme) -->
+    <!-- Top Controls -->
     <div class="absolute top-8 right-8 flex items-center gap-2">
       <DropdownMenu>
         <DropdownMenuTrigger as-child>
@@ -153,7 +170,7 @@ const languages = [
             <Label class="text-[10px] uppercase font-black tracking-widest opacity-40 ml-1">{{ t('common.username') }}</Label>
             <Input
                 v-model="form.login"
-                class="h-12 rounded-xl bg-muted/50 border-none focus:bg-background transition-all px-4"
+                class="h-12 rounded-xl bg-muted/50 border-none focus:bg-background transition-all px-4 shadow-none"
                 placeholder="Username"
                 required
             />
@@ -163,11 +180,11 @@ const languages = [
           <div class="space-y-2.5">
             <div class="flex justify-between items-center px-1">
               <Label class="text-[10px] uppercase font-black tracking-widest opacity-40">{{ t('common.password') }}</Label>
-              <!-- Forgot Password: Only show if Email feature is enabled -->
               <button
                   v-if="canResetPassword"
                   type="button"
-                  class="text-[10px] font-black uppercase text-brand-blue hover:underline"
+                  @click="goToForgotPassword"
+                  class="text-[10px] font-black uppercase text-brand-blue hover:underline cursor-pointer"
               >
                 {{ t('auth.forgotPassword') }}
               </button>
@@ -175,7 +192,7 @@ const languages = [
             <Input
                 v-model="form.password"
                 type="password"
-                class="h-12 rounded-xl bg-muted/50 border-none focus:bg-background transition-all px-4"
+                class="h-12 rounded-xl bg-muted/50 border-none focus:bg-background transition-all px-4 shadow-none"
                 placeholder="••••••••"
                 required
             />
@@ -191,11 +208,11 @@ const languages = [
               {{ t('auth.signIn') }}
             </Button>
 
-            <!-- Register: Only show if Registration feature is enabled -->
             <Button
                 v-if="canRegister"
                 variant="outline"
                 type="button"
+                @click="goToRegister"
                 class="w-full h-12 rounded-xl border-border/60 font-bold hover:bg-muted/50 transition-all"
             >
               {{ t('auth.register') }}

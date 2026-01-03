@@ -14,6 +14,18 @@ const router = createRouter({
             meta: { guest: true }
         },
         {
+            path: '/register',
+            name: 'register',
+            component: () => import('@/views/RegisterView.vue'),
+            meta: { guest: true }
+        },
+        {
+            path: '/forgot-password',
+            name: 'forgot-password',
+            component: () => import('@/views/ForgotPasswordView.vue'),
+            meta: { guest: true }
+        },
+        {
             path: '/dashboard',
             component: DashboardLayout,
             meta: { requiresAuth: true },
