@@ -25,7 +25,9 @@ export const zh = {
         language: '语言',
         light: '浅色',
         dark: '深色',
-        system: '跟随系统'
+        system: '跟随系统',
+        collapse: '收起侧边栏',
+        expand: '展开侧边栏'
     },
     auth: {
         loginTitle: 'Open Profile Card',
@@ -91,7 +93,16 @@ export const zh = {
         updatedRecently: '最近更新',
         fingerprint: '指纹',
         expiresAt: '过期时间: {date}',
-        noCertificates: '暂无任何加密密钥或证书。'
+        noCertificates: '暂无任何加密密钥或证书。',
+
+        accountSuspended: '账户已挂起',
+        accountSuspendedDesc: '您的账户已被暂停，控制台访问受限。',
+        accountBanned: '账户已封禁',
+        accountBannedDesc: '该账户已被永久封禁。',
+        accountPendingDeletion: '等待删除',
+        accountPendingDeletionDesc: '您的账户已进入删除倒计时。如需继续使用，请尽快恢复账户。',
+        contactSupport: '联系支持',
+        restoreAccount: '恢复账户'
     },
     profile: {
         noBio: '这个人很懒，什么都没有写。',

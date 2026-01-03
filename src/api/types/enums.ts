@@ -14,7 +14,15 @@ export type AssetType = 'Text' | 'Image' | 'Remote' | 'Style' | 'Identifier';
 
 export type AccountType = 'Personal' | 'Organization' | 'Application' | 'System' | 'Service';
 
-export type AccountStatus = 'Active' | 'PendingDeletion' | 'Banned' | 'Suspended' | 'Deactivated';
+// export type AccountStatus = 'Active' | 'PendingDeletion' | 'Banned' | 'Suspended' | 'Deactivated';
+
+export const AccountStatus = {
+    Active: 0,
+    PendingDeletion: 1,
+    Banned: 2,
+    Suspended: 3,
+    Deactivated: 4
+} as const;
 
 export type AccountRole = -1 | 0 | 1000; // Root | User | Admin
 

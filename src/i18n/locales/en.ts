@@ -25,7 +25,9 @@ export const en = {
         language: 'Language',
         light: 'Light',
         dark: 'Dark',
-        system: 'System'
+        system: 'System',
+        collapse: 'Collapse Sidebar',
+        expand: 'Expand Sidebar'
     },
     auth: {
         loginTitle: 'Open Profile Card',
@@ -91,7 +93,16 @@ export const en = {
         updatedRecently: 'Updated recently',
         fingerprint: 'Fingerprint',
         expiresAt: 'Expires: {date}',
-        noCertificates: 'No cryptographic keys or certificates listed.'
+        noCertificates: 'No cryptographic keys or certificates listed.',
+
+        accountSuspended: 'Account Suspended',
+        accountSuspendedDesc: 'Your account has been suspended. Access to this dashboard is restricted.',
+        accountBanned: 'Account Banned',
+        accountBannedDesc: 'This account has been permanently banned.',
+        accountPendingDeletion: 'Pending Deletion',
+        accountPendingDeletionDesc: 'Your account is scheduled for deletion. Please restore your account to regain access.',
+        contactSupport: 'Contact Support',
+        restoreAccount: 'Restore Account'
     },
     profile: {
         noBio: 'No bio provided yet.',
