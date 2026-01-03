@@ -3,6 +3,7 @@ import { useAuthStore } from '../stores/auth';
 import LoginView from "@/views/LoginView.vue";
 import DashboardLayout from "@/layouts/DashboardLayout.vue";
 import DashboardView from "@/views/DashboardView.vue";
+import SettingsView from "@/views/SettingsView.vue";
 
 const router = createRouter({
     history: createWebHistory(),
@@ -35,6 +36,11 @@ const router = createRouter({
                     name: 'dashboard',
                     component: DashboardView
                 },
+                {
+                    path: 'settings',
+                    name: 'settings',
+                    component: SettingsView
+                }
             ]
         },
         { path: '/', redirect: '/dashboard' }
