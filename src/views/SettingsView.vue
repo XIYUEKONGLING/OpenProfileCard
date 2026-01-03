@@ -1,13 +1,13 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { useI18n } from '@/i18n';
 import { useAuthStore } from '@/stores/auth';
 import { useServerStore } from '@/stores/server';
 import { useUIStore } from '@/stores/ui';
 import { httpClient } from '@/api/client';
 import {
-  type ProfileDto,
-  type UpdateProfileRequestDto,
+  AccountStatus,
   type PersonalSettingsDto,
   type UpdatePersonalSettingsRequestDto,
   type AccountEmailDto,
@@ -31,7 +31,6 @@ import {
   CardTitle,
   CardFooter
 } from '@/components/ui/card';
-import AssetView from '@/components/ui/AssetView.vue';
 
 // Icons
 import {
@@ -41,27 +40,19 @@ import {
   Shield,
   Star,
   AlertTriangle,
-  Globe,
-  Calendar,
-  Briefcase
+  RotateCcw,
+  X
 } from 'lucide-vue-next';
 
+const router = useRouter();
 const { t } = useI18n();
 const auth = useAuthStore();
-const server = useServerStore(); // Use Server Store
+const server = useServerStore();
 const ui = useUIStore();
 
 // --- State ---
 const isLoading = ref(false);
 const isSaving = ref(false);
-
-// Profile State
-const profile = ref<ProfileDto | null>(null);
-
-// Initialize with safe default for Avatar to prevent v-model errors
-const profileForm = ref<UpdateProfileRequestDto>({
-  Avatar: { Type: 'Image', Value: '' }
-});
 
 // Settings State
 const settings = ref<PersonalSettingsDto | null>(null);
@@ -81,10 +72,18 @@ const passwordForm = ref<ChangePasswordRequestDto>({
 });
 const confirmPassword = ref('');
 
+// Delete Modal State
+const showDeleteModal = ref(false);
+const deleteConfirmInput = ref('');
+const isDeleting = ref(false);
+
 // --- Computed ---
 const isPersonal = computed(() => auth.user?.Type === 'Personal');
 
-// Check server feature flags for email verification
+// 账户状态检测
+const isPendingDeletion = computed(() => auth.user?.Status === AccountStatus.PendingDeletion);
+
+// Feature Flags
 const isEmailServiceEnabled = computed(() => server.features?.Email === true);
 const requiresVerification = computed(() => server.features?.EmailVerification === true);
 
@@ -93,31 +92,14 @@ const requiresVerification = computed(() => server.features?.EmailVerification =
 const fetchData = async () => {
   isLoading.value = true;
   try {
-    const [profileData, settingsData, emailData] = await Promise.all([
-      httpClient<ProfileDto>('/me/profile'),
+    // 仅获取设置和邮箱，不再获取 Profile
+    const [settingsData, emailData] = await Promise.all([
       httpClient<PersonalSettingsDto>('/me/settings'),
       httpClient<AccountEmailDto[]>('/me/emails')
     ]);
 
-    profile.value = profileData;
-
-    // Map profile to form with safe Avatar fallback
-    profileForm.value = {
-      DisplayName: profileData.DisplayName,
-      Description: profileData.Description,
-      Content: profileData.Content,
-      Location: profileData.Location,
-      Website: profileData.Website,
-      JobTitle: profileData.JobTitle,
-      CurrentCompany: profileData.CurrentCompany,
-      Pronouns: profileData.Pronouns,
-      Birthday: profileData.Birthday,
-      Avatar: profileData.Avatar || { Type: 'Image', Value: '' }
-    };
-
     settings.value = settingsData;
     settingsForm.value = { ...settingsData };
-
     emails.value = emailData || [];
   } catch (error) {
     console.error(error);
@@ -126,29 +108,7 @@ const fetchData = async () => {
   }
 };
 
-// 1. Profile Update
-const saveProfile = async () => {
-  isSaving.value = true;
-  try {
-    // Ensure Avatar type is set if user entered a URL
-    if (profileForm.value.Avatar?.Value && !profileForm.value.Avatar.Type) {
-      profileForm.value.Avatar.Type = 'Remote';
-    }
-
-    await httpClient('/me/profile', {
-      method: 'PATCH',
-      body: JSON.stringify(profileForm.value)
-    });
-    ui.notify(t('common.success'), 'success');
-    await auth.fetchMe();
-  } catch (e: any) {
-    ui.notify(e.message, 'error');
-  } finally {
-    isSaving.value = false;
-  }
-};
-
-// 2. Settings Update
+// 1. Settings Update
 const saveSettings = async () => {
   isSaving.value = true;
   try {
@@ -164,25 +124,22 @@ const saveSettings = async () => {
   }
 };
 
-// 3. Email Management
+// 2. Email Management
 const addEmail = async () => {
   if (!newEmail.value) return;
 
   try {
-    // Logic Branch: Verification Required vs Direct Add
-    if (requiresVerification.value) {
-      // Step 1: Send Code if not yet entered
-      if (!verifyCode.value) {
-        await auth.sendCode({ Email: newEmail.value, Type: 'VerifyEmail' });
-        ui.notify(t('auth.codeSent'), 'success');
-        return; // Stop here, wait for user to enter code
-      }
+    // 如果服务器强制验证，且用户还没填验证码，先发送验证码
+    if (requiresVerification.value && !verifyCode.value) {
+      await auth.sendCode({ Email: newEmail.value, Type: 'VerifyEmail' });
+      ui.notify(t('auth.codeSent'), 'success');
+      return;
     }
 
-    // Step 2: Submit (With code if required, or empty/dummy code if not)
+    // 提交添加请求
     const payload: AddEmailRequestDto = {
       Email: newEmail.value,
-      Code: verifyCode.value || 'skipped' // Backend should handle bypass if feature disabled
+      Code: verifyCode.value || 'skipped' // 如果未启用验证，后端应允许绕过
     };
 
     await httpClient('/me/emails', {
@@ -192,7 +149,7 @@ const addEmail = async () => {
 
     ui.notify(t('common.success'), 'success');
 
-    // Reset State
+    // Reset
     newEmail.value = '';
     verifyCode.value = '';
     showAddEmail.value = false;
@@ -226,17 +183,11 @@ const setPrimaryEmail = async (email: string) => {
 };
 
 const verifyExistingEmail = async (email: string) => {
-  // Only fetch code if verification is actually enabled/required
   if (requiresVerification.value && !verifyCode.value) {
     await auth.sendCode({ Email: email, Type: 'VerifyEmail' });
     ui.notify(t('auth.codeSent'), 'success');
     return;
   }
-
-  // If verification is disabled, we might send an empty code to endpoint 
-  // depending on backend implementation, but usually /verify endpoint implies verification is needed.
-  // If feature is off, maybe this button shouldn't even be clickable or it just auto-verifies?
-  // Assuming standard flow:
 
   const payload: VerifyEmailRequestDto = {
     Code: verifyCode.value || 'skipped'
@@ -252,7 +203,7 @@ const verifyExistingEmail = async (email: string) => {
   emails.value = await httpClient<AccountEmailDto[]>('/me/emails');
 };
 
-// 4. Password Change
+// 3. Password Change (Force Logout)
 const changePassword = async () => {
   if (passwordForm.value.NewPassword !== confirmPassword.value) {
     ui.notify(t('auth.passwordMismatch'), 'error');
@@ -265,31 +216,53 @@ const changePassword = async () => {
       body: JSON.stringify(passwordForm.value)
     });
     ui.notify(t('auth.resetPasswordSuccess'), 'success');
-    passwordForm.value = { OldPassword: '', NewPassword: '' };
-    confirmPassword.value = '';
+
+    // 强制登出
+    await auth.logout();
+    router.push('/login');
   } catch (e: any) {
+    ui.notify(e.message, 'error');
+    isSaving.value = false;
+  }
+};
+
+// 4. Account Deletion & Restoration
+const handleDeleteAccount = async () => {
+  if (deleteConfirmInput.value !== auth.user?.AccountName) {
+    ui.notify('Account name mismatch', 'error');
+    return;
+  }
+
+  isDeleting.value = true;
+  try {
+    await httpClient('/me', { method: 'DELETE' });
+    ui.notify(t('settings.accountDeleted'), 'warning');
+
+    // 删除后通常也要强制登出，或者刷新状态显示“已删除”
+    showDeleteModal.value = false;
+    await auth.fetchMe(); // 刷新本地用户状态为 PendingDeletion
+    // 也可以选择直接登出
+    // await auth.logout();
+    // router.push('/login');
+  } catch(e: any) {
+    ui.notify(e.message, 'error');
+  } finally {
+    isDeleting.value = false;
+  }
+};
+
+const handleRestoreAccount = async () => {
+  isSaving.value = true;
+  try {
+    await httpClient('/me/restore', { method: 'POST' });
+    ui.notify(t('common.success'), 'success');
+    await auth.fetchMe(); // 刷新状态回 Active
+  } catch(e: any) {
     ui.notify(e.message, 'error');
   } finally {
     isSaving.value = false;
   }
 };
-
-// 5. Account Deletion
-const deleteAccount = async () => {
-  const confirmation = prompt(t('settings.deleteConfirmPrompt'));
-  if (confirmation === auth.user?.AccountName) {
-    try {
-      await httpClient('/me', { method: 'DELETE' });
-      ui.notify(t('settings.accountDeleted'), 'warning');
-      await auth.logout();
-      window.location.reload();
-    } catch(e: any) {
-      ui.notify(e.message, 'error');
-    }
-  } else {
-    ui.notify('Account name does not match.', 'error');
-  }
-}
 
 onMounted(() => {
   if (auth.isAuthenticated) {
@@ -305,113 +278,12 @@ onMounted(() => {
       <p class="text-muted-foreground">{{ t('settings.subtitle') }}</p>
     </div>
 
-    <Tabs default-value="profile" class="w-full">
-      <TabsList class="grid w-full grid-cols-3 lg:w-100">
-        <TabsTrigger value="profile">{{ t('settings.profile') }}</TabsTrigger>
+    <!-- TABS -->
+    <Tabs default-value="account" class="w-full">
+      <TabsList class="grid w-full grid-cols-2 lg:w-[300px]">
         <TabsTrigger value="account">{{ t('settings.account') }}</TabsTrigger>
         <TabsTrigger value="preferences">{{ t('settings.preferences') }}</TabsTrigger>
       </TabsList>
-
-      <!-- TAB: PROFILE -->
-      <TabsContent value="profile" class="space-y-6 mt-6 animate-in fade-in slide-in-from-bottom-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>{{ t('settings.publicProfile') }}</CardTitle>
-            <CardDescription>{{ t('settings.publicProfileDesc') }}</CardDescription>
-          </CardHeader>
-          <CardContent class="space-y-6">
-
-            <!-- Avatar -->
-            <div class="flex items-center gap-6">
-              <div class="size-20 rounded-full bg-muted border border-border overflow-hidden shrink-0">
-                <!-- Use optional chaining safely via profileForm state -->
-                <AssetView
-                    :asset="profileForm.Avatar"
-                    :fallback-name="profileForm.DisplayName"
-                    class-name="w-full h-full object-cover"
-                />
-              </div>
-              <div class="flex-1 space-y-2">
-                <Label>{{ t('settings.avatarUrl') }}</Label>
-                <!-- Safe v-model binding: profileForm.Avatar is guaranteed by init -->
-                <Input
-                    v-if="profileForm.Avatar"
-                    v-model="profileForm.Avatar.Value"
-                    placeholder="https://..."
-                    @input="profileForm.Avatar!.Type = 'Remote'"
-                />
-                <p class="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
-                  Currently supporting remote URLs only
-                </p>
-              </div>
-            </div>
-
-            <Separator />
-
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div class="space-y-2">
-                <Label>{{ t('settings.displayName') }}</Label>
-                <Input v-model="profileForm.DisplayName" />
-              </div>
-              <div class="space-y-2">
-                <Label>{{ t('settings.location') }}</Label>
-                <div class="relative">
-                  <Globe class="absolute left-3 top-2.5 size-4 text-muted-foreground" />
-                  <Input v-model="profileForm.Location" class="pl-9" />
-                </div>
-              </div>
-
-              <!-- Personal Specifics -->
-              <template v-if="isPersonal">
-                <div class="space-y-2">
-                  <Label>{{ t('settings.pronouns') }}</Label>
-                  <Input v-model="profileForm.Pronouns" placeholder="he/him" />
-                </div>
-                <div class="space-y-2">
-                  <Label>{{ t('settings.birthday') }}</Label>
-                  <div class="relative">
-                    <Calendar class="absolute left-3 top-2.5 size-4 text-muted-foreground" />
-                    <Input v-model="profileForm.Birthday" type="date" class="pl-9" />
-                  </div>
-                </div>
-              </template>
-
-              <div class="space-y-2">
-                <Label>{{ t('settings.jobTitle') }}</Label>
-                <div class="relative">
-                  <Briefcase class="absolute left-3 top-2.5 size-4 text-muted-foreground" />
-                  <Input v-model="profileForm.JobTitle" class="pl-9" />
-                </div>
-              </div>
-              <div class="space-y-2">
-                <Label>{{ t('settings.company') }}</Label>
-                <Input v-model="profileForm.CurrentCompany" />
-              </div>
-            </div>
-
-            <div class="space-y-2">
-              <Label>{{ t('settings.bio') }}</Label>
-              <textarea
-                  v-model="profileForm.Description"
-                  class="flex min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  rows="3"
-              ></textarea>
-            </div>
-
-            <div class="space-y-2">
-              <Label>{{ t('settings.website') }}</Label>
-              <Input v-model="profileForm.Website" placeholder="https://" />
-            </div>
-
-          </CardContent>
-          <CardFooter class="border-t bg-muted/20 px-6 py-4">
-            <Button @click="saveProfile" :disabled="isSaving" class="font-bold">
-              <Loader2 v-if="isSaving" class="mr-2 size-4 animate-spin" />
-              {{ t('common.save') }}
-            </Button>
-          </CardFooter>
-        </Card>
-      </TabsContent>
 
       <!-- TAB: ACCOUNT -->
       <TabsContent value="account" class="space-y-6 mt-6 animate-in fade-in slide-in-from-bottom-2">
@@ -423,7 +295,7 @@ onMounted(() => {
             <CardDescription>{{ t('settings.emailDesc') }}</CardDescription>
           </CardHeader>
           <CardContent class="space-y-4">
-            <div v-for="email in emails" :key="email.Id" class="flex items-center justify-between p-3 border rounded-lg bg-card">
+            <div v-for="email in emails" :key="email.Id" class="flex items-center justify-between p-3 border rounded-lg bg-card transition-colors hover:bg-muted/30">
               <div class="flex flex-col gap-1">
                 <div class="flex items-center gap-2 font-medium">
                   <Mail class="size-4 text-muted-foreground" />
@@ -440,21 +312,21 @@ onMounted(() => {
                 <!-- Verify Action -->
                 <div v-if="!email.IsVerified && isEmailServiceEnabled" class="flex items-center gap-1">
                   <template v-if="requiresVerification">
-                    <Input
-                        v-if="verifyEmailId === email.Id"
-                        v-model="verifyCode"
-                        class="w-24 h-8 text-xs"
-                        placeholder="Code"
-                    />
-                    <Button
-                        v-if="verifyEmailId === email.Id"
-                        size="sm"
-                        variant="default"
-                        class="h-8"
-                        @click="verifyExistingEmail(email.Email)"
-                    >
-                      {{ t('common.save') }}
-                    </Button>
+                    <div v-if="verifyEmailId === email.Id" class="flex items-center gap-1 animate-in slide-in-from-right-2">
+                      <Input
+                          v-model="verifyCode"
+                          class="w-24 h-8 text-xs"
+                          placeholder="Code"
+                      />
+                      <Button
+                          size="sm"
+                          variant="default"
+                          class="h-8"
+                          @click="verifyExistingEmail(email.Email)"
+                      >
+                        {{ t('common.save') }}
+                      </Button>
+                    </div>
                     <Button
                         v-else
                         size="icon"
@@ -499,7 +371,6 @@ onMounted(() => {
                 <div class="flex gap-2">
                   <Input v-model="newEmail" placeholder="name@example.com" class="flex-1" />
 
-                  <!-- Show Code Input only if Verification is Required -->
                   <Input
                       v-if="requiresVerification && (verifyCode || newEmail)"
                       v-model="verifyCode"
@@ -508,7 +379,6 @@ onMounted(() => {
                   />
 
                   <Button @click="addEmail">
-                    <!-- Button Label Logic -->
                     <template v-if="requiresVerification">
                       {{ verifyCode ? t('common.save') : t('auth.sendCode') }}
                     </template>
@@ -520,7 +390,6 @@ onMounted(() => {
                 <p v-if="requiresVerification" class="text-[10px] text-muted-foreground">{{ t('settings.addEmailNote') }}</p>
               </div>
             </div>
-
             <Button v-else variant="outline" class="w-full border-dashed" @click="showAddEmail = true">
               + {{ t('settings.addEmail') }}
             </Button>
@@ -549,22 +418,38 @@ onMounted(() => {
           </CardContent>
           <CardFooter class="border-t bg-muted/20 px-6 py-4">
             <Button @click="changePassword" :disabled="isSaving" variant="secondary">
+              <Loader2 v-if="isSaving" class="mr-2 size-4 animate-spin" />
               {{ t('common.save') }}
             </Button>
           </CardFooter>
         </Card>
 
         <!-- Danger Zone -->
-        <Card class="border-destructive/30">
-          <CardHeader>
+        <Card class="border-destructive/30 overflow-hidden">
+          <CardHeader class="bg-destructive/5 border-b border-destructive/10">
             <CardTitle class="text-destructive flex items-center gap-2">
               <AlertTriangle class="size-5" />
               {{ t('settings.dangerZone') }}
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <p class="text-sm text-muted-foreground mb-4">{{ t('settings.deleteAccountDesc') }}</p>
-            <Button variant="destructive" @click="deleteAccount">{{ t('settings.deleteAccount') }}</Button>
+          <CardContent class="pt-6">
+            <!-- Case A: Account is Pending Deletion -->
+            <div v-if="isPendingDeletion" class="flex items-center justify-between">
+              <div class="space-y-1">
+                <h4 class="font-bold text-destructive">{{ t('dashboard.accountPendingDeletion') }}</h4>
+                <p class="text-sm text-muted-foreground">{{ t('dashboard.accountPendingDeletionDesc') }}</p>
+              </div>
+              <Button variant="default" @click="handleRestoreAccount" :disabled="isSaving">
+                <RotateCcw class="size-4 mr-2" />
+                {{ t('dashboard.restoreAccount') }}
+              </Button>
+            </div>
+
+            <!-- Case B: Active Account -->
+            <div v-else>
+              <p class="text-sm text-muted-foreground mb-4">{{ t('settings.deleteAccountDesc') }}</p>
+              <Button variant="destructive" @click="showDeleteModal = true">{{ t('settings.deleteAccount') }}</Button>
+            </div>
           </CardContent>
         </Card>
       </TabsContent>
@@ -583,7 +468,7 @@ onMounted(() => {
                 <Label class="text-base">{{ t('settings.allowFollowers') }}</Label>
                 <p class="text-sm text-muted-foreground">{{ t('settings.allowFollowersDesc') }}</p>
               </div>
-              <input type="checkbox" v-model="settingsForm.AllowFollowers" class="size-5 accent-brand-blue" />
+              <input type="checkbox" v-model="settingsForm.AllowFollowers" class="size-5 accent-brand-blue rounded-md border-input bg-background" />
             </div>
             <Separator />
 
@@ -592,7 +477,7 @@ onMounted(() => {
                 <Label class="text-base">{{ t('settings.showFollowers') }}</Label>
                 <p class="text-sm text-muted-foreground">{{ t('settings.showFollowersDesc') }}</p>
               </div>
-              <input type="checkbox" v-model="settingsForm.ShowFollowersList" class="size-5 accent-brand-blue" />
+              <input type="checkbox" v-model="settingsForm.ShowFollowersList" class="size-5 accent-brand-blue rounded-md border-input bg-background" />
             </div>
             <Separator />
 
@@ -601,7 +486,7 @@ onMounted(() => {
                 <Label class="text-base">{{ t('settings.showFollowing') }}</Label>
                 <p class="text-sm text-muted-foreground">{{ t('settings.showFollowingDesc') }}</p>
               </div>
-              <input type="checkbox" v-model="settingsForm.ShowFollowingList" class="size-5 accent-brand-blue" />
+              <input type="checkbox" v-model="settingsForm.ShowFollowingList" class="size-5 accent-brand-blue rounded-md border-input bg-background" />
             </div>
 
             <template v-if="isPersonal">
@@ -611,7 +496,7 @@ onMounted(() => {
                   <Label class="text-base">{{ t('settings.showLocalTime') }}</Label>
                   <p class="text-sm text-muted-foreground">{{ t('settings.showLocalTimeDesc') }}</p>
                 </div>
-                <input type="checkbox" v-model="settingsForm.ShowLocalTime" class="size-5 accent-brand-blue" />
+                <input type="checkbox" v-model="settingsForm.ShowLocalTime" class="size-5 accent-brand-blue rounded-md border-input bg-background" />
               </div>
             </template>
 
@@ -625,5 +510,64 @@ onMounted(() => {
         </Card>
       </TabsContent>
     </Tabs>
+
+    <!-- MODERN DELETE MODAL -->
+    <Teleport to="body">
+      <div v-if="showDeleteModal" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" @click="showDeleteModal = false"></div>
+
+        <!-- Modal Content -->
+        <div class="glass-card relative w-full max-w-md rounded-2xl p-6 shadow-2xl animate-in zoom-in-95 duration-300 border-destructive/20 bg-background/90">
+          <button @click="showDeleteModal = false" class="absolute right-4 top-4 text-muted-foreground hover:text-foreground">
+            <X class="size-5" />
+          </button>
+
+          <div class="flex flex-col gap-4">
+            <div class="flex items-center gap-3 text-destructive">
+              <div class="p-2 bg-destructive/10 rounded-full">
+                <AlertTriangle class="size-6" />
+              </div>
+              <h3 class="text-lg font-black tracking-tight">{{ t('settings.deleteAccount') }}</h3>
+            </div>
+
+            <p class="text-sm text-muted-foreground leading-relaxed">
+              {{ t('settings.deleteAccountDesc') }}
+            </p>
+
+            <div class="space-y-2 pt-2">
+              <Label class="text-xs font-bold uppercase tracking-wider">{{ t('settings.deleteConfirmPrompt') }}</Label>
+              <Input
+                  v-model="deleteConfirmInput"
+                  :placeholder="auth.user?.AccountName"
+                  class="bg-destructive/5 border-destructive/20 focus-visible:ring-destructive/50"
+              />
+            </div>
+
+            <div class="flex justify-end gap-3 mt-4">
+              <Button variant="ghost" @click="showDeleteModal = false">{{ t('common.cancel') }}</Button>
+              <Button
+                  variant="destructive"
+                  @click="handleDeleteAccount"
+                  :disabled="deleteConfirmInput !== auth.user?.AccountName || isDeleting"
+              >
+                <Loader2 v-if="isDeleting" class="size-4 animate-spin mr-2" />
+                Confirm Deletion
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Teleport>
+
   </div>
 </template>
+
+<style scoped>
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--glass-border);
+}
+</style>
