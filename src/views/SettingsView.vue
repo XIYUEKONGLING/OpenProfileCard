@@ -410,7 +410,12 @@ onMounted(() => {
 
         <!-- Danger Zone (Delete / Restore) -->
         <Card class="border-destructive/30 overflow-hidden">
-          <CardHeader :class="isPendingDeletion ? 'bg-orange-500/10' : 'bg-destructive/10'">
+          <CardHeader
+              :class="[
+                isPendingDeletion ? 'bg-orange-500/10' : 'bg-destructive/10', 
+                'py-6' 
+              ]"
+          >
             <CardTitle class="flex items-center gap-2" :class="isPendingDeletion ? 'text-orange-500' : 'text-destructive'">
               <AlertTriangle class="size-5" />
               {{ t('settings.dangerZone') }}
@@ -518,7 +523,9 @@ onMounted(() => {
               </p>
 
               <div class="space-y-2">
-                <Label>{{ t('settings.deleteConfirmLabel', { name: auth.user?.AccountName }) }}</Label>
+                <Label>
+                  {{ t('settings.deleteConfirmLabel', { name: auth.user?.AccountName ?? '' }) }}
+                </Label>
                 <Input v-model="deleteConfirmationInput" :placeholder="auth.user?.AccountName" class="border-destructive/50 focus:border-destructive" />
               </div>
             </div>
