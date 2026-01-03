@@ -1,4 +1,4 @@
-import type {AssetType} from './enums';
+import type { AssetType } from './enums';
 
 export interface ServerInfoDto {
     Version: string;
@@ -28,4 +28,11 @@ export interface PagedResponse<T> extends ApiResponse<T[]> {
 
 export interface MessageResponse {
     Message: string | null;
+}
+
+// Represents query parameters for pagination
+export interface PaginationFilter {
+    page?: number;
+    pageSize?: number;
+    searchTerm?: string;
 }

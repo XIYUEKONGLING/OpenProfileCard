@@ -1,9 +1,9 @@
-import type {VerificationType} from './enums';
+import type { VerificationType } from './enums';
 
 export interface TokenResponseDto {
     AccessToken: string;
     RefreshToken?: string;
-    ExpiresAt: string;
+    ExpiresAt: string; // DateTime
 }
 
 export interface LoginRequestDto {
@@ -31,4 +31,19 @@ export interface SendCodeRequestDto {
 export interface RefreshTokenRequestDto {
     AccessToken: string;
     RefreshToken: string;
+}
+
+export interface ForgotPasswordRequestDto {
+    Email: string;
+}
+
+export interface ResetPasswordRequestDto {
+    Email: string;
+    Code: string;
+    NewPassword: string;
+}
+
+export interface PublicVerifyEmailRequestDto {
+    Email: string;
+    Code: string;
 }
