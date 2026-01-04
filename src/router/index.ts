@@ -4,63 +4,66 @@ import LoginView from "@/views/LoginView.vue";
 import DashboardLayout from "@/layouts/DashboardLayout.vue";
 import DashboardView from "@/views/DashboardView.vue";
 import SettingsView from "@/views/SettingsView.vue";
+import PublicLayout from "@/layouts/PublicLayout.vue";
+import PublicProfileView from "@/views/PublicProfileView.vue";
 
 const router = createRouter({
     history: createWebHistory(),
     routes: [
-        {
-            path: '/login',
-            name: 'login',
-            component: LoginView,
-            meta: { guest: true }
-        },
-        {
-            path: '/register',
-            name: 'register',
-            component: () => import('@/views/RegisterView.vue'),
-            meta: { guest: true }
-        },
-        {
-            path: '/forgot-password',
-            name: 'forgot-password',
-            component: () => import('@/views/ForgotPasswordView.vue'),
-            meta: { guest: true }
-        },
+        // 1. Auth Routes
+        { path: '/login', name: 'login', component: LoginView, meta: { guest: true } },
+        { path: '/register', name: 'register', component: () => import('@/views/RegisterView.vue'), meta: { guest: true } },
+        { path: '/forgot-password', name: 'forgot-password', component: () => import('@/views/ForgotPasswordView.vue'), meta: { guest: true } },
+
+        // 2. Dashboard Routes (Protected)
         {
             path: '/dashboard',
             component: DashboardLayout,
             meta: { requiresAuth: true },
             children: [
-                {
-                    path: '',
-                    name: 'dashboard',
-                    component: DashboardView
-                },
-                {
-                    path: 'settings',
-                    name: 'settings',
-                    component: SettingsView
-                },
-                {
-                    path: 'profile/edit',
-                    name: 'profile-edit',
-                    component: () => import('@/views/ProfileEditView.vue')
-                },
-                {
-                    path: 'manage/:resource',
-                    name: 'resource-manager',
-                    component: () => import('@/views/ResourceManager.vue'),
-                    props: true
-                }
+                { path: '', name: 'dashboard', component: DashboardView },
+                { path: 'settings', name: 'settings', component: SettingsView },
+                { path: 'profile/edit', name: 'profile-edit', component: () => import('@/views/ProfileEditView.vue') },
+                { path: 'manage/:resource', name: 'resource-manager', component: () => import('@/views/ResourceManager.vue'), props: true }
             ]
         },
-        { path: '/', redirect: '/dashboard' }
-    ]
+
+        // 3. Public Routes (Layout)
+        {
+            path: '/',
+            component: PublicLayout,
+            children: [
+                // Landing Page (Redirect to login for now, or create a LandingView)
+                { path: '', redirect: '/login' },
+
+                // Explicit Routes (Optional, for SEO or specific structures)
+                { path: 'u/:id', redirect: '/:id' },
+                { path: 'orgs/:id', redirect: '/:id' },
+
+                // 4. Catch-all Profile Route (MUST BE LAST CHILD)
+                // Matches /username, /@uuid, /test
+                {
+                    path: ':id',
+                    name: 'public-profile',
+                    component: PublicProfileView
+                }
+            ]
+        }
+    ],
+    scrollBehavior(to, from, savedPosition) {
+        if (savedPosition) return savedPosition;
+        return { top: 0 };
+    }
 });
 
 router.beforeEach(async (to, _from, next) => {
     const auth = useAuthStore();
-    if (auth.token && !auth.user) await auth.fetchMe();
+    // Try to fetch user if token exists but user is missing (page refresh)
+    if (auth.token && !auth.user) {
+        try {
+            await auth.fetchMe();
+        } catch {}
+    }
 
     if (to.meta.requiresAuth && !auth.isAuthenticated) return next('/login');
     if (to.meta.guest && auth.isAuthenticated) return next('/dashboard');
