@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { useI18n } from '@/i18n';
 import { httpClient } from '@/api/client';
 import { useUIStore } from '@/stores/ui';
@@ -28,7 +28,19 @@ const savingKey = ref<string | null>(null);
 const editingSetting = ref<SystemSettingDto | null>(null);
 const editValue = ref('');
 
+const actualSettings = computed(() => {
+  return Array.isArray(props.settings) ? props.settings : [];
+});
+
+const isTrue = (val: any) => {
+  if (typeof val === 'boolean') return val;
+  if (typeof val === 'string') return val.toLowerCase() === 'true';
+  return false;
+};
+
 const updateSetting = async (key: string, value: string) => {
+  if (savingKey.value === key) return;
+
   savingKey.value = key;
   try {
     await httpClient(`/admin/system-settings/${key}`, {
@@ -58,7 +70,7 @@ const saveDialog = async () => {
 
 <template>
   <div class="grid gap-4">
-    <Card v-for="s in settings" :key="s.Key" class="overflow-hidden">
+    <Card v-for="s in actualSettings" :key="s.Key" class="overflow-hidden">
       <CardContent class="p-6">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div class="space-y-1 flex-1 min-w-0">
@@ -71,12 +83,12 @@ const saveDialog = async () => {
             <p class="text-sm text-muted-foreground">{{ s.Description }}</p>
           </div>
 
-          <div class="flex items-center gap-4 min-w-[200px] justify-end shrink-0">
+          <div class="flex items-center gap-4 min-w-50 justify-end shrink-0">
             <!-- Boolean Toggle -->
             <template v-if="s.ValueType === 'boolean'">
               <Switch
-                  :checked="s.Value === 'true'"
-                  @update:checked="(v) => updateSetting(s.Key, v ? 'true' : 'false')"
+                  :checked="isTrue(s.Value)"
+                  @update:checked="(v: boolean) => updateSetting(s.Key, v ? 'true' : 'false')"
                   :disabled="savingKey === s.Key"
               />
             </template>
@@ -85,8 +97,10 @@ const saveDialog = async () => {
             <template v-else-if="s.ValueType === 'number'">
               <div class="flex gap-2 w-full">
                 <Input
-                    :value="s.Value"
-                    @change="(e: any) => updateSetting(s.Key, e.target.value)"
+                    :model-value="s.Value"
+                    @update:model-value="(v: string | number) => s.Value = String(v)"
+                    @blur="updateSetting(s.Key, s.Value)"
+                    @keydown.enter="updateSetting(s.Key, s.Value)"
                     class="h-9 font-mono"
                     type="number"
                 />
@@ -114,7 +128,7 @@ const saveDialog = async () => {
           <DialogDescription class="font-mono text-xs break-all">{{ editingSetting?.Key }}</DialogDescription>
         </DialogHeader>
         <div class="py-4">
-          <Textarea v-model="editValue" class="min-h-[400px] font-mono text-sm leading-relaxed" />
+          <Textarea v-model="editValue" class="min-h-75 font-mono text-sm leading-relaxed" />
         </div>
         <DialogFooter>
           <Button variant="outline" @click="editingSetting = null">{{ t('common.cancel') }}</Button>
