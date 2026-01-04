@@ -53,6 +53,16 @@ export const zh = {
         next: '下一页',
         refresh: '刷新',
         close: '关闭',
+
+        total: '总共',
+        expired: '过期',
+        notifications: '通知',
+
+        accountTypePersonal: '个人',
+        accountTypeOrganization: '组织',
+        accountTypeApplication: '应用',
+        accountTypeSystem: '系统',
+        accountTypeService: '服务',
     },
     auth: {
         loginTitle: 'Open Profile Card',

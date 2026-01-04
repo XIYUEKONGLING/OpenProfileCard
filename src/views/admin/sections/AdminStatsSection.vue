@@ -19,7 +19,7 @@ const { t } = useI18n();
         </CardHeader>
         <CardContent>
           <div class="text-2xl font-black">{{ status.TotalAccountCount }}</div>
-          <p class="text-xs text-muted-foreground">Personal: {{ status.TotalPersonalProfileCount }} / Orgs: {{ status.TotalOrganizationCount }}</p>
+          <p class="text-xs text-muted-foreground">{{ t('common.accountTypePersonal') }}: {{ status.TotalPersonalProfileCount }} / {{ t('common.accountTypeOrganization') }}: {{ status.TotalOrganizationCount }}</p>
         </CardContent>
       </Card>
 
@@ -30,13 +30,13 @@ const { t } = useI18n();
         </CardHeader>
         <CardContent>
           <div class="text-2xl font-black">{{ status.ActiveRefreshTokenCount }}</div>
-          <p class="text-xs text-muted-foreground">Total: {{ status.TotalRefreshTokenCount }} / Expired: {{ status.ExpiredRefreshTokenCount }}</p>
+          <p class="text-xs text-muted-foreground">{{ t('common.total') }}: {{ status.TotalRefreshTokenCount }} / {{ t('common.expired') }}: {{ status.ExpiredRefreshTokenCount }}</p>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader class="flex flex-row items-center justify-between pb-2 space-y-0">
-          <CardTitle class="text-sm font-medium">Notifications</CardTitle>
+          <CardTitle class="text-sm font-medium">{{ t('common.notifications') }}</CardTitle>
           <Bell class="size-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>

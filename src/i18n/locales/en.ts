@@ -53,6 +53,16 @@ export const en = {
         next: 'Next',
         refresh: 'Refresh',
         close: 'Close',
+
+        total: 'Total',
+        expired: 'Expired',
+        notifications: 'Notifications',
+        
+        accountTypePersonal: 'Personal',
+        accountTypeOrganization: 'Organization',
+        accountTypeApplication: 'Application',
+        accountTypeSystem: 'System',
+        accountTypeService: 'Service',
     },
     auth: {
         loginTitle: 'Open Profile Card',
