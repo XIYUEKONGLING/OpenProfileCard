@@ -58,9 +58,10 @@ const config = computed(() => {
 
   return {
     title: info.title,
-    api: `${prefix}/${r}` // Construct dynamic URL
+    api: `${prefix}/${r}`
   };
 });
+
 const CurrentForm = computed(() => forms[props.resource]);
 
 // --- Actions ---
@@ -131,14 +132,14 @@ const handleDelete = async (id: string) => {
   }
 };
 
-watch(() => props.resource, fetchItems, { immediate: true });
+watch(() => [props.resource, props.apiPrefix], fetchItems, { immediate: true });
 </script>
 
 <template>
   <div class="max-w-4xl mx-auto pb-10 space-y-6">
     <div class="flex items-center justify-between gap-4">
       <div class="flex items-center gap-2">
-        <Button variant="ghost" size="icon" @click="router.push('/dashboard')" class="rounded-full">
+        <Button variant="ghost" size="icon" @click="router.back()" class="rounded-full">
           <ArrowLeft class="size-5" />
         </Button>
         <div>
