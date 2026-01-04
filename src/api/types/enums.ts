@@ -23,7 +23,16 @@ export const AssetType = {
 } as const;
 
 
-export type AccountType = 'Personal' | 'Organization' | 'Application' | 'System' | 'Service';
+// export type AccountType = 'Personal' | 'Organization' | 'Application' | 'System' | 'Service';
+
+export const AccountType = {
+    Personal: 0,
+    Organization: 1,
+    Application: 2,
+    System: 3,
+    Service: 4
+} as const;
+export type AccountType = typeof AccountType[keyof typeof AccountType];
 
 // export type AccountStatus = 'Active' | 'PendingDeletion' | 'Banned' | 'Suspended' | 'Deactivated';
 
