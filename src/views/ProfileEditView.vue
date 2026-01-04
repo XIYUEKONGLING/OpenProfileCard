@@ -53,6 +53,8 @@ const form = reactive<UpdateProfileRequestDto>({
 
 // --- Computed ---
 const isOrg = computed(() => auth.user?.Type === 'Organization');
+const isPersonal = computed(() => auth.user?.Type === 'Personal');
+
 const renderedContent = computed(() => renderMarkdown(form.Content || ''));
 
 // --- Actions ---
@@ -196,8 +198,8 @@ onMounted(() => {
             <Input v-model="form.Description" :placeholder="t('profile.bio')" />
           </div>
 
-          <!-- Personal Fields -->
-          <template v-if="!isOrg">
+          <!-- Personal Fields Only -->
+          <template v-if="isPersonal">
             <div class="space-y-2">
               <Label>{{ t('profile.jobTitle') }}</Label>
               <Input v-model="form.JobTitle" placeholder="Software Engineer" />
@@ -216,13 +218,15 @@ onMounted(() => {
             </div>
           </template>
 
-          <!-- Org Fields -->
-          <template v-else>
+          <!-- Org Fields Only -->
+          <template v-else-if="isOrg">
             <div class="space-y-2">
               <Label>{{ t('profile.foundedDate') }}</Label>
               <Input type="date" v-model="form.FoundedDate" />
             </div>
           </template>
+
+          <!-- System/App accounts show neither of the above blocks -->
 
           <div class="space-y-2">
             <Label>{{ t('profile.location') }}</Label>
