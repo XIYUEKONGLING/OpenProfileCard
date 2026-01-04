@@ -346,7 +346,7 @@ onMounted(fetchUsers);
 
     <!-- User Table -->
     <!-- Added min-h to prevent page height jumping during data load -->
-    <div class="rounded-xl border bg-card/40 backdrop-blur-sm overflow-hidden relative min-h-[580px]">
+    <div class="rounded-xl border bg-card/40 backdrop-blur-sm overflow-hidden relative min-h-145">
 
       <!-- Overlay Loading -->
       <transition name="fade">
@@ -361,7 +361,7 @@ onMounted(fetchUsers);
       <Table>
         <TableHeader class="bg-muted/50">
           <TableRow>
-            <TableHead class="w-[260px] font-black uppercase text-xs tracking-widest">{{ t('common.username') }}</TableHead>
+            <TableHead class="w-65 font-black uppercase text-xs tracking-widest">{{ t('common.username') }}</TableHead>
             <TableHead class="font-black uppercase text-xs tracking-widest">{{ t('admin.typeFilter') }}</TableHead>
             <TableHead class="font-black uppercase text-xs tracking-widest">{{ t('admin.roleFilter') }}</TableHead>
             <TableHead class="font-black uppercase text-xs tracking-widest">{{ t('admin.statusFilter') }}</TableHead>
@@ -432,10 +432,10 @@ onMounted(fetchUsers);
 
           <!-- Empty State -->
           <TableRow v-if="users.length === 0 && !isLoading">
-            <TableCell colspan="5" class="h-[400px] text-center">
+            <TableCell colspan="5" class="h-100 text-center">
               <div class="flex flex-col items-center justify-center text-muted-foreground gap-2">
                 <Search class="size-10 opacity-20" />
-                <p class="text-sm font-bold italic">No users found matching your criteria.</p>
+                <p class="text-sm font-bold italic">{{ t('admin.accountFilterNoMatching') }}</p>
               </div>
             </TableCell>
           </TableRow>

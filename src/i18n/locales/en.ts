@@ -382,5 +382,6 @@ export const en = {
         typeApplication: 'Application',
         typeSystem: 'System',
         typeService: 'Service',
+        accountFilterNoMatching: 'No account found matching your criteria'
     }
 };
