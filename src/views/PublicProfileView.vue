@@ -110,6 +110,10 @@ const joinDate = computed(() => {
   return date.toLocaleDateString(locale.value === 'zh' ? 'zh-CN' : 'en-US', { year: 'numeric', month: 'long' });
 });
 
+const hasBackground = computed(() =>
+    profile.value?.Background && profile.value.Background.Type !== AssetType.Empty
+);
+
 // --- Actions ---
 
 const fetchPublicData = async () => {
@@ -285,8 +289,8 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
     <!-- Content -->
     <div v-else-if="profile" class="animate-in fade-in duration-700">
       <!-- Hero Banner (z-0 to prevent overlaying avatar) -->
-      <div class="h-48 md:h-80 w-full bg-muted overflow-hidden relative group z-0">
-        <div v-if="profile.Background && profile.Background.Type !== AssetType.Empty" class="h-full w-full">
+      <div v-if="hasBackground" class="h-48 md:h-80 w-full bg-muted overflow-hidden relative group z-0">
+        <div v-if="hasBackground" class="h-full w-full">
           <div class="absolute inset-0 bg-linear-to-b from-transparent to-black/30 z-10 pointer-events-none"></div>
           <AssetView
               :asset="profile.Background"
@@ -305,7 +309,12 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
 
           <!-- LEFT COLUMN -->
           <div class="lg:col-span-4 xl:col-span-3 relative">
-            <div class="lg:sticky lg:top-24 -mt-16 lg:-mt-20 mb-8 space-y-6">
+            <div
+                :class="[
+                  'lg:sticky lg:top-24 mb-8 space-y-6',
+                  hasBackground ? '-mt-16 lg:-mt-20' : 'mt-8' 
+                ]"
+            >
               <!-- Avatar (z-20 to be above everything) -->
               <div class="relative group w-fit z-20">
                 <div class="size-32 md:size-40 rounded-full border-[6px] border-background bg-background shadow-xl overflow-hidden cursor-pointer flex items-center justify-center" @click="openImage(profile.Avatar)">
