@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue';
 import { useI18n } from '@/i18n';
-import {type AssetDto, AssetType} from '@/api/types';
+import { type AssetDto, AssetType } from '@/api/types';
 import AssetView from '@/components/ui/AssetView.vue';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,11 +13,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { UploadCloud, Lock } from 'lucide-vue-next';
+import { UploadCloud, Lock, XCircle } from 'lucide-vue-next';
 import { useUIStore } from '@/stores/ui';
 
 const props = defineProps<{
-  modelValue?: AssetDto;
+  modelValue?: AssetDto | null;
   label?: string;
   description?: string;
 }>();
@@ -29,23 +29,27 @@ const ui = useUIStore();
 
 // Local state
 const currentType = ref<AssetType>(AssetType.Remote);
-const currentValue = ref('');
+const currentValue = ref<string>('');
 const currentTag = ref<string | undefined>(undefined);
 
-// Supported types for selection (Identifier is excluded for manual creation)
+// Supported types for selection
 const availableTypes = [
   { value: AssetType.Remote, label: t('common.remote') },
-  { value: AssetType.Image, label: t('common.image') }, // Base64
+  { value: AssetType.Image, label: t('common.image') },
   { value: AssetType.Text, label: t('common.text') },
   { value: AssetType.Style, label: t('common.style') },
+  { value: AssetType.Empty, label: t('common.none') },
 ];
 
 // Computed Asset for Preview
-const previewAsset = computed<AssetDto>(() => ({
-  Type: currentType.value,
-  Value: currentValue.value,
-  Tag: currentTag.value
-}));
+const previewAsset = computed<AssetDto | null>(() => {
+  if (currentType.value === AssetType.Empty) return null;
+  return {
+    Type: currentType.value,
+    Value: currentValue.value,
+    Tag: currentTag.value
+  };
+});
 
 // Is the incoming asset a restricted system identifier?
 const isRestricted = computed(() => props.modelValue?.Type === AssetType.Identifier);
@@ -56,16 +60,29 @@ watch(() => props.modelValue, (newVal) => {
     currentType.value = newVal.Type;
     currentValue.value = newVal.Value || '';
     currentTag.value = newVal.Tag;
+  } else {
+    // Default to Empty if null
+    currentType.value = AssetType.Empty;
+    currentValue.value = '';
+    currentTag.value = undefined;
   }
 }, { immediate: true });
 
 // Emit changes
 const update = () => {
-  emit('update:modelValue', {
-    Type: currentType.value,
-    Value: currentValue.value,
-    Tag: currentTag.value || undefined
-  });
+  if (currentType.value === AssetType.Empty) {
+    emit('update:modelValue', {
+      Type: AssetType.Empty,
+      Value: null,
+      Tag: null
+    });
+  } else {
+    emit('update:modelValue', {
+      Type: currentType.value,
+      Value: currentValue.value,
+      Tag: currentTag.value || undefined
+    });
+  }
 };
 
 // Handle Type Switch
@@ -94,23 +111,17 @@ const handleFileUpload = (event: Event) => {
   reader.onload = (e) => {
     const result = e.target?.result;
     if (typeof result === 'string') {
-      // result: "data:image/png;base64,......"
-
-      // MIME Type
       const mimeMatch = result.match(/^data:(.+);base64,/);
       if (mimeMatch) {
-        currentTag.value = mimeMatch[1]; // e.g., "image/png"
+        currentTag.value = mimeMatch[1];
       }
-
       currentValue.value = result;
       currentType.value = AssetType.Image;
-
       update();
     }
   };
   reader.readAsDataURL(file);
 };
-
 </script>
 
 <template>
@@ -124,11 +135,18 @@ const handleFileUpload = (event: Event) => {
 
       <!-- Preview Section -->
       <div class="shrink-0">
-        <div class="size-24 rounded-lg border bg-muted overflow-hidden relative shadow-sm">
+        <div class="size-24 rounded-lg border bg-muted overflow-hidden relative shadow-sm flex items-center justify-center">
+          <!-- Show AssetView if NOT Empty -->
           <AssetView
+              v-if="currentType !== AssetType.Empty"
               :asset="isRestricted ? props.modelValue : previewAsset"
               class-name="w-full h-full object-cover"
           />
+          <!-- Show 'None' Placeholder if Empty -->
+          <div v-else class="text-muted-foreground opacity-50 flex flex-col items-center gap-1">
+            <XCircle class="size-6" />
+            <span class="text-[9px] font-bold uppercase">None</span>
+          </div>
         </div>
       </div>
 
@@ -157,7 +175,6 @@ const handleFileUpload = (event: Event) => {
           <!-- Type Selector -->
           <Select :model-value="currentType" @update:model-value="onTypeChange">
             <SelectTrigger class="w-full sm:w-48 h-8 text-xs">
-              <!-- 显示当前选中的 label -->
               <SelectValue>
                 {{ availableTypes.find(t => t.value === currentType)?.label || t('common.selectType') }}
               </SelectValue>
@@ -204,6 +221,11 @@ const handleFileUpload = (event: Event) => {
           <div v-else-if="currentType === AssetType.Style">
             <Input v-model="currentValue" @input="update" placeholder="fa-solid fa-user" class="font-mono text-xs" />
             <p class="text-[10px] text-muted-foreground mt-1">FontAwesome 6 Free or Devicon classes</p>
+          </div>
+
+          <!-- Input: Empty (No controls) -->
+          <div v-else-if="currentType === AssetType.Empty" class="text-xs text-muted-foreground italic">
+            {{ t('common.noAssetSelected') }}
           </div>
 
         </div>

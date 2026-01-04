@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import {type AssetDto, AssetType} from '@/api/types';
+import { type AssetDto, AssetType } from '@/api/types';
 
 const props = defineProps<{
   asset?: AssetDto | null;
@@ -9,7 +9,12 @@ const props = defineProps<{
   className?: string;
 }>();
 
+// Helper: Check type safely
 const isType = (type: AssetType) => {
+  if (type === AssetType.Empty) {
+    // It's empty if asset is null, or Type is explicitly 0 (Empty)
+    return !props.asset || props.asset.Type === AssetType.Empty;
+  }
   return props.asset?.Type === type;
 };
 
@@ -40,27 +45,32 @@ const fallbackChar = computed(() => {
 <template>
   <div :class="['relative flex items-center justify-center overflow-hidden shrink-0 select-none', className]">
 
-    <!-- Fallback & Text Background -->
-    <div v-if="!asset?.Value || isType(AssetType.Text)"
+    <!-- Background Pattern (Only if NOT empty and has value) -->
+    <div v-if="!isType(AssetType.Empty) && asset?.Value"
          class="absolute inset-0 bg-linear-to-br from-foreground/5 to-foreground/10 -z-10">
     </div>
 
-    <!-- Fallback (No data) -->
-    <template v-if="!asset || !asset.Value">
-      <svg viewBox="0 0 100 100" class="w-[70%] h-[70%]">
-        <text
-            x="50%" y="72"
-            text-anchor="middle"
-            fill="currentColor"
-            class="font-black italic opacity-20"
-            style="font-size: 70px"
-        >
-          {{ fallbackChar }}
-        </text>
-      </svg>
+    <!-- Case 1: Explicitly Empty or Null Asset -->
+    <template v-if="isType(AssetType.Empty)">
+      <!-- If fallbackName is provided, show initial char (e.g., for Avatars) -->
+      <template v-if="fallbackName">
+        <div class="absolute inset-0 bg-linear-to-br from-foreground/5 to-foreground/10 -z-10"></div>
+        <svg viewBox="0 0 100 100" class="w-[70%] h-[70%]">
+          <text
+              x="50%" y="72"
+              text-anchor="middle"
+              fill="currentColor"
+              class="font-black italic opacity-20"
+              style="font-size: 70px"
+          >
+            {{ fallbackChar }}
+          </text>
+        </svg>
+      </template>
+      <!-- Else (e.g. Background), render nothing -->
     </template>
 
-    <!-- Text -->
+    <!-- Case 2: Text / Emoji -->
     <template v-else-if="isType(AssetType.Text)">
       <svg viewBox="0 0 100 100" class="w-[85%] h-[85%]">
         <text
@@ -71,27 +81,28 @@ const fallbackChar = computed(() => {
             class="font-black tracking-tighter"
             :style="{ fontSize: `${textMetrics.fontSize}px` }"
         >
-          {{ asset.Value }}
+          {{ asset?.Value }}
         </text>
       </svg>
     </template>
 
-    <!-- Image or Remote -->
+    <!-- Case 3: Image / Remote URL -->
     <template v-else-if="isType(AssetType.Image) || isType(AssetType.Remote)">
       <img
+          v-if="asset?.Value"
           :src="asset.Value"
-          :alt="alt ?? 'Identity Asset'"
+          :alt="alt ?? 'Asset'"
           class="w-full h-full object-cover"
           loading="lazy"
       />
     </template>
 
-    <!-- Style -->
+    <!-- Case 4: Icon Style (FontAwesome / Devicon) -->
     <template v-else-if="isType(AssetType.Style)">
-      <i :class="[asset.Value, 'not-italic flex items-center justify-center text-[2em]']" aria-hidden="true"></i>
+      <i :class="[asset?.Value, 'not-italic flex items-center justify-center text-[2em]']" aria-hidden="true"></i>
     </template>
 
-    <!-- Identifier -->
+    <!-- Case 5: Identifier (Restricted) -->
     <template v-else-if="isType(AssetType.Identifier)">
       <div class="bg-destructive/20 text-destructive text-[8px] font-black p-1 uppercase">Restricted</div>
     </template>
