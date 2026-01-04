@@ -18,8 +18,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import AssetView from '@/components/ui/AssetView.vue';
-import { Loader2, Save, ArrowLeft, Image as ImageIcon } from 'lucide-vue-next';
+import { Separator } from '@/components/ui/separator';
+import AssetEditor from '@/components/ui/AssetEditor.vue';
+import { Loader2, Save, ArrowLeft } from 'lucide-vue-next';
 
 const { t } = useI18n();
 const auth = useAuthStore();
@@ -50,10 +51,6 @@ const form = reactive<UpdateProfileRequestDto>({
   Background: undefined
 });
 
-// Helper for Asset Binding
-const avatarUrl = ref('');
-const backgroundUrl = ref('');
-
 // --- Computed ---
 const isOrg = computed(() => auth.user?.Type === 'Organization');
 const renderedContent = computed(() => renderMarkdown(form.Content || ''));
@@ -65,6 +62,7 @@ const fetchData = async () => {
   try {
     const data = await httpClient<ProfileDto>('/me/profile');
 
+    // Map API data to Form
     form.DisplayName = data.DisplayName;
     form.Pronouns = data.Pronouns;
     form.Description = data.Description;
@@ -75,15 +73,13 @@ const fetchData = async () => {
     form.JobTitle = data.JobTitle;
     form.CurrentCompany = data.CurrentCompany;
     form.CurrentSchool = data.CurrentSchool;
-    form.Birthday = data.Birthday;
+    form.Birthday = data.Birthday; // string "yyyy-MM-dd"
 
     form.FoundedDate = data.FoundedDate;
 
+    // Directly assign AssetDto objects
     form.Avatar = data.Avatar;
     form.Background = data.Background;
-
-    avatarUrl.value = data.Avatar?.Value || '';
-    backgroundUrl.value = data.Background?.Value || '';
 
   } catch (error) {
     console.error(error);
@@ -96,18 +92,15 @@ const fetchData = async () => {
 const saveProfile = async () => {
   isSaving.value = true;
   try {
-    const payload: UpdateProfileRequestDto = {
-      ...form,
-      Avatar: avatarUrl.value ? { Type: 'Image', Value: avatarUrl.value } : undefined,
-      Background: backgroundUrl.value ? { Type: 'Image', Value: backgroundUrl.value } : undefined
-    };
-
+    // Send full update (POST)
     await httpClient('/me/profile', {
       method: 'POST',
-      body: JSON.stringify(payload)
+      body: JSON.stringify(form)
     });
 
     ui.notify(t('profile.saveSuccess'), 'success');
+
+    // Refresh local user data (in case avatar/name changed in navbar)
     await auth.fetchMe();
   } catch (e: any) {
     ui.notify(e.message || 'Failed to save', 'error');
@@ -145,12 +138,13 @@ onMounted(() => {
       </Button>
     </div>
 
+    <!-- Loading State -->
     <div v-if="isLoading" class="space-y-4">
-      <!-- Skeletons -->
       <div class="h-64 bg-muted rounded-xl animate-pulse"></div>
       <div class="h-32 bg-muted rounded-xl animate-pulse"></div>
     </div>
 
+    <!-- Main Content -->
     <div v-else class="space-y-8 animate-in fade-in slide-in-from-bottom-4">
 
       <!-- Section: Visuals -->
@@ -159,36 +153,24 @@ onMounted(() => {
           <CardTitle>{{ t('profile.visuals') }}</CardTitle>
           <CardDescription>{{ t('profile.visualsDesc') }}</CardDescription>
         </CardHeader>
-        <CardContent class="space-y-6">
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <!-- Avatar -->
-            <div class="space-y-3">
-              <Label>{{ t('profile.avatar') }}</Label>
-              <div class="flex items-start gap-4">
-                <div class="size-20 rounded-full border bg-muted shrink-0 overflow-hidden relative group">
-                  <AssetView :asset="{ Type: 'Image', Value: avatarUrl }" class-name="w-full h-full object-cover" />
-                  <div v-if="!avatarUrl" class="absolute inset-0 flex items-center justify-center text-muted-foreground">
-                    <ImageIcon class="size-6 opacity-50" />
-                  </div>
-                </div>
-                <div class="flex-1 space-y-2">
-                  <Input v-model="avatarUrl" placeholder="https://..." class="font-mono text-xs" />
-                  <p class="text-[10px] text-muted-foreground">{{ t('profile.avatarSupport') }}</p>
-                </div>
-              </div>
-            </div>
+        <CardContent class="space-y-8">
 
-            <!-- Background -->
-            <div class="space-y-3">
-              <Label>{{ t('profile.background') }}</Label>
-              <div class="space-y-2">
-                <div class="w-full h-20 rounded-lg border bg-muted overflow-hidden relative">
-                  <AssetView :asset="{ Type: 'Image', Value: backgroundUrl }" class-name="w-full h-full object-cover" />
-                </div>
-                <Input v-model="backgroundUrl" placeholder="https://..." class="font-mono text-xs" />
-              </div>
-            </div>
-          </div>
+          <!-- Avatar Editor -->
+          <AssetEditor
+              v-model="form.Avatar"
+              :label="t('profile.avatar')"
+              :description="t('profile.avatarDesc')"
+          />
+
+          <Separator />
+
+          <!-- Background Editor -->
+          <AssetEditor
+              v-model="form.Background"
+              :label="t('profile.background')"
+              :description="t('profile.backgroundDesc')"
+          />
+
         </CardContent>
       </Card>
 
@@ -270,12 +252,12 @@ onMounted(() => {
             <TabsContent value="write" class="p-0 m-0 border-none">
                 <Textarea
                     v-model="form.Content"
-                    class="min-h-[400px] rounded-none border-0 focus-visible:ring-0 resize-none p-6 font-mono text-sm leading-relaxed"
+                    class="min-h-100 rounded-none border-0 focus-visible:ring-0 resize-none p-6 font-mono text-sm leading-relaxed"
                     :placeholder="t('profile.markdownPlaceholder')"
                 />
             </TabsContent>
 
-            <TabsContent value="preview" class="min-h-[400px] p-6 bg-muted/10">
+            <TabsContent value="preview" class="min-h-100 p-6 bg-muted/10">
               <div v-if="form.Content" class="prose dark:prose-invert max-w-none prose-sm" v-html="renderedContent"></div>
               <div v-else class="text-muted-foreground text-sm italic text-center pt-20">{{ t('profile.nothingToPreview') }}</div>
             </TabsContent>

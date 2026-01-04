@@ -27,7 +27,16 @@ export const zh = {
         dark: '深色',
         system: '跟随系统',
         collapse: '收起侧边栏',
-        expand: '展开侧边栏'
+        expand: '展开侧边栏',
+        text: '文本/Emoji',
+        image: '上传图片',
+        remote: '远程链接',
+        style: '图标样式',
+        identifier: '系统标识符',
+        selectType: '选择类型',
+        uploadImage: '点击上传图片',
+        fileSizeLimit: '文件大小必须小于 2MB',
+        replace: '替换',
     },
     auth: {
         loginTitle: 'Open Profile Card',
@@ -134,6 +143,8 @@ export const zh = {
         avatarSupport: '支持 PNG, JPG, GIF 格式链接',
         markdownPlaceholder: '# 你好，世界\n\n使用 Markdown 写点关于自己的事情...',
         nothingToPreview: '暂无预览内容。',
+        avatarDesc: '自定义您的头像显示方式。',
+        backgroundDesc: '自定义您的个人主页背景横幅。',
     },
     settings: {
         subtitle: '管理您的个人资料和账户偏好',

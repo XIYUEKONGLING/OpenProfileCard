@@ -27,7 +27,16 @@ export const en = {
         dark: 'Dark',
         system: 'System',
         collapse: 'Collapse Sidebar',
-        expand: 'Expand Sidebar'
+        expand: 'Expand Sidebar',
+        text: 'Text',
+        image: 'Image',
+        remote: 'Remote URL',
+        style: 'Icon Class',
+        identifier: 'System ID',
+        selectType: 'Select Type',
+        uploadImage: 'Upload Image',
+        fileSizeLimit: 'File size must be less than 2MB',
+        replace: 'Replace',
     },
     auth: {
         loginTitle: 'Open Profile Card',
@@ -134,6 +143,8 @@ export const en = {
         avatarSupport: 'Supported formats: PNG, JPG, GIF',
         markdownPlaceholder: '# Hello World\n\nWrite something about yourself using Markdown...',
         nothingToPreview: 'Nothing to preview.',
+        avatarDesc: 'Customize how you appear.',
+        backgroundDesc: 'Customize your profile banner.',
     },
     settings: {
         subtitle: 'Manage your profile and account preferences',
