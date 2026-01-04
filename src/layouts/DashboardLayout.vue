@@ -184,7 +184,7 @@ const themeOptions = [
             <router-link
                 v-for="org in myOrgs"
                 :key="org.Id"
-                :to="`/orgs/${org.AccountName}`"
+                :to="`/dashboard/orgs/${org.AccountName}`"
                 v-slot="{ isExactActive }"
             >
               <div :class="[

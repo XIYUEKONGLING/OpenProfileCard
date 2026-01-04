@@ -431,7 +431,7 @@ const copyToClipboard = async (text: string, id: string) => {
                   <router-link
                       v-for="org in orgs"
                       :key="org.Id"
-                      :to="`/orgs/${org.AccountName}`"
+                      :to="`/dashboard/orgs/${org.AccountName}`"
                       class="relative group"
                   >
                     <div class="size-10 rounded-lg bg-muted border border-border overflow-hidden transition-transform group-hover:scale-110 shadow-sm" :title="org.DisplayName">

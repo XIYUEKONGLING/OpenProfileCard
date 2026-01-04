@@ -10,7 +10,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import AssetView from '@/components/ui/AssetView.vue';
 import { ArrowLeft, Plus, Edit2, Trash2 } from 'lucide-vue-next';
 
-const props = defineProps<{ resource: string }>();
+const props = defineProps<{
+  resource: string;
+  apiPrefix?: string; // Optional, defaults to '/me'
+}>();
+
 const router = useRouter();
 const { t } = useI18n();
 const ui = useUIStore();
@@ -37,19 +41,26 @@ const editingItem = ref<any>(null);
 // --- Config ---
 const config = computed(() => {
   const r = props.resource;
-  const map: Record<string, { title: string, api: string }> = {
-    work: { title: t('dashboard.workExp'), api: '/me/work' },
-    education: { title: t('dashboard.education'), api: '/me/education' },
-    projects: { title: t('dashboard.projects'), api: '/me/projects' },
-    socials: { title: 'Social Links', api: '/me/socials' },
-    contacts: { title: t('common.contact'), api: '/me/contacts' },
-    gallery: { title: t('dashboard.galleryItems'), api: '/me/gallery' },
-    certificates: { title: t('dashboard.certificates'), api: '/me/certificates' },
-    sponsorships: { title: t('dashboard.sponsorships'), api: '/me/sponsorships' },
-  };
-  return map[r] || { title: 'Resource', api: `/me/${r}` };
-});
+  const prefix = props.apiPrefix || '/me'; // Use prop or default
 
+  const map: Record<string, { title: string }> = {
+    work: { title: t('dashboard.workExp') },
+    education: { title: t('dashboard.education') },
+    projects: { title: t('dashboard.projects') },
+    socials: { title: 'Social Links' },
+    contacts: { title: t('common.contact') },
+    gallery: { title: t('dashboard.galleryItems') },
+    certificates: { title: t('dashboard.certificates') },
+    sponsorships: { title: t('dashboard.sponsorships') },
+  };
+
+  const info = map[r] || { title: 'Resource' };
+
+  return {
+    title: info.title,
+    api: `${prefix}/${r}` // Construct dynamic URL
+  };
+});
 const CurrentForm = computed(() => forms[props.resource]);
 
 // --- Actions ---

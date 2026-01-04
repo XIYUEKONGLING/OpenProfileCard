@@ -405,5 +405,40 @@ export const en = {
         emailAdded: 'Email added successfully',
         emailUpdated: 'Email status updated',
         emailDeleted: 'Email removed successfully',
+    },
+    organization: {
+        manage: 'Manage Organization',
+        profile: 'Org Profile',
+        settings: 'Org Settings',
+        members: 'Members',
+        invitations: 'Invitations',
+
+        // Settings
+        allowMemberInvite: 'Allow Member Invites',
+        allowMemberInviteDesc: 'If enabled, regular members can invite others.',
+        defaultMemberVisibility: 'Default Member Visibility',
+
+        // Members
+        role: 'Role',
+        joinedAt: 'Joined',
+        inviteMember: 'Invite Member',
+        inviteDesc: 'Send an invitation to a user via email or username.',
+        identity: 'Username or Email',
+        updateRole: 'Update Role',
+        kick: 'Remove Member',
+        kickConfirm: 'Are you sure you want to remove {name} from the organization?',
+        leave: 'Leave Organization',
+        leaveConfirm: 'Are you sure you want to leave this organization?',
+
+        // Roles
+        roleOwner: 'Owner',
+        roleAdmin: 'Admin',
+        roleMember: 'Member',
+        roleGuest: 'Guest',
+
+        // Danger
+        dissolve: 'Dissolve Organization',
+        dissolveDesc: 'Permanently delete this organization and all its resources.',
+        dissolveConfirm: 'Type {name} to confirm dissolution:',
     }
 };

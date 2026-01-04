@@ -6,6 +6,7 @@ import DashboardView from "@/views/DashboardView.vue";
 import SettingsView from "@/views/SettingsView.vue";
 import PublicLayout from "@/layouts/PublicLayout.vue";
 import PublicProfileView from "@/views/PublicProfileView.vue";
+import OrgLayout from "@/views/org/OrgLayout.vue";
 
 const router = createRouter({
     history: createWebHistory(),
@@ -31,7 +32,28 @@ const router = createRouter({
                     name: 'admin-dashboard',
                     component: () => import('@/views/admin/AdminDashboardView.vue'),
                     meta: { adminOnly: true }
-                }
+                },
+
+                {
+                    path: 'orgs/:accountName',
+                    component: OrgLayout,
+                    children: [
+                        { path: '', redirect: { name: 'org-edit' } }, // Default to edit profile
+                        { path: 'edit', name: 'org-edit', component: () => import('@/views/org/OrgEditView.vue') },
+                        { path: 'settings', name: 'org-settings', component: () => import('@/views/org/OrgSettingsView.vue') },
+                        { path: 'members', name: 'org-members', component: () => import('@/views/org/OrgMembersView.vue') },
+                        // Reusing ResourceManager for Org sub-resources
+                        {
+                            path: 'manage/:resource',
+                            name: 'org-resource-manager',
+                            component: () => import('@/views/ResourceManager.vue'),
+                            props: route => ({
+                                resource: route.params.resource,
+                                apiPrefix: `/orgs/${route.params.accountName}` // Pass dynamic prefix
+                            })
+                        },
+                    ]
+                },
             ]
         },
 

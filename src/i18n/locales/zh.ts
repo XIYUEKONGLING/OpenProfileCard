@@ -402,5 +402,41 @@ export const zh = {
         emailAdded: '邮箱已添加',
         emailUpdated: '邮箱状态已更新',
         emailDeleted: '邮箱已移除',
+    },
+    organization: {
+        manage: '管理组织',
+        profile: '组织资料',
+        settings: '组织设置',
+        members: '成员',
+        invitations: '邀请',
+
+        // Settings
+        allowMemberInvite: '允许成员邀请',
+        allowMemberInviteDesc: '如果启用，普通成员也可以邀请他人。',
+        defaultMemberVisibility: '默认成员可见性',
+
+        // Members
+        role: '角色',
+        joinedAt: '加入时间',
+        inviteMember: '邀请成员',
+        inviteDesc: '通过电子邮件或用户名向用户发送邀请。',
+        identity: '用户名或邮箱',
+        updateRole: '修改角色',
+        kick: '移除成员',
+        kickConfirm: '确定要将 {name} 从组织中移除吗？',
+        leave: '退出组织',
+        leaveConfirm: '确定要退出该组织吗？',
+
+        // Roles
+        roleOwner: '所有者',
+        roleAdmin: '管理员',
+        roleMember: '成员',
+        roleGuest: '访客',
+
+        // Danger
+        dissolve: '解散组织',
+        dissolveDesc: '永久删除此组织及其所有资源。',
+        dissolveConfirm: '请输入 {name} 以确认解散：',
     }
+
 };
