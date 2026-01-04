@@ -251,6 +251,7 @@ const fetchPublicData = async () => {
       safeFetch<SponsorshipItemDto[]>(`/profiles/${id}/sponsorships`, []).then(res => sponsorships.value = res),
       safeFetch<ContactMethodDto[]>(`/profiles/${id}/contacts`, []).then(res => contacts.value = res),
       safeFetch<SocialLinkDto[]>(`/profiles/${id}/socials`, []).then(res => socials.value = res),
+      safeFetch<CertificateDto[]>(`/profiles/${id}/certificates`, []).then(res => certificates.value = res),
       safeFetch<FollowerDto[]>(`/profiles/${id}/followers`, []).then(res => followersCount.value = res.length),
       safeFetch<FollowerDto[]>(`/profiles/${id}/following`, []).then(res => followingCount.value = res.length),
       safeFetch<ProfilePrivacyDto>(`/profiles/${id}/privacy`, { ShowFollowers: true, ShowFollowing: true } as ProfilePrivacyDto).then(res => privacy.value = res),
@@ -262,7 +263,6 @@ const fetchPublicData = async () => {
       promises.push(
           safeFetch<WorkExperienceDto[]>(`/profiles/${id}/work`, []).then(res => work.value = res),
           safeFetch<EducationExperienceDto[]>(`/profiles/${id}/education`, []).then(res => education.value = res),
-          safeFetch<CertificateDto[]>(`/profiles/${id}/certificates`, []).then(res => certificates.value = res)
       );
     }
     if (auth.isAuthenticated && !isStatic.value && auth.user?.AccountName !== profileData.AccountName) {
