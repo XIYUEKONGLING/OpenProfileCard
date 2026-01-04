@@ -35,7 +35,7 @@ export const zh = {
         identifier: '系统标识符',
         selectType: '选择类型',
         uploadImage: '点击上传图片',
-        fileSizeLimit: '文件大小必须小于 2MB',
+        fileSizeLimit: '文件大小必须小于 5MB',
         replace: '替换',
         none: '无',
         noAssetSelected: '不显示任何内容。',

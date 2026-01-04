@@ -35,7 +35,7 @@ export const en = {
         identifier: 'System ID',
         selectType: 'Select Type',
         uploadImage: 'Upload Image',
-        fileSizeLimit: 'File size must be less than 2MB',
+        fileSizeLimit: 'File size must be less than 5MB',
         replace: 'Replace',
         none: 'None',
         noAssetSelected: 'No asset will be displayed.',
