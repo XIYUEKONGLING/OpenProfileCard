@@ -6,6 +6,9 @@ interface RequestOptions extends RequestInit {
     requiresAuth?: boolean;
 }
 
+let isRefreshing = false;
+let refreshPromise: Promise<boolean> | null = null;
+
 /**
  * Core HTTP client using fetch API
  * Handles JWT injection and automatic token refresh logic
@@ -30,10 +33,22 @@ export async function httpClient<T>(endpoint: string, options: RequestOptions = 
 
     // Trigger refresh if unauthorized
     if (response.status === 401 && requiresAuth) {
-        const success = await authStore.refreshSession();
-        if (success) return httpClient<T>(endpoint, options);
-        await authStore.logout();
-        throw new Error('Unauthorized');
+        if (!isRefreshing) {
+            isRefreshing = true;
+            refreshPromise = authStore.refreshSession().finally(() => {
+                isRefreshing = false;
+                refreshPromise = null;
+            });
+        }
+
+        const success = await refreshPromise;
+
+        if (success) {
+            return httpClient<T>(endpoint, options);
+        } else {
+            await authStore.logout();
+            throw new Error('Session expired');
+        }
     }
 
     let json: any;
@@ -41,25 +56,12 @@ export async function httpClient<T>(endpoint: string, options: RequestOptions = 
     try {
         json = text ? JSON.parse(text) : {};
     } catch (e) {
-        throw new Error(`Invalid JSON response: ${response.status} ${response.statusText}`);
+        throw new Error(`Invalid JSON response: ${response.status}`);
     }
 
     if (!response.ok) {
-        if (json.errors && typeof json.errors === 'object') {
-            const errorMessages = Object.entries(json.errors)
-                .map(([field, msgs]) => `${field}: ${(msgs as any[]).join(', ')}`)
-                .join('\n');
-
-            throw new Error(errorMessages || json.title || 'Validation Error');
-        }
-        if (json.title || json.detail) {
-            throw new Error(json.detail || json.title);
-        }
-        throw new Error(json.Message || `Request failed with status ${response.status}`);
-    }
-
-    if (json.Status === false) {
-        throw new Error(json.Message || 'Operation Failed');
+        if (json.errors) throw new Error(Object.values(json.errors).flat().join(', '));
+        throw new Error(json.Message || json.detail || `Error ${response.status}`);
     }
 
     return (json.Status !== undefined && json.Data !== undefined) ? json.Data : json;
