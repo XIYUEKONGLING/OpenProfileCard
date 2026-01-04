@@ -259,5 +259,16 @@ export const en = {
         deleteModalTitle: 'Delete Account?',
         deleteModalDesc: 'This action will deactivate your account and schedule it for deletion. All data will be permanently removed if not restored within the grace period.',
         deleteConfirmLabel: 'Type {name} to confirm:',
-    }
+    },
+    social: {
+        blocking: 'Blocking...',
+        block: 'Block',
+        unblock: 'Unblock',
+        blockConfirm: 'Are you sure you want to block {name}?',
+        blockDesc: 'Blocking will prevent this user from following you or viewing your profile. Existing relationships will be severed.',
+        unfollowConfirm: 'Unfollow {name}?',
+        remove: 'Remove',
+        emptyFollowers: 'No followers yet.',
+        emptyFollowing: 'You are not following anyone yet.',
+    },
 };

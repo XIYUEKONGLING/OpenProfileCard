@@ -256,5 +256,16 @@ export const zh = {
         deleteModalTitle: '确定要删除账户吗？',
         deleteModalDesc: '此操作将禁用您的账户并将其置于等待删除状态。如果您在宽限期内未恢复账户，所有数据将被永久删除。',
         deleteConfirmLabel: '请输入 {name} 以确认：',
-    }
+    },
+    social: {
+        blocking: '拉黑中...',
+        block: '拉黑',
+        unblock: '解除拉黑',
+        blockConfirm: '确定要拉黑 {name} 吗？',
+        blockDesc: '拉黑后，对方将无法关注您或查看您的动态。如果你们互相关注，关系将被解除。',
+        unfollowConfirm: '确定不再关注 {name} 吗？',
+        remove: '移除',
+        emptyFollowers: '还没有人关注您。',
+        emptyFollowing: '您还没有关注任何人。',
+    },
 };

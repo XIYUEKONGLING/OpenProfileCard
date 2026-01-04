@@ -34,6 +34,8 @@ import {
   CardContent,
 } from '@/components/ui/card';
 
+import UserListDialog from '@/components/dashboard/UserListDialog.vue';
+
 // Icons
 import {
   MapPin, Link as LinkIcon, Building2, Clock,
@@ -87,6 +89,9 @@ const joinDate = computed(() => {
   return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 });
 
+const showUserList = ref(false);
+const userListType = ref<'followers' | 'following'>('followers');
+
 // --- Actions ---
 const goToEditProfile = (tab: string) => {
   router.push({ path: '/dashboard/profile/edit', query: { tab } });
@@ -101,6 +106,17 @@ const isAccountBlocked = computed(() => {
   if (!auth.user) return false;
   return Number(auth.user.Status) !== AccountStatus.Active;
 });
+
+const openUserList = (type: 'followers' | 'following') => {
+  userListType.value = type;
+  showUserList.value = true;
+};
+
+const refreshStats = () => {
+  httpClient<FollowCountsDto>('/me/follow-stats').then(data => {
+    followStats.value = data;
+  });
+};
 
 const blockReason = computed(() => {
   if (!auth.user) return null;
@@ -233,6 +249,12 @@ const copyToClipboard = async (text: string, id: string) => {
 <template>
   <div class="relative min-h-[80vh] w-full">
 
+    <UserListDialog
+        v-model:open="showUserList"
+        :type="userListType"
+        @change="refreshStats"
+    />
+
     <!-- BLOCKER OVERLAY -->
     <div v-if="isAccountBlocked && blockReason" class="absolute inset-0 z-50 backdrop-blur-xl bg-background/50 flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-500">
       <div class="max-w-md w-full bg-background border border-border shadow-2xl rounded-3xl p-8 flex flex-col items-center">
@@ -324,14 +346,21 @@ const copyToClipboard = async (text: string, id: string) => {
 
               <!-- Follow Stats -->
               <div class="flex items-center justify-center lg:justify-start gap-6 text-sm">
-                <div class="flex items-center gap-1 hover:text-foreground transition-colors cursor-pointer">
-                  <span class="font-black text-foreground">{{ followStats?.FollowingCount || 0 }}</span>
-                  <span class="text-muted-foreground">{{ t('dashboard.following') }}</span>
-                </div>
-                <div class="flex items-center gap-1 hover:text-foreground transition-colors cursor-pointer">
-                  <span class="font-black text-foreground">{{ followStats?.FollowersCount || 0 }}</span>
-                  <span class="text-muted-foreground">{{ t('dashboard.followers') }}</span>
-                </div>
+                <button
+                    class="flex items-center gap-1 hover:text-brand-blue transition-colors cursor-pointer outline-none group"
+                    @click="openUserList('following')"
+                >
+                  <span class="font-black text-foreground group-hover:text-brand-blue">{{ followStats?.FollowingCount || 0 }}</span>
+                  <span class="text-muted-foreground group-hover:text-brand-blue/80">{{ t('dashboard.following') }}</span>
+                </button>
+                <div class="w-px h-4 bg-border"></div>
+                <button
+                    class="flex items-center gap-1 hover:text-brand-blue transition-colors cursor-pointer outline-none group"
+                    @click="openUserList('followers')"
+                >
+                  <span class="font-black text-foreground group-hover:text-brand-blue">{{ followStats?.FollowersCount || 0 }}</span>
+                  <span class="text-muted-foreground group-hover:text-brand-blue/80">{{ t('dashboard.followers') }}</span>
+                </button>
               </div>
 
               <!-- Bio Text -->
