@@ -92,7 +92,7 @@ const actionLoadingId = ref<string | null>(null);
 const showDeleteDialog = ref(false);
 const userToDelete = ref<UserAdminDto | null>(null);
 
-const accountTypeValues = Object.values(AccountType).filter((v): v is number => typeof v === 'number');
+const accountTypeValues = Object.values(AccountType).filter((v) => typeof v === 'number');
 
 const selectedUser = ref<UserAdminDto | null>(null);
 
@@ -657,7 +657,7 @@ onMounted(fetchUsers);
         <DialogHeader>
           <DialogTitle class="text-xl font-black flex items-center gap-2">
             <Mail class="size-5 text-brand-blue" />
-            {{ t('admin.emailsFor', { name: selectedUser?.AccountName }) }}
+            {{selectedUser?.AccountName ? t('admin.emailsFor', { name: selectedUser?.AccountName }) : t('admin.manageEmails') }}
           </DialogTitle>
         </DialogHeader>
 
