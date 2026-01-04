@@ -40,7 +40,12 @@ const router = createRouter({
                     path: 'settings',
                     name: 'settings',
                     component: SettingsView
-                }
+                },
+                {
+                    path: 'profile/edit',
+                    name: 'profile-edit',
+                    component: () => import('@/views/ProfileEditView.vue')
+                },
             ]
         },
         { path: '/', redirect: '/dashboard' }
