@@ -19,6 +19,11 @@ export interface AccountPermissionsDto {
     Role: AccountRole;
 }
 
+export interface FollowCountsDto {
+    FollowersCount: number;
+    FollowingCount: number;
+}
+
 // --- Emails ---
 
 export interface AccountEmailDto {
