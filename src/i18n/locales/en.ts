@@ -272,6 +272,10 @@ export const en = {
         remove: 'Remove',
         emptyFollowers: 'No followers yet.',
         emptyFollowing: 'You are not following anyone yet.',
+        emptyFollowersOther: 'This user has no followers yet.',
+        emptyFollowingOther: 'This user is not following anyone yet.',
+        privateList: 'List is private',
+        privateListDesc: 'This list is hidden due to privacy settings.',
     },
     publicProfile: {
         followers: 'Followers',

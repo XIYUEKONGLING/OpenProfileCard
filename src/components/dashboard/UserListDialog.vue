@@ -27,12 +27,14 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import AssetView from '@/components/ui/AssetView.vue';
-import { Loader2, UserMinus, UserPlus, Ban } from 'lucide-vue-next';
+import { Loader2, UserMinus, UserPlus, Ban, Lock } from 'lucide-vue-next';
 
 const props = defineProps<{
   open: boolean;
   type: 'followers' | 'following';
   accountName?: string; // Optional: If viewing another user's list
+  isMe?: boolean;
+  isPrivate?: boolean;
 }>();
 
 const emit = defineEmits(['update:open', 'change']);
@@ -55,8 +57,12 @@ const pendingUser = ref<FollowerDto | null>(null);
 
 // Computed
 const title = computed(() => props.type === 'followers' ? t('dashboard.followers') : t('dashboard.following'));
-const emptyText = computed(() => props.type === 'followers' ? t('social.emptyFollowers') : t('social.emptyFollowing'));
-
+const emptyText = computed(() => {
+  if (props.type === 'followers') {
+    return props.isMe ? t('social.emptyFollowers') : t('social.emptyFollowersOther');
+  }
+  return props.isMe ? t('social.emptyFollowing') : t('social.emptyFollowingOther');
+});
 // Check if we can perform actions (Logged in + Dynamic Server)
 const canInteract = computed(() => {
   return auth.isAuthenticated && server.info?.Dynamic;
@@ -184,7 +190,17 @@ const close = () => emit('update:open', false);
       </DialogHeader>
 
       <div class="flex-1 overflow-y-auto p-6 pt-2">
-        <div v-if="isLoading" class="space-y-4 mt-2">
+        <div v-if="isPrivate && !isMe" class="flex flex-col items-center justify-center py-12 text-center space-y-3">
+          <div class="size-12 rounded-full bg-muted flex items-center justify-center">
+            <Lock class="size-6 text-muted-foreground/40" />
+          </div>
+          <div class="space-y-1">
+            <p class="text-sm font-bold">{{ t('social.privateList') }}</p>
+            <p class="text-xs text-muted-foreground">{{ t('social.privateListDesc') }}</p>
+          </div>
+        </div>
+
+        <div v-else-if="isLoading" class="space-y-4 mt-2">
           <div v-for="i in 3" :key="i" class="flex items-center gap-3">
             <div class="size-10 rounded-full bg-muted animate-pulse" />
             <div class="space-y-1 flex-1">

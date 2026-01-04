@@ -269,6 +269,10 @@ export const zh = {
         remove: '移除',
         emptyFollowers: '还没有人关注您。',
         emptyFollowing: '您还没有关注任何人。',
+        emptyFollowersOther: '该用户暂无粉丝。',
+        emptyFollowingOther: '该用户尚未关注任何人。',
+        privateList: '列表已隐藏',
+        privateListDesc: '由于隐私设置，该列表不可见。',
     },
     publicProfile: {
         followers: '粉丝',

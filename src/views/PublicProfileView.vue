@@ -22,7 +22,7 @@ import {
   type SocialLinkDto,
   type FollowerDto,
   AccountType,
-  AssetType
+  AssetType, type ProfilePrivacyDto
 } from '@/api/types';
 
 // UI Components
@@ -54,7 +54,7 @@ import {
 import {
   MapPin, Link as LinkIcon, Building2, Calendar,
   MoreHorizontal, UserPlus, UserMinus, Ban, Cake,
-  Briefcase, FolderGit2, Users, BookOpen, Heart,
+  Briefcase, FolderGit2, Users, BookOpen, Heart, Lock,
   Image as ImageIcon, GraduationCap, Key, Mail, Download, Copy, Check, User, Clock, ShieldCheck, Shield
 } from 'lucide-vue-next';
 
@@ -71,6 +71,8 @@ const notFound = ref(false);
 const profile = ref<ProfileDto | null>(null);
 const followStatus = ref<FollowStatusDto | null>(null);
 const actionLoading = ref(false);
+
+const privacy = ref<ProfilePrivacyDto | null>(null);
 
 // Counts (Calculated from lists)
 const followersCount = ref(0);
@@ -99,7 +101,7 @@ const copiedId = ref<string | null>(null);
 const isOrg = computed(() => profile.value?.Type === AccountType.Organization);
 const isPersonal = computed(() => profile.value?.Type === AccountType.Personal);
 const isSystem = computed(() => profile.value?.Type === AccountType.System);
-const isMe = computed(() => auth.user && profile.value && auth.user.AccountName === profile.value.AccountName);
+const isMe = computed(() => (auth.user && profile.value && auth.user.AccountName === profile.value.AccountName));
 const isStatic = computed(() => server.info?.Static === true);
 const renderedContent = computed(() => renderMarkdown(profile.value?.Content));
 
@@ -113,6 +115,9 @@ const joinDate = computed(() => {
 const hasBackground = computed(() =>
     profile.value?.Background && profile.value.Background.Type !== AssetType.Empty
 );
+
+const isFollowersHidden = computed(() => !isMe.value && privacy.value?.ShowFollowers === false);
+const isFollowingHidden = computed(() => !isMe.value && privacy.value?.ShowFollowing === false);
 
 // --- Actions ---
 
@@ -136,6 +141,7 @@ const fetchPublicData = async () => {
       // Direct count calculation from lists
       httpClient<FollowerDto[]>(`/profiles/${id}/followers`).then(res => followersCount.value = res?.length || 0),
       httpClient<FollowerDto[]>(`/profiles/${id}/following`).then(res => followingCount.value = res?.length || 0),
+      httpClient<ProfilePrivacyDto>(`/profiles/${id}/privacy`).then(res => privacy.value = res),
     ];
 
     if (profileData.Type === AccountType.Organization) {
@@ -241,13 +247,15 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
 </script>
 
 <template>
-  <div class="w-full pb-20">
+  <div class="w-full pb-20 relative">
     <ImageViewer v-model:open="showImageViewer" :asset="selectedImage" />
 
     <UserListDialog
         v-model:open="showUserList"
         :type="userListType"
         :account-name="profile?.AccountName"
+        :is-me="isMe ?? false"
+        :is-private="userListType === 'followers' ? isFollowersHidden : isFollowingHidden"
         @change="fetchPublicData"
     />
 
@@ -401,12 +409,25 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
               <!-- Stats (Using calculated counts) -->
               <div class="flex items-center gap-6 text-sm pt-2 border-t border-border/50">
                 <button class="flex items-center gap-1 hover:text-foreground transition-colors" @click="openUserList('following')">
-                  <span class="font-black text-foreground">{{ followingCount }}</span>
-                  <span class="text-muted-foreground">{{ t('publicProfile.following') }}</span>
+                  <template v-if="isFollowingHidden">
+                    <Lock class="size-3 text-muted-foreground" />
+                    <span class="text-muted-foreground">{{ t('publicProfile.following') }}</span>
+                  </template>
+                  <template v-else>
+                    <span class="font-black text-foreground">{{ followingCount }}</span>
+                    <span class="text-muted-foreground">{{ t('publicProfile.following') }}</span>
+                  </template>
                 </button>
+
                 <button class="flex items-center gap-1 hover:text-foreground transition-colors" @click="openUserList('followers')">
-                  <span class="font-black text-foreground">{{ followersCount }}</span>
-                  <span class="text-muted-foreground">{{ t('publicProfile.followers') }}</span>
+                  <template v-if="isFollowersHidden">
+                    <Lock class="size-3 text-muted-foreground" />
+                    <span class="text-muted-foreground">{{ t('publicProfile.followers') }}</span>
+                  </template>
+                  <template v-else>
+                    <span class="font-black text-foreground">{{ followersCount }}</span>
+                    <span class="text-muted-foreground">{{ t('publicProfile.followers') }}</span>
+                  </template>
                 </button>
               </div>
             </div>
