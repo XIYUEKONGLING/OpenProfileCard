@@ -309,5 +309,13 @@ export const zh = {
         blockConfirmTitle: '拉黑用户？',
         blockConfirmDesc: '确定要拉黑 {name} 吗？对方将无法关注您或查看您的资料。',
         viewProject: '查看项目',
+
+        accountSuspended: '账户已挂起',
+        accountSuspendedDesc: '该账户已被暂停。',
+        accountBanned: '账户已封禁',
+        accountBannedDesc: '该账户已被永久封禁。',
+        accountPendingDeletion: '等待删除',
+        accountPendingDeletionDesc: '该户已进入删除倒计时。',
+        accountDeactivated: '该账户已被停用。',
     }
 };

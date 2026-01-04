@@ -312,5 +312,13 @@ export const en = {
         blockConfirmTitle: 'Block User?',
         blockConfirmDesc: 'Are you sure you want to block {name}? They will no longer be able to follow you or view your profile.',
         viewProject: 'View Project',
+
+        accountSuspended: 'Account Suspended',
+        accountSuspendedDesc: 'This account has been suspended.',
+        accountBanned: 'Account Banned',
+        accountBannedDesc: 'This account has been permanently banned.',
+        accountPendingDeletion: 'Pending Deletion',
+        accountPendingDeletionDesc: 'This account is scheduled for deletion.',
+        accountDeactivated: 'This account has been deactivated.',
     }
 };

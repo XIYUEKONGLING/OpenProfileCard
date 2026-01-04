@@ -22,7 +22,7 @@ import {
   type SocialLinkDto,
   type FollowerDto,
   AccountType,
-  AssetType, type ProfilePrivacyDto, type BlockDto
+  AssetType, type ProfilePrivacyDto, type BlockDto, AccountStatus
 } from '@/api/types';
 
 // UI Components
@@ -55,7 +55,8 @@ import {
   MapPin, Link as LinkIcon, Building2, Calendar,
   MoreHorizontal, UserPlus, UserMinus, Ban, Cake,
   Briefcase, FolderGit2, Users, BookOpen, Heart, Lock, ChevronLeft, ChevronRight,
-  Image as ImageIcon, GraduationCap, Key, Mail, Download, Copy, Check, User, Clock, ShieldCheck, Shield
+  Image as ImageIcon, GraduationCap, Key, Mail, Download, Copy, Check, User, Clock, ShieldCheck, Shield, AlertTriangle,
+  Trash2
 } from 'lucide-vue-next';
 
 const route = useRoute();
@@ -119,6 +120,42 @@ const hasBackground = computed(() =>
 const isFollowersHidden = computed(() => !isMe.value && privacy.value?.ShowFollowers === false);
 const isFollowingHidden = computed(() => !isMe.value && privacy.value?.ShowFollowing === false);
 
+const profileStatus = computed(() => Number(profile.value?.Status ?? AccountStatus.Active));
+const isRestricted = computed(() => profileStatus.value !== AccountStatus.Active);
+
+const statusNotice = computed(() => {
+  if (!profile.value) return null;
+
+  switch (profileStatus.value) {
+    case AccountStatus.Banned:
+      return {
+        title: t('publicProfile.accountBanned'),
+        desc: t('publicProfile.accountBannedDesc'),
+        icon: Ban,
+        color: 'text-destructive',
+        blur: 'blur-md'
+      };
+    case AccountStatus.Suspended:
+      return {
+        title: t('publicProfile.accountSuspended'),
+        desc: t('publicProfile.accountSuspendedDesc'),
+        icon: AlertTriangle,
+        color: 'text-orange-500',
+        blur: 'blur-sm'
+      };
+    case AccountStatus.PendingDeletion:
+      return {
+        title: t('publicProfile.accountPendingDeletion'),
+        desc: t('publicProfile.accountPendingDeletionDesc'),
+        icon: Trash2,
+        color: 'text-muted-foreground',
+        blur: 'blur-md'
+      };
+    default:
+      return null;
+  }
+});
+
 // --- Members Pagination & Actions State ---
 const membersPage = ref(1);
 const membersPageSize = 10;
@@ -181,8 +218,6 @@ const handleMemberBlock = async (member: OrganizationMemberDto) => {
 
 // --- Actions ---
 
-// ... 之前的代码
-
 const fetchPublicData = async () => {
   const id = route.params.id as string;
   if (!id) return;
@@ -224,7 +259,10 @@ const fetchPublicData = async () => {
       );
     }
     if (auth.isAuthenticated && !isStatic.value && auth.user?.AccountName !== profileData.AccountName) {
-      promises.push(safeFetch<FollowStatusDto>(`/profiles/${id}/follow`, null).then(res => followStatus.value = res));
+      promises.push(
+          safeFetch<FollowStatusDto | null>(`/profiles/${id}/follow`, null)
+              .then(res => followStatus.value = res)
+      );
     }
 
     await Promise.all(promises);
@@ -411,6 +449,9 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
                 <div v-if="isSystem" class="absolute bottom-2 right-2 bg-brand-blue text-white p-1.5 rounded-full border-4 border-background shadow-sm" title="Organization">
                   <Shield class="size-4" />
                 </div>
+                <div v-if="isRestricted" class="absolute top-2 right-2 bg-background rounded-full p-1.5 shadow-lg border border-border">
+                  <component :is="statusNotice?.icon" class="size-5" :class="statusNotice?.color" />
+                </div>
               </div>
 
               <!-- Identity -->
@@ -422,96 +463,119 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
                 <p class="text-lg text-muted-foreground font-medium">@{{ profile.AccountName }}</p>
               </div>
 
-              <!-- Bio -->
-              <p v-if="profile.Description" class="text-base leading-relaxed text-foreground/80">{{ profile.Description }}</p>
-
-              <!-- Actions -->
-              <div v-if="!isStatic" class="flex flex-wrap gap-2">
-                <template v-if="auth.isAuthenticated && !isMe">
-                  <Button :variant="followStatus?.IsFollowing ? 'outline' : 'default'" class="flex-1 font-bold rounded-full" :disabled="actionLoading" @click="handleFollow">
-                    <UserMinus v-if="followStatus?.IsFollowing" class="size-4 mr-2" />
-                    <UserPlus v-else class="size-4 mr-2" />
-                    {{ followStatus?.IsFollowing ? t('publicProfile.unfollow') : t('publicProfile.follow') }}
-                  </Button>
-                  <DropdownMenu :modal="false">
-                    <DropdownMenuTrigger as-child><Button variant="outline" size="icon" class="rounded-full"><MoreHorizontal class="size-4" /></Button></DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem class="text-destructive focus:text-destructive cursor-pointer" @click="showBlockDialog = true"><Ban class="size-4 mr-2" /> {{ t('publicProfile.block') }}</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </template>
-                <Button v-else-if="isMe" variant="outline" class="w-full rounded-full font-bold" @click="router.push('/dashboard/profile/edit')">{{ t('common.edit') }}</Button>
+              <div v-if="isRestricted" class="mt-6 p-4 rounded-2xl bg-muted/30 border border-dashed border-border text-center">
+                <p class="text-xs font-bold uppercase tracking-widest" :class="statusNotice?.color">
+                  {{ statusNotice?.title }}
+                </p>
               </div>
 
-              <!-- Metadata -->
-              <div class="space-y-3 text-sm text-muted-foreground pt-2">
+              <template v-else>
+                <!-- Bio -->
+                <p v-if="profile.Description" class="text-base leading-relaxed text-foreground/80">{{ profile.Description }}</p>
 
-                <div v-if="isPersonal && profile.JobTitle" class="flex items-center gap-3">
-                  <Briefcase class="size-4 shrink-0" />
-                  <span class="text-foreground font-medium">{{ profile.JobTitle }}</span>
-                </div>
-
-                <div v-if="profile.CurrentCompany" class="flex items-center gap-3">
-                  <Building2 class="size-4 shrink-0" />
-                  <span class="text-foreground">{{ profile.CurrentCompany }}</span>
-                </div>
-
-                <div v-if="isPersonal && profile.CurrentSchool" class="flex items-center gap-3">
-                  <GraduationCap class="size-4 shrink-0" />
-                  <span class="text-foreground">{{ profile.CurrentSchool }}</span>
-                </div>
-
-                <div v-if="profile.Location" class="flex items-center gap-3">
-                  <MapPin class="size-4 shrink-0" />
-                  <span>{{ profile.Location }}</span>
-                </div>
-
-                <div v-if="isPersonal && profile.Birthday" class="flex items-center gap-3">
-                  <Cake class="size-4 shrink-0" />
-                  <span>{{ formatDate(profile.Birthday) }}</span>
-                </div>
-
-                <div v-if="profile.Website" class="flex items-center gap-3">
-                  <LinkIcon class="size-4 shrink-0" />
-                  <a :href="profile.Website" target="_blank" class="text-brand-blue hover:underline truncate">{{ profile.Website }}</a>
-                </div>
-
-                <div v-if="joinDate" class="flex items-center gap-3">
-                  <Calendar class="size-4 shrink-0" />
-                  <span>{{ t('publicProfile.joined', { date: joinDate }) }}</span>
-                </div>
-              </div>
-
-              <!-- Stats (Using calculated counts) -->
-              <div class="flex items-center gap-6 text-sm pt-2 border-t border-border/50">
-                <button class="flex items-center gap-1 hover:text-foreground transition-colors" @click="openUserList('following')">
-                  <template v-if="isFollowingHidden">
-                    <Lock class="size-3 text-muted-foreground" />
-                    <span class="text-muted-foreground">{{ t('publicProfile.following') }}</span>
+                <!-- Actions -->
+                <div v-if="!isStatic" class="flex flex-wrap gap-2">
+                  <template v-if="auth.isAuthenticated && !isMe">
+                    <Button :variant="followStatus?.IsFollowing ? 'outline' : 'default'" class="flex-1 font-bold rounded-full" :disabled="actionLoading" @click="handleFollow">
+                      <UserMinus v-if="followStatus?.IsFollowing" class="size-4 mr-2" />
+                      <UserPlus v-else class="size-4 mr-2" />
+                      {{ followStatus?.IsFollowing ? t('publicProfile.unfollow') : t('publicProfile.follow') }}
+                    </Button>
+                    <DropdownMenu :modal="false">
+                      <DropdownMenuTrigger as-child><Button variant="outline" size="icon" class="rounded-full"><MoreHorizontal class="size-4" /></Button></DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem class="text-destructive focus:text-destructive cursor-pointer" @click="showBlockDialog = true"><Ban class="size-4 mr-2" /> {{ t('publicProfile.block') }}</DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </template>
-                  <template v-else>
-                    <span class="font-black text-foreground">{{ followingCount }}</span>
-                    <span class="text-muted-foreground">{{ t('publicProfile.following') }}</span>
-                  </template>
-                </button>
+                  <Button v-else-if="isMe" variant="outline" class="w-full rounded-full font-bold" @click="router.push('/dashboard/profile/edit')">{{ t('common.edit') }}</Button>
+                </div>
 
-                <button class="flex items-center gap-1 hover:text-foreground transition-colors" @click="openUserList('followers')">
-                  <template v-if="isFollowersHidden">
-                    <Lock class="size-3 text-muted-foreground" />
-                    <span class="text-muted-foreground">{{ t('publicProfile.followers') }}</span>
-                  </template>
-                  <template v-else>
-                    <span class="font-black text-foreground">{{ followersCount }}</span>
-                    <span class="text-muted-foreground">{{ t('publicProfile.followers') }}</span>
-                  </template>
-                </button>
-              </div>
+                <!-- Metadata -->
+                <div class="space-y-3 text-sm text-muted-foreground pt-2">
+
+                  <div v-if="isPersonal && profile.JobTitle" class="flex items-center gap-3">
+                    <Briefcase class="size-4 shrink-0" />
+                    <span class="text-foreground font-medium">{{ profile.JobTitle }}</span>
+                  </div>
+
+                  <div v-if="profile.CurrentCompany" class="flex items-center gap-3">
+                    <Building2 class="size-4 shrink-0" />
+                    <span class="text-foreground">{{ profile.CurrentCompany }}</span>
+                  </div>
+
+                  <div v-if="isPersonal && profile.CurrentSchool" class="flex items-center gap-3">
+                    <GraduationCap class="size-4 shrink-0" />
+                    <span class="text-foreground">{{ profile.CurrentSchool }}</span>
+                  </div>
+
+                  <div v-if="profile.Location" class="flex items-center gap-3">
+                    <MapPin class="size-4 shrink-0" />
+                    <span>{{ profile.Location }}</span>
+                  </div>
+
+                  <div v-if="isPersonal && profile.Birthday" class="flex items-center gap-3">
+                    <Cake class="size-4 shrink-0" />
+                    <span>{{ formatDate(profile.Birthday) }}</span>
+                  </div>
+
+                  <div v-if="profile.Website" class="flex items-center gap-3">
+                    <LinkIcon class="size-4 shrink-0" />
+                    <a :href="profile.Website" target="_blank" class="text-brand-blue hover:underline truncate">{{ profile.Website }}</a>
+                  </div>
+
+                  <div v-if="joinDate" class="flex items-center gap-3">
+                    <Calendar class="size-4 shrink-0" />
+                    <span>{{ t('publicProfile.joined', { date: joinDate }) }}</span>
+                  </div>
+                </div>
+
+                <!-- Stats (Using calculated counts) -->
+                <div class="flex items-center gap-6 text-sm pt-2 border-t border-border/50">
+                  <button class="flex items-center gap-1 hover:text-foreground transition-colors" @click="openUserList('following')">
+                    <template v-if="isFollowingHidden">
+                      <Lock class="size-3 text-muted-foreground" />
+                      <span class="text-muted-foreground">{{ t('publicProfile.following') }}</span>
+                    </template>
+                    <template v-else>
+                      <span class="font-black text-foreground">{{ followingCount }}</span>
+                      <span class="text-muted-foreground">{{ t('publicProfile.following') }}</span>
+                    </template>
+                  </button>
+
+                  <button class="flex items-center gap-1 hover:text-foreground transition-colors" @click="openUserList('followers')">
+                    <template v-if="isFollowersHidden">
+                      <Lock class="size-3 text-muted-foreground" />
+                      <span class="text-muted-foreground">{{ t('publicProfile.followers') }}</span>
+                    </template>
+                    <template v-else>
+                      <span class="font-black text-foreground">{{ followersCount }}</span>
+                      <span class="text-muted-foreground">{{ t('publicProfile.followers') }}</span>
+                    </template>
+                  </button>
+                </div>
+              </template>
             </div>
           </div>
 
           <!-- RIGHT COLUMN -->
           <div class="lg:col-span-8 xl:col-span-9 pt-8 min-w-0">
-            <Tabs defaultValue="overview" class="w-full">
+            <div v-if="isRestricted" class="absolute inset-0 z-30 flex flex-col items-center justify-start pt-20 text-center px-6">
+              <div class="glass-card p-16 rounded-3xl border-border/50 shadow-2xl max-w-md animate-in zoom-in-95 duration-300">
+                <div class="size-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
+                  <component :is="statusNotice?.icon" class="size-8" :class="statusNotice?.color" />
+                </div>
+                <h2 class="text-xl font-black mb-2">{{ statusNotice?.title }}</h2>
+                <p class="text-sm text-muted-foreground leading-relaxed">
+                  {{ statusNotice?.desc }}
+                </p>
+                <!-- <Button variant="outline" class="mt-6 w-full font-bold" @click="router.push('/')"> -->
+                <!--   {{ t('publicProfile.backHome') }} -->
+                <!-- </Button> -->
+              </div>
+            </div>
+            
+            <Tabs defaultValue="overview" class="w-full" :class="[isRestricted ? 'filter blur-lg pointer-events-none select-none opacity-40' : '']">
               <TabsList class="w-full justify-start h-auto p-0 bg-transparent border-b border-border rounded-none gap-6 mb-8 overflow-x-auto no-scrollbar">
                 <TabsTrigger value="overview" class="rounded-md border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent px-0 py-3 font-bold text-muted-foreground data-[state=active]:text-foreground transition-all"><BookOpen class="size-4 mr-2" /> {{ t('publicProfile.about') }}</TabsTrigger>
                 <TabsTrigger value="projects" class="rounded-md border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent px-0 py-3 font-bold text-muted-foreground data-[state=active]:text-foreground transition-all"><FolderGit2 class="size-4 mr-2" /> {{ t('publicProfile.projects') }} <Badge variant="secondary" class="ml-2">{{ projects.length }}</Badge></TabsTrigger>
