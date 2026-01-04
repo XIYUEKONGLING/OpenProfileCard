@@ -8,7 +8,6 @@ import {
   type UserAdminDto,
   type PagedResponse,
   AccountStatus,
-  AccountRole,
   AccountType,
   AccountRoleNames
 } from '@/api/types';
@@ -53,8 +52,7 @@ import {
 import {
   Loader2, Search, Shield, Ban, Trash2, CheckCircle,
   AlertTriangle, MoreHorizontal, Filter, ChevronDown,
-  ChevronLeft, ChevronsLeft, ChevronRight, RotateCcw, X,
-  UserCircle
+  ChevronLeft, ChevronsLeft, ChevronRight, RotateCcw, UserCircle
 } from 'lucide-vue-next';
 
 const { t } = useI18n();
@@ -80,6 +78,8 @@ const filterType = ref<number[]>([]);
 const actionLoadingId = ref<string | null>(null);
 const showDeleteDialog = ref(false);
 const userToDelete = ref<UserAdminDto | null>(null);
+
+const accountTypeValues = Object.values(AccountType).filter(_v => true) as number[];
 
 // --- Mappings ---
 const getStatusLabel = (s: number) => {
@@ -331,7 +331,7 @@ onMounted(fetchUsers);
           <PopoverContent class="w-48 p-2" align="end">
             <div class="grid gap-1">
               <div
-                  v-for="ty in [1, 2, 3, 4, 5]" :key="ty"
+                  v-for="ty in accountTypeValues" :key="ty"
                   class="flex items-center gap-2 p-2 rounded-md hover:bg-muted cursor-pointer transition-colors"
                   @click="toggleFilter('type', ty)"
               >
