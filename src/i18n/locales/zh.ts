@@ -185,6 +185,9 @@ export const zh = {
         logo: 'Logo',
         icon: '图标',
         image: '图片',
+        type: '类型',
+        label: '标签',
+        value: '值',
     },
     settings: {
         subtitle: '管理您的个人资料和账户偏好',

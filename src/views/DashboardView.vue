@@ -19,7 +19,7 @@ import {
   type FollowCountsDto,
   AccountStatus,
   AccountType,
-  AssetType
+  AssetType, type ContactMethodDto
 } from '@/api/types';
 
 // UI Components
@@ -57,6 +57,7 @@ const education = ref<EducationExperienceDto[]>([]);
 const orgs = ref<OrganizationDto[]>([]);
 const gallery = ref<GalleryItemDto[]>([]);
 const socials = ref<SocialLinkDto[]>([]);
+const contacts = ref<ContactMethodDto[]>([]);
 const certificates = ref<CertificateDto[]>([]);
 const sponsorships = ref<SponsorshipItemDto[]>([]);
 
@@ -149,6 +150,7 @@ const fetchData = async () => {
       orgsData,
       galleryData,
       socialsData,
+      contactsData,
       certsData,
       sponsorshipsData
     ] = await Promise.all([
@@ -160,6 +162,7 @@ const fetchData = async () => {
       httpClient<OrganizationDto[]>('/orgs'),
       httpClient<GalleryItemDto[]>('/me/gallery'),
       httpClient<SocialLinkDto[]>('/me/socials'),
+      httpClient<ContactMethodDto[]>('/me/contacts'),
       httpClient<CertificateDto[]>('/me/certificates'),
       httpClient<SponsorshipItemDto[]>('/me/sponsorships')
     ]);
@@ -172,6 +175,7 @@ const fetchData = async () => {
     orgs.value = orgsData || [];
     gallery.value = galleryData || [];
     socials.value = socialsData || [];
+    contacts.value = contactsData || [];
     certificates.value = certsData || [];
     sponsorships.value = sponsorshipsData || [];
 
@@ -187,6 +191,19 @@ onMounted(() => {
 });
 
 // --- Helpers ---
+
+// Helper for Contact Icons
+const getContactIcon = (type: number) => {
+  switch (type) {
+    case 0: return Mail;
+    case 1: return Phone;
+    case 2: return MessageSquare;
+    case 3: return MapIcon;
+    case 4: return LinkIcon2;
+    default: return LinkIcon2;
+  }
+};
+
 const formatDate = (dateString?: string) => {
   if (!dateString) return t('common.present');
   const date = new Date(dateString);
@@ -453,6 +470,35 @@ const copyToClipboard = async (text: string, id: string) => {
                   <Button variant="ghost" size="sm" class="text-xs" @click="goToManage('socials')">
                     <Plus class="size-3 mr-1"/> {{ t('dashboard.addSocial') }}
                   </Button>
+                </div>
+
+                <!-- Contact Methods -->
+                <div class="space-y-3">
+                  <div class="flex items-center justify-between">
+                    <h3 class="font-bold text-sm text-muted-foreground uppercase tracking-wider">{{ t('common.contact') }}</h3>
+                    <Button variant="ghost" size="sm" class="h-6 text-xs" @click="goToManage('contacts')">
+                      <Edit2 class="size-3 mr-1" /> {{ t('common.manage') }}
+                    </Button>
+                  </div>
+
+                  <div v-if="contacts.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div v-for="contact in contacts" :key="contact.Id" class="flex items-center gap-3 p-3 rounded-xl border border-border/60 bg-card">
+                      <div class="size-8 flex items-center justify-center rounded-lg bg-muted shrink-0">
+                        <!-- Prefer Custom Icon, fallback to Type Icon -->
+                        <AssetView v-if="contact.Icon && contact.Icon.Type !== 0" :asset="contact.Icon" class-name="size-5" />
+                        <component v-else :is="getContactIcon(contact.Type)" class="size-4 text-muted-foreground" />
+                      </div>
+                      <div class="min-w-0 overflow-hidden">
+                        <p class="text-xs text-muted-foreground font-bold uppercase truncate">{{ contact.Label }}</p>
+                        <p class="text-sm font-medium truncate select-all">{{ contact.Value }}</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div v-else class="flex justify-start">
+                    <Button variant="outline" size="sm" class="text-xs border-dashed" @click="goToManage('contacts')">
+                      <Plus class="size-3 mr-1"/> Add Contact Info
+                    </Button>
+                  </div>
                 </div>
 
                 <!-- README Card -->

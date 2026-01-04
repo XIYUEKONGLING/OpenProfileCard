@@ -184,7 +184,10 @@ export const en = {
         qrCode: 'QR Code',
         logo: 'Logo',
         icon: 'Icon',
-        image: 'Image'
+        image: 'Image',
+        type: 'Type',
+        label: 'Label',
+        value: 'Value',
     },
     settings: {
         subtitle: 'Manage your profile and account preferences',
