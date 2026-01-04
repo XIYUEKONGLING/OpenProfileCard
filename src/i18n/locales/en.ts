@@ -2,6 +2,7 @@ export const en = {
     common: {
         save: 'Save',
         cancel: 'Cancel',
+        remove: 'Remove',
         loading: 'Loading...',
         username: 'Username',
         email: 'Email',

@@ -2,6 +2,7 @@ export const zh = {
     common: {
         save: '保存',
         cancel: '取消',
+        remove: '删除',
         loading: '加载中...',
         username: '用户名',
         email: '电子邮箱',

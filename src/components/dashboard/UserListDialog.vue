@@ -5,7 +5,7 @@ import { httpClient } from '@/api/client';
 import { useUIStore } from '@/stores/ui';
 import type { FollowerDto } from '@/api/types';
 
-// UI
+// UI Components
 import {
   Dialog,
   DialogContent,
@@ -13,6 +13,16 @@ import {
   DialogTitle,
   DialogDescription
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import AssetView from '@/components/ui/AssetView.vue';
 import { Loader2, UserMinus, UserPlus, Ban } from 'lucide-vue-next';
@@ -27,12 +37,18 @@ const emit = defineEmits(['update:open', 'change']);
 const { t } = useI18n();
 const ui = useUIStore();
 
+// --- State ---
 const users = ref<FollowerDto[]>([]);
 const myFollowingIds = ref<Set<string>>(new Set());
-
 const isLoading = ref(false);
 const actionLoading = ref<string | null>(null);
 
+// Confirmation Dialog State
+const confirmOpen = ref(false);
+const pendingAction = ref<'unfollow' | 'block' | null>(null);
+const pendingUser = ref<FollowerDto | null>(null);
+
+// Computed
 const title = computed(() => props.type === 'followers' ? t('dashboard.followers') : t('dashboard.following'));
 const emptyText = computed(() => props.type === 'followers' ? t('social.emptyFollowers') : t('social.emptyFollowing'));
 
@@ -65,42 +81,39 @@ const fetchList = async () => {
   }
 };
 
-// --- Actions ---
+// --- Execution Logic (Called after confirmation) ---
 
-const toggleFollow = async (user: FollowerDto) => {
+const executeToggleFollow = async (user: FollowerDto) => {
   const isFollowing = myFollowingIds.value.has(user.AccountId);
-
-  if (isFollowing) {
-    if (!confirm(t('social.unfollowConfirm', { name: user.DisplayName }))) return;
-  }
-
   actionLoading.value = user.AccountId;
+
   try {
     if (isFollowing) {
+      // Unfollow
       await httpClient(`/profiles/${user.AccountName}/follow`, { method: 'DELETE' });
       myFollowingIds.value.delete(user.AccountId);
 
+      // If in "Following" list, remove the row
       if (props.type === 'following') {
         users.value = users.value.filter(u => u.AccountId !== user.AccountId);
       }
       ui.notify(t('common.success'), 'success');
     } else {
+      // Follow
       await httpClient(`/profiles/${user.AccountName}/follow`, { method: 'POST' });
       myFollowingIds.value.add(user.AccountId);
       ui.notify(t('common.success'), 'success');
     }
-
     emit('change');
   } catch (e: any) {
     ui.notify(e.message, 'error');
   } finally {
     actionLoading.value = null;
+    confirmOpen.value = false;
   }
 };
 
-const handleBlock = async (user: FollowerDto) => {
-  if (!confirm(t('social.blockConfirm', { name: user.DisplayName }))) return;
-
+const executeBlock = async (user: FollowerDto) => {
   actionLoading.value = user.AccountId;
   try {
     await httpClient(`/profiles/${user.AccountName}/block`, { method: 'POST' });
@@ -113,9 +126,43 @@ const handleBlock = async (user: FollowerDto) => {
     ui.notify(e.message, 'error');
   } finally {
     actionLoading.value = null;
+    confirmOpen.value = false;
   }
 };
 
+// --- Interaction Handlers (Triggers Dialog) ---
+
+const onToggleFollowClick = (user: FollowerDto) => {
+  const isFollowing = myFollowingIds.value.has(user.AccountId);
+
+  if (isFollowing) {
+    // If Unfollowing, require confirmation
+    pendingUser.value = user;
+    pendingAction.value = 'unfollow';
+    confirmOpen.value = true;
+  } else {
+    // If Following, do it immediately
+    executeToggleFollow(user);
+  }
+};
+
+const onBlockClick = (user: FollowerDto) => {
+  pendingUser.value = user;
+  pendingAction.value = 'block';
+  confirmOpen.value = true;
+};
+
+const onConfirm = () => {
+  if (!pendingUser.value || !pendingAction.value) return;
+
+  if (pendingAction.value === 'unfollow') {
+    executeToggleFollow(pendingUser.value);
+  } else if (pendingAction.value === 'block') {
+    executeBlock(pendingUser.value);
+  }
+};
+
+// --- Watchers ---
 watch(() => props.open, (isOpen) => {
   if (isOpen) {
     fetchList();
@@ -128,6 +175,7 @@ const close = () => emit('update:open', false);
 </script>
 
 <template>
+  <!-- Main List Dialog -->
   <Dialog :open="open" @update:open="emit('update:open', $event)">
     <DialogContent class="sm:max-w-md max-h-[80vh] flex flex-col p-0 gap-0 overflow-hidden">
       <DialogHeader class="p-6 pb-2 shrink-0">
@@ -183,7 +231,7 @@ const close = () => emit('update:open', false);
                     : 'text-brand-blue hover:bg-brand-blue/10'"
                   :title="myFollowingIds.has(user.AccountId) ? t('profile.unfollow') : t('profile.follow')"
                   :disabled="!!actionLoading"
-                  @click="toggleFollow(user)"
+                  @click="onToggleFollowClick(user)"
               >
                 <Loader2 v-if="actionLoading === user.AccountId" class="size-4 animate-spin" />
                 <template v-else>
@@ -199,7 +247,7 @@ const close = () => emit('update:open', false);
                   class="size-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                   :title="t('social.block')"
                   :disabled="!!actionLoading"
-                  @click="handleBlock(user)"
+                  @click="onBlockClick(user)"
               >
                 <Ban class="size-4" />
               </Button>
@@ -209,4 +257,33 @@ const close = () => emit('update:open', false);
       </div>
     </DialogContent>
   </Dialog>
+
+  <!-- Confirmation Alert Dialog -->
+  <AlertDialog v-model:open="confirmOpen">
+    <AlertDialogContent>
+      <AlertDialogHeader>
+        <AlertDialogTitle>
+          {{ pendingAction === 'block'
+            ? t('social.block')
+            : t('profile.unfollow')
+          }}
+        </AlertDialogTitle>
+        <AlertDialogDescription>
+          {{ pendingAction === 'block'
+            ? t('social.blockConfirm', { name: pendingUser?.DisplayName })
+            : t('social.unfollowConfirm', { name: pendingUser?.DisplayName })
+          }}
+          <span v-if="pendingAction === 'block'" class="block mt-2 text-destructive font-medium">
+            {{ t('social.blockDesc') }}
+          </span>
+        </AlertDialogDescription>
+      </AlertDialogHeader>
+      <AlertDialogFooter>
+        <AlertDialogCancel>{{ t('common.cancel') }}</AlertDialogCancel>
+        <AlertDialogAction @click="onConfirm" class="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+          {{ pendingAction === 'block' ? t('social.block') : t('common.remove') }}
+        </AlertDialogAction>
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  </AlertDialog>
 </template>
