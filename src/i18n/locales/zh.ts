@@ -300,6 +300,7 @@ export const zh = {
         about: '关于',
         resources: '资源',
         joined: '加入于 {date}',
+        founded: "成立于 {date}",
         follow: '关注',
         unfollow: '取消关注',
         block: '拉黑',

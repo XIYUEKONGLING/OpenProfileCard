@@ -22,7 +22,7 @@ import {
   type SocialLinkDto,
   type FollowerDto,
   AccountType,
-  AssetType, type ProfilePrivacyDto, type BlockDto, AccountStatus
+  AssetType, type ProfilePrivacyDto, AccountStatus
 } from '@/api/types';
 
 // UI Components
@@ -54,7 +54,7 @@ import {
 import {
   MapPin, Link as LinkIcon, Building2, Calendar,
   MoreHorizontal, UserPlus, UserMinus, Ban, Cake,
-  Briefcase, FolderGit2, Users, BookOpen, Heart, Lock, ChevronLeft, ChevronRight,
+  Briefcase, FolderGit2, Users, BookOpen, Heart, Lock, ChevronLeft, ChevronRight, Landmark,
   Image as ImageIcon, GraduationCap, Key, Mail, Download, Copy, Check, User, Clock, ShieldCheck, Shield, AlertTriangle,
   Trash2
 } from 'lucide-vue-next';
@@ -106,8 +106,15 @@ const isMe = computed(() => (auth.user && profile.value && auth.user.AccountName
 const isStatic = computed(() => server.info?.Static === true);
 const renderedContent = computed(() => renderMarkdown(profile.value?.Content));
 
+// const joinDate = computed(() => {
+//   const dateStr = profile.value?.FoundedDate || (profile.value as any)?.CreatedAt;
+//   if (!dateStr) return '';
+//   const date = new Date(dateStr);
+//   return date.toLocaleDateString(locale.value === 'zh' ? 'zh-CN' : 'en-US', { year: 'numeric', month: 'long' });
+// });
+
 const joinDate = computed(() => {
-  const dateStr = profile.value?.FoundedDate || (profile.value as any)?.CreatedAt;
+  const dateStr = (profile.value as any)?.CreatedAt;
   if (!dateStr) return '';
   const date = new Date(dateStr);
   return date.toLocaleDateString(locale.value === 'zh' ? 'zh-CN' : 'en-US', { year: 'numeric', month: 'long' });
@@ -517,6 +524,11 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
                   <div v-if="isPersonal && profile.Birthday" class="flex items-center gap-3">
                     <Cake class="size-4 shrink-0" />
                     <span>{{ formatDate(profile.Birthday) }}</span>
+                  </div>
+
+                  <div v-if="isOrg && profile.FoundedDate" class="flex items-center gap-3">
+                    <Landmark class="size-4 shrink-0" />
+                    <span>{{ t('publicProfile.founded', { date: profile.FoundedDate }) }}</span>
                   </div>
 
                   <div v-if="profile.Website" class="flex items-center gap-3">

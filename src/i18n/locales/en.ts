@@ -304,6 +304,7 @@ export const en = {
         about: 'About',
         resources: 'Resources',
         joined: 'Joined {date}',
+        founded: "Founded {date}",
         follow: 'Follow',
         unfollow: 'Unfollow',
         block: 'Block',

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, defineAsyncComponent, onMounted } from 'vue';
+import { ref, computed, watch, defineAsyncComponent } from 'vue';
 import { useRouter } from 'vue-router';
 import { useI18n } from '@/i18n';
 import { httpClient } from '@/api/client';
@@ -24,7 +24,6 @@ import {
 import AssetView from '@/components/ui/AssetView.vue';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import UserListDialog from '@/components/dashboard/UserListDialog.vue';
@@ -35,7 +34,7 @@ import {
   FolderGit2, Image as ImageIcon, Settings, BookOpen,
   Heart, ExternalLink, LogOut, ShieldAlert,
   Crown, Mail, Phone, MessageSquare, MapPin as MapIcon, Link as LinkIcon2,
-  AlertTriangle, Ban, Trash2, Shield, Key, Copy, Check, Clock, Calendar
+  AlertTriangle, Ban, Trash2, Shield, Key, Copy, Check, Clock, Landmark,
 } from 'lucide-vue-next';
 
 // Lazy Load
@@ -116,6 +115,9 @@ const blockReason = computed(() => {
       return null;
   }
 });
+
+// --- Computed ---
+
 
 // --- Actions ---
 const fetchOrgData = async () => {
@@ -219,13 +221,19 @@ const getContactIcon = (type: any) => {
   }
 };
 
-const formatDate = (dateString?: string) => {
-  if (!dateString) return t('common.present');
-  const date = new Date(dateString);
-  if (locale.value === 'zh') {
-    return date.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long' });
-  }
-  return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+// const formatDate = (dateString?: string) => {
+//   if (!dateString) return t('common.present');
+//   const date = new Date(dateString);
+//   if (locale.value === 'zh') {
+//     return date.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long' });
+//   }
+//   return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+// };
+
+const formatDate = (dateStr?: string) => {
+  if (!dateStr) return t('common.present');
+  const date = new Date(dateStr);
+  return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 };
 
 const copyToClipboard = async (text: string, id: string) => {
@@ -371,6 +379,9 @@ watch(() => props.accountName, fetchOrgData, { immediate: true });
               <div class="flex flex-col gap-3 text-sm text-muted-foreground text-left">
                 <div v-if="profile?.Location" class="flex items-center gap-3">
                   <MapPin class="size-4 shrink-0 opacity-70" /> <span>{{ profile.Location }}</span>
+                </div>
+                <div v-if="profile?.FoundedDate" class="flex items-center gap-3">
+                  <Landmark class="size-4 shrink-0 opacity-70" /> <span>{{ formatDate(profile.FoundedDate) }}</span>
                 </div>
                 <div v-if="profile?.Website" class="flex items-center gap-3">
                   <LinkIcon class="size-4 shrink-0 opacity-70" />
