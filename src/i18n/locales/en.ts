@@ -121,7 +121,10 @@ export const en = {
         accountPendingDeletionDesc: 'Your account is scheduled for deletion. Please restore your account to regain access.',
         accountDeactivated: 'This account has been deactivated.',
         contactSupport: 'Contact Support',
-        restoreAccount: 'Restore Account'
+        restoreAccount: 'Restore Account',
+        socials: 'Social Links',
+        addSocial: 'Add Social Link',
+        noSocials: 'No social links added.',
     },
     profile: {
         noBio: 'No bio provided yet.',

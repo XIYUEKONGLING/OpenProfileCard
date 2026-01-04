@@ -121,7 +121,10 @@ export const zh = {
         accountPendingDeletionDesc: '您的账户已进入删除倒计时。如需继续使用，请尽快恢复账户。',
         accountDeactivated: '该账户已被停用。',
         contactSupport: '联系支持',
-        restoreAccount: '恢复账户'
+        restoreAccount: '恢复账户',
+        socials: '社交链接',
+        addSocial: '添加社交链接',
+        noSocials: '暂无社交链接',
     },
     profile: {
         noBio: '这个人很懒，什么都没有写。',
@@ -181,7 +184,7 @@ export const zh = {
         qrCode: '二维码',
         logo: 'Logo',
         icon: '图标',
-        image: '图片'
+        image: '图片',
     },
     settings: {
         subtitle: '管理您的个人资料和账户偏好',
