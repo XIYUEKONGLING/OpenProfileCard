@@ -379,6 +379,8 @@ export const zh = {
         typeApplication: '应用',
         typeSystem: '系统',
         typeService: '服务',
-        accountFilterNoMatching: '没有找到符合条件的账户'
+        accountFilterNoMatching: '没有找到符合条件的账户',
+        actionsBan: '封禁',
+        actionsSuspend: '暂停',
     }
 };

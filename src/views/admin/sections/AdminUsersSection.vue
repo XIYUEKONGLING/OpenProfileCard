@@ -409,10 +409,10 @@ onMounted(fetchUsers);
                       <CheckCircle class="mr-2 size-4 text-green-500" /> {{ t('admin.statusActive') }}
                     </DropdownMenuItem>
                     <DropdownMenuItem v-if="user.Status !== 3" @click="updateStatus(user, 3)">
-                      <AlertTriangle class="mr-2 size-4 text-orange-500" /> {{ t('admin.statusSuspended') }}
+                      <AlertTriangle class="mr-2 size-4 text-orange-500" /> {{ t('admin.actionsSuspend') }}
                     </DropdownMenuItem>
                     <DropdownMenuItem v-if="user.Status !== 2" @click="updateStatus(user, 2)">
-                      <Ban class="mr-2 size-4 text-destructive" /> {{ t('admin.statusBanned') }}
+                      <Ban class="mr-2 size-4 text-destructive" /> {{ t('admin.actionsBan') }}
                     </DropdownMenuItem>
 
                     <DropdownMenuSeparator />
