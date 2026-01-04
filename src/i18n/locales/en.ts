@@ -386,6 +386,8 @@ export const en = {
         accountFilterNoMatching: 'No account found matching your criteria',
         actionsBan: 'Ban',
         actionsSuspend: 'Suspend',
+        actionsPromote: 'Promote to Admin',
+        actionsDemote: 'Demote to User',
         deleteModalDesc: 'This action will permanently delete the account and all associated resources, projects, and data from the database. This action cannot be undone.',
     }
 };

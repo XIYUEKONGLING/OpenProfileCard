@@ -211,6 +211,26 @@ const updateStatus = async (user: UserAdminDto, newStatus: number) => {
   }
 };
 
+const updateRole = async (user: UserAdminDto, newRole: number) => {
+  actionLoadingId.value = user.Id;
+  try {
+    await httpClient(`/admin/users/${user.Id}/role`, {
+      method: 'POST',
+      body: JSON.stringify({ Role: newRole })
+    });
+    user.Role = newRole as any;
+    ui.notify(t('common.success'), 'success');
+  } catch (e: any) {
+    ui.notify(e.message, 'error');
+  } finally {
+    actionLoadingId.value = null;
+  }
+};
+
+const canManageRoles = (targetUser: UserAdminDto) => {
+  return auth.isRoot && targetUser.Role !== AccountRoleNames.Root;
+};
+
 const confirmDelete = async () => {
   if (!userToDelete.value) return;
   actionLoadingId.value = userToDelete.value.Id;
@@ -415,6 +435,25 @@ onMounted(fetchUsers);
                       <Ban class="mr-2 size-4 text-destructive" /> {{ t('admin.actionsBan') }}
                     </DropdownMenuItem>
 
+                    <template v-if="canManageRoles(user)">
+                      <DropdownMenuSeparator />
+                      <DropdownMenuLabel class="text-xs opacity-50 uppercase tracking-tighter">权限控制</DropdownMenuLabel>
+
+                      <DropdownMenuItem
+                          v-if="user.Role === AccountRoleNames.User"
+                          @click="updateRole(user, AccountRoleNames.Admin)"
+                      >
+                        <Shield class="mr-2 size-4 text-brand-blue" /> {{ t('admin.actionsPromote') }}
+                      </DropdownMenuItem>
+
+                      <DropdownMenuItem
+                          v-if="user.Role === AccountRoleNames.Admin"
+                          @click="updateRole(user, AccountRoleNames.User)"
+                      >
+                        <UserCircle class="mr-2 size-4 text-muted-foreground" /> {{ t('admin.actionsDemote') }}
+                      </DropdownMenuItem>
+                    </template>
+                    
                     <DropdownMenuSeparator />
 
                     <DropdownMenuItem

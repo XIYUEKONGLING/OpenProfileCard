@@ -383,6 +383,8 @@ export const zh = {
         accountFilterNoMatching: '没有找到符合条件的账户',
         actionsBan: '封禁',
         actionsSuspend: '暂停',
+        actionsPromote: '设为管理员',
+        actionsDemote: '降级为用户',
         deleteModalDesc: '此操作将从数据库中永久删除该账户及其所有关联的资源、项目和数据。此操作无法撤销，请务必确认。',
     }
 };
