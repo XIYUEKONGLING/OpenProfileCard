@@ -261,7 +261,7 @@ const close = () => emit('update:open', false);
       <AlertDialogFooter>
         <AlertDialogCancel>{{ t('common.cancel') }}</AlertDialogCancel>
         <AlertDialogAction @click="onConfirm" class="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-          {{ pendingAction === 'block' ? t('social.block') : t('common.remove') }}
+          {{ pendingAction === 'block' ? t('social.block') : t('social.remove') }}
         </AlertDialogAction>
       </AlertDialogFooter>
     </AlertDialogContent>
