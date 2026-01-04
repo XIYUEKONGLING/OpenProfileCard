@@ -36,6 +36,25 @@ export interface UpdateUserRoleRequestDto {
     Role: AccountRole;
 }
 
+// --- System Status ---
+
+export interface SystemStatusDto {
+    TotalAccountCount: number;
+    AccountsByType: Record<AccountType, number>;
+    AccountsByRole: Record<AccountRole, number>;
+    AccountsByStatus: Record<AccountStatus, number>;
+    
+    TotalRefreshTokenCount: number;
+    ActiveRefreshTokenCount: number;
+    ExpiredRefreshTokenCount: number;
+    
+    TotalOrganizationCount: number;
+    TotalPersonalProfileCount: number;
+    TotalNotificationCount: number;
+    
+    ServerTimeUtc: string; // DateTime
+}
+
 // --- System Settings ---
 
 export interface SystemSettingDto {
