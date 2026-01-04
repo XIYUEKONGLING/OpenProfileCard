@@ -15,11 +15,12 @@ export type ContactType = 'Email' | 'Phone' | 'Message' | 'Address' | 'Link' | '
 export type AssetType = typeof AssetType[keyof typeof AssetType];
 
 export const AssetType = {
-    Text: 0,
-    Image: 1,
-    Remote: 2,
-    Style: 3,
-    Identifier: 4
+    Empty: 0,
+    Text: 1,
+    Image: 2,
+    Remote: 3,
+    Style: 4,
+    Identifier: 5
 } as const;
 
 

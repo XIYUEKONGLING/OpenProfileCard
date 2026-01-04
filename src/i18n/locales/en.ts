@@ -37,6 +37,8 @@ export const en = {
         uploadImage: 'Upload Image',
         fileSizeLimit: 'File size must be less than 2MB',
         replace: 'Replace',
+        none: 'None',
+        noAssetSelected: 'No asset will be displayed.',
     },
     auth: {
         loginTitle: 'Open Profile Card',

@@ -219,11 +219,12 @@ const copyToClipboard = async (text: string, id: string) => {
       <div class="w-full h-48 md:h-64 bg-muted relative overflow-hidden group">
         <!-- Background Asset -->
         <AssetView
-            v-if="profile?.Background"
+            v-if="profile?.Background && profile.Background.Type !== 0 && profile.Background.Value"
             :asset="profile.Background"
             class-name="w-full h-full object-cover"
         />
-        <!-- Fallback Gradient -->
+
+        <!-- Fallback Gradient (Only if no valid background) -->
         <div v-else class="w-full h-full bg-linear-to-r from-brand-blue/10 to-brand-purple/10"></div>
 
         <!-- Quick Edit Button (Overlay) -->
