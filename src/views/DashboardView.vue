@@ -339,9 +339,9 @@ const copyToClipboard = async (text: string, id: string) => {
                     <AssetView :asset="social.Icon" class-name="size-5" />
                   </a>
                 </div>
-                <Button variant="ghost" size="sm" class="w-full text-xs text-muted-foreground border border-dashed border-border/50" @click="goToEdit('basic')">
-                  <Edit2 class="size-3 mr-2" /> {{ t('common.manage') }} {{ t('dashboard.resources') }}
-                </Button>
+                <!-- <Button variant="ghost" size="sm" class="w-full text-xs text-muted-foreground border border-dashed border-border/50" @click="goToEdit('basic')"> -->
+                <!--   <Edit2 class="size-3 mr-2" /> {{ t('common.manage') }} {{ t('dashboard.resources') }} -->
+                <!-- </Button> -->
               </div>
 
               <Separator />
