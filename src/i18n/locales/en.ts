@@ -58,7 +58,8 @@ export const en = {
         total: 'Total',
         expired: 'Expired',
         notifications: 'Notifications',
-        
+
+        account: 'Account',
         accountTypePersonal: 'Personal',
         accountTypeOrganization: 'Organization',
         accountTypeApplication: 'Application',
@@ -385,5 +386,6 @@ export const en = {
         accountFilterNoMatching: 'No account found matching your criteria',
         actionsBan: 'Ban',
         actionsSuspend: 'Suspend',
+        deleteModalDesc: 'This action will permanently delete the account and all associated resources, projects, and data from the database. This action cannot be undone.',
     }
 };

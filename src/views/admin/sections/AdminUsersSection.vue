@@ -484,7 +484,7 @@ onMounted(fetchUsers);
           <AlertDialogDescription class="font-medium">
             {{ t('admin.deleteModalDesc') || 'This will permanently delete the account and all associated data. This action cannot be undone.' }}
             <div class="mt-4 p-3 bg-destructive/10 rounded-xl border border-destructive/20 text-destructive text-sm font-bold">
-              Account: {{ userToDelete?.AccountName }} ({{ userToDelete?.Email }})
+              {{ t('common.account') }}: {{ userToDelete?.AccountName }} {{ userToDelete?.Email ? "(" + userToDelete?.Email + ")" : "" }}
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>

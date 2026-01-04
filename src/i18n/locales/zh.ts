@@ -59,6 +59,7 @@ export const zh = {
         expired: '过期',
         notifications: '通知',
 
+        account: '账户',
         accountTypePersonal: '个人',
         accountTypeOrganization: '组织',
         accountTypeApplication: '应用',
@@ -382,5 +383,6 @@ export const zh = {
         accountFilterNoMatching: '没有找到符合条件的账户',
         actionsBan: '封禁',
         actionsSuspend: '暂停',
+        deleteModalDesc: '此操作将从数据库中永久删除该账户及其所有关联的资源、项目和数据。此操作无法撤销，请务必确认。',
     }
 };
