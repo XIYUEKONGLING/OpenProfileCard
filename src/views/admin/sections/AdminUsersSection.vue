@@ -9,7 +9,8 @@ import {
   type PagedResponse,
   AccountStatus,
   AccountType,
-  AccountRoleNames
+  AccountRoleNames, type AccountEmailDto, type AddEmailRequestDto, type AdminUpdateEmailRequestDto,
+  type AdminResetPasswordRequestDto
 } from '@/api/types';
 
 // UI Components
@@ -51,9 +52,11 @@ import {
 
 import {
   Loader2, Search, Shield, Ban, Trash2, CheckCircle,
-  AlertTriangle, MoreHorizontal, Filter, ChevronDown,
+  AlertTriangle, MoreHorizontal, Filter, ChevronDown, Mail, Key,
   ChevronLeft, ChevronsLeft, ChevronRight, RotateCcw, UserCircle
 } from 'lucide-vue-next';
+import {Dialog, DialogFooter, DialogHeader} from "@/components/ui/dialog";
+import {Switch} from "@/components/ui/switch";
 
 const { t } = useI18n();
 const ui = useUIStore();
@@ -80,6 +83,23 @@ const showDeleteDialog = ref(false);
 const userToDelete = ref<UserAdminDto | null>(null);
 
 const accountTypeValues = Object.values(AccountType).filter(_v => true) as number[];
+
+const selectedUser = ref<UserAdminDto | null>(null);
+
+// Email Management State
+const showEmailModal = ref(false);
+const userEmails = ref<AccountEmailDto[]>([]);
+const isEmailsLoading = ref(false);
+const newEmailAddress = ref('');
+const isAddingEmail = ref(false);
+
+// Reset Password State
+const showResetPasswordModal = ref(false);
+const resetPasswordData = ref({
+  newPassword: '',
+  confirmPassword: ''
+});
+const isResettingPassword = ref(false);
 
 // --- Mappings ---
 const getStatusLabel = (s: number) => {
@@ -157,6 +177,109 @@ const resetFilters = () => {
   activeSearch.value = '';
   currentPage.value = 1;
   fetchUsers();
+};
+
+
+
+// --- API Logic: Emails ---
+
+const fetchUserEmails = async (userId: string) => {
+  isEmailsLoading.value = true;
+  try {
+    userEmails.value = await httpClient<AccountEmailDto[]>(`/admin/users/${userId}/emails`);
+  } catch (e: any) {
+    ui.notify(e.message, 'error');
+  } finally {
+    isEmailsLoading.value = false;
+  }
+};
+
+const openEmailModal = (user: UserAdminDto) => {
+  selectedUser.value = user;
+  showEmailModal.value = true;
+  fetchUserEmails(user.Id);
+};
+
+const handleAddEmail = async () => {
+  if (!selectedUser.value || !newEmailAddress.value) return;
+  isAddingEmail.value = true;
+  try {
+    const payload: AddEmailRequestDto = {
+      Email: newEmailAddress.value,
+      Code: "" // Admin force add usually doesn't require code validation
+    };
+    await httpClient(`/admin/users/${selectedUser.value.Id}/emails`, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    ui.notify(t('admin.emailAdded'), 'success');
+    newEmailAddress.value = '';
+    fetchUserEmails(selectedUser.value.Id);
+  } catch (e: any) {
+    ui.notify(e.message, 'error');
+  } finally {
+    isAddingEmail.value = false;
+  }
+};
+
+const handleUpdateEmailStatus = async (email: string, updates: AdminUpdateEmailRequestDto) => {
+  if (!selectedUser.value) return;
+  try {
+    await httpClient(`/admin/users/${selectedUser.value.Id}/emails/${email}`, {
+      method: 'PATCH',
+      body: JSON.stringify(updates)
+    });
+    ui.notify(t('admin.emailUpdated'), 'success');
+    fetchUserEmails(selectedUser.value.Id);
+  } catch (e: any) {
+    ui.notify(e.message, 'error');
+  }
+};
+
+const handleDeleteEmail = async (email: string) => {
+  if (!selectedUser.value) return;
+  try {
+    await httpClient(`/admin/users/${selectedUser.value.Id}/emails/${email}`, {
+      method: 'DELETE'
+    });
+    ui.notify(t('admin.emailDeleted'), 'success');
+    fetchUserEmails(selectedUser.value.Id);
+  } catch (e: any) {
+    ui.notify(e.message, 'error');
+  }
+};
+
+// --- API Logic: Password ---
+
+const openResetPasswordModal = (user: UserAdminDto) => {
+  selectedUser.value = user;
+  resetPasswordData.value = { newPassword: '', confirmPassword: '' };
+  showResetPasswordModal.value = true;
+};
+
+const handleResetPassword = async () => {
+  if (!selectedUser.value) return;
+  if (resetPasswordData.value.newPassword !== resetPasswordData.value.confirmPassword) {
+    ui.notify(t('admin.passwordMismatch'), 'error');
+    return;
+  }
+
+  isResettingPassword.value = true;
+  try {
+    const payload: AdminResetPasswordRequestDto = {
+      NewPassword: resetPasswordData.value.newPassword
+    };
+    await httpClient(`/admin/users/${selectedUser.value.Id}/password/reset`, {
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+    ui.notify(t('admin.resetPasswordSuccess'), 'success');
+    showResetPasswordModal.value = false;
+  } catch (e: any) {
+    ui.notify(e.message, 'error');
+  } finally {
+    isResettingPassword.value = false;
+  }
 };
 
 // Fixed Toggle Logic: Ensure we create a new array reference to trigger watchers
@@ -437,7 +560,7 @@ onMounted(fetchUsers);
 
                     <template v-if="canManageRoles(user)">
                       <DropdownMenuSeparator />
-                      <DropdownMenuLabel class="text-xs opacity-50 uppercase tracking-tighter">权限控制</DropdownMenuLabel>
+                      <DropdownMenuLabel class="text-xs opacity-50 uppercase tracking-tighter"> {{ t('admin.permissionControl') }} </DropdownMenuLabel>
 
                       <DropdownMenuItem
                           v-if="user.Role === AccountRoleNames.User"
@@ -453,6 +576,16 @@ onMounted(fetchUsers);
                         <UserCircle class="mr-2 size-4 text-muted-foreground" /> {{ t('admin.actionsDemote') }}
                       </DropdownMenuItem>
                     </template>
+
+                    <DropdownMenuSeparator />
+                    
+                    <DropdownMenuItem @click="openEmailModal(user)">
+                      <Mail class="mr-2 size-4" /> {{ t('admin.manageEmails') }}
+                    </DropdownMenuItem>
+                    
+                    <DropdownMenuItem @click="openResetPasswordModal(user)">
+                      <Key class="mr-2 size-4" /> {{ t('admin.resetPassword') }}
+                    </DropdownMenuItem>
                     
                     <DropdownMenuSeparator />
 
@@ -514,6 +647,130 @@ onMounted(fetchUsers);
         </Button>
       </div>
     </div>
+
+    <!-- Modal: Email Management -->
+    <Dialog v-model:open="showEmailModal">
+      <DialogContent class="sm:max-w-xl rounded-2xl">
+        <DialogHeader>
+          <DialogTitle class="text-xl font-black flex items-center gap-2">
+            <Mail class="size-5 text-brand-blue" />
+            {{ t('admin.emailsFor', { name: selectedUser?.AccountName }) }}
+          </DialogTitle>
+        </DialogHeader>
+
+        <div class="space-y-4 py-4">
+          <!-- Add Email Form -->
+          <div class="flex items-end gap-2">
+            <div class="flex-1 space-y-1.5">
+              <Label class="text-xs font-bold uppercase tracking-wider opacity-60">{{ t('common.email') }}</Label>
+              <Input
+                  v-model="newEmailAddress"
+                  placeholder="example@domain.com"
+                  class="h-10"
+                  @keyup.enter="handleAddEmail"
+              />
+            </div>
+            <Button :disabled="isAddingEmail" @click="handleAddEmail" class="h-10 font-bold">
+              <Plus v-if="!isAddingEmail" class="size-4 mr-1" />
+              <Loader2 v-else class="size-4 animate-spin mr-1" />
+              {{ t('common.add') }}
+            </Button>
+          </div>
+
+          <!-- Email List -->
+          <div class="rounded-xl border bg-muted/30 overflow-hidden">
+            <Table>
+              <TableBody>
+                <TableRow v-if="isEmailsLoading">
+                  <TableCell colspan="3" class="h-32 text-center">
+                    <Loader2 class="size-6 animate-spin mx-auto text-muted-foreground" />
+                  </TableCell>
+                </TableRow>
+                <TableRow v-else v-for="email in userEmails" :key="email.Id" class="group">
+                  <TableCell>
+                    <div class="flex flex-col">
+                      <span class="font-bold text-sm">{{ email.Email }}</span>
+                      <span class="text-[10px] text-muted-foreground">{{ new Date(email.CreatedAt).toLocaleDateString() }}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div class="flex items-center gap-4">
+                      <div class="flex items-center gap-1.5">
+                        <Switch
+                            :checked="email.IsVerified"
+                            @update:checked="(v) => handleUpdateEmailStatus(email.Email, { IsVerified: v })"
+                        />
+                        <span class="text-xs font-medium">{{ t('admin.isVerified') }}</span>
+                      </div>
+                      <div class="flex items-center gap-1.5">
+                        <Switch
+                            :checked="email.IsPrimary"
+                            @update:checked="(v) => handleUpdateEmailStatus(email.Email, { IsPrimary: v })"
+                        />
+                        <span class="text-xs font-medium">{{ t('admin.isPrimary') }}</span>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell class="text-right">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        class="size-8 text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                        @click="handleDeleteEmail(email.Email)"
+                    >
+                      <X class="size-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+
+    <!-- Modal: Reset Password -->
+    <Dialog v-model:open="showResetPasswordModal">
+      <DialogContent class="sm:max-w-md rounded-2xl">
+        <DialogHeader>
+          <DialogTitle class="text-xl font-black flex items-center gap-2">
+            <Key class="size-5 text-brand-blue" />
+            {{ t('admin.resetPassword') }}
+          </DialogTitle>
+        </DialogHeader>
+
+        <div class="space-y-4 py-4">
+          <div class="p-3 bg-muted/50 rounded-xl border text-sm font-medium">
+            {{ t('common.account') }}: <span class="font-black">{{ selectedUser?.AccountName }}</span>
+          </div>
+
+          <div class="space-y-3">
+            <div class="space-y-1.5">
+              <Label class="text-xs font-bold uppercase tracking-wider opacity-60">{{ t('admin.newPassword') }}</Label>
+              <Input v-model="resetPasswordData.newPassword" type="password" class="h-10" />
+            </div>
+            <div class="space-y-1.5">
+              <Label class="text-xs font-bold uppercase tracking-wider opacity-60">{{ t('admin.confirmPassword') }}</Label>
+              <Input v-model="resetPasswordData.confirmPassword" type="password" class="h-10" />
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" @click="showResetPasswordModal = false" class="font-bold rounded-xl">
+            {{ t('common.cancel') }}
+          </Button>
+          <Button
+              :disabled="isResettingPassword || !resetPasswordData.newPassword"
+              @click="handleResetPassword"
+              class="font-bold rounded-xl bg-brand-blue hover:bg-brand-blue/90"
+          >
+            <Loader2 v-if="isResettingPassword" class="size-4 animate-spin mr-2" />
+            {{ t('admin.resetPassword') }}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
 
     <!-- Physical Delete Confirmation -->
     <AlertDialog v-model:open="showDeleteDialog">

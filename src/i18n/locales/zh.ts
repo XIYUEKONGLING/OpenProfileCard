@@ -386,5 +386,21 @@ export const zh = {
         actionsPromote: '设为管理员',
         actionsDemote: '降级为用户',
         deleteModalDesc: '此操作将从数据库中永久删除该账户及其所有关联的资源、项目和数据。此操作无法撤销，请务必确认。',
+
+        permissionControl: '权限控制',
+
+        resetPassword: '重置密码',
+        manageEmails: '管理邮箱',
+        emailsFor: '{name} 的邮箱管理',
+        addEmail: '添加邮箱',
+        isPrimary: '主邮箱',
+        isVerified: '已验证',
+        newPassword: '新密码',
+        confirmPassword: '确认密码',
+        passwordMismatch: '两次输入的密码不一致',
+        resetPasswordSuccess: '密码已成功重置',
+        emailAdded: '邮箱已添加',
+        emailUpdated: '邮箱状态已更新',
+        emailDeleted: '邮箱已移除',
     }
 };

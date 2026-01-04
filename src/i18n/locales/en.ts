@@ -389,5 +389,21 @@ export const en = {
         actionsPromote: 'Promote to Admin',
         actionsDemote: 'Demote to User',
         deleteModalDesc: 'This action will permanently delete the account and all associated resources, projects, and data from the database. This action cannot be undone.',
+
+        permissionControl: 'Permission control',
+        
+        resetPassword: 'Reset Password',
+        manageEmails: 'Manage Emails',
+        emailsFor: 'Manage emails for {name}',
+        addEmail: 'Add Email',
+        isPrimary: 'Primary',
+        isVerified: 'Verified',
+        newPassword: 'New Password',
+        confirmPassword: 'Confirm Password',
+        passwordMismatch: 'Passwords do not match',
+        resetPasswordSuccess: 'Password reset successfully',
+        emailAdded: 'Email added successfully',
+        emailUpdated: 'Email status updated',
+        emailDeleted: 'Email removed successfully',
     }
 };
