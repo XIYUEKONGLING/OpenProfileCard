@@ -53,7 +53,8 @@ import {
 import {
   Loader2, Search, Shield, Ban, Trash2, CheckCircle,
   AlertTriangle, MoreHorizontal, Filter, ChevronDown,
-  ChevronLeft, ChevronsLeft, ChevronRight, RotateCcw, X
+  ChevronLeft, ChevronsLeft, ChevronRight, RotateCcw, X,
+  UserCircle
 } from 'lucide-vue-next';
 
 const { t } = useI18n();
@@ -66,8 +67,8 @@ const totalRecords = ref(0);
 const totalPages = ref(0);
 const currentPage = ref(1);
 const pageSize = ref(10);
-const searchInput = ref(''); // Local input state for search
-const activeSearch = ref(''); // The actual search string used for API
+const searchInput = ref('');
+const activeSearch = ref('');
 const isLoading = ref(false);
 
 // Multi-select Filter States
@@ -125,6 +126,8 @@ const fetchUsers = async () => {
     });
 
     if (activeSearch.value) params.append('Search', activeSearch.value);
+
+    // Append multiple filters
     filterStatus.value.forEach(v => params.append('Status', v.toString()));
     filterRole.value.forEach(v => params.append('Role', v.toString()));
     filterType.value.forEach(v => params.append('Type', v.toString()));
@@ -156,11 +159,25 @@ const resetFilters = () => {
   fetchUsers();
 };
 
-const toggleFilter = (arr: number[], val: number) => {
-  const idx = arr.indexOf(val);
-  if (idx > -1) arr.splice(idx, 1);
-  else arr.push(val);
-  currentPage.value = 1; // Reset to page 1 on filter change
+// Fixed Toggle Logic: Ensure we create a new array reference to trigger watchers
+const toggleFilter = (target: 'status' | 'role' | 'type', val: number) => {
+  currentPage.value = 1;
+  if (target === 'status') {
+    const arr = [...filterStatus.value];
+    const idx = arr.indexOf(val);
+    if (idx > -1) arr.splice(idx, 1); else arr.push(val);
+    filterStatus.value = arr;
+  } else if (target === 'role') {
+    const arr = [...filterRole.value];
+    const idx = arr.indexOf(val);
+    if (idx > -1) arr.splice(idx, 1); else arr.push(val);
+    filterRole.value = arr;
+  } else if (target === 'type') {
+    const arr = [...filterType.value];
+    const idx = arr.indexOf(val);
+    if (idx > -1) arr.splice(idx, 1); else arr.push(val);
+    filterType.value = arr;
+  }
 };
 
 const isAnyFilterActive = computed(() => {
@@ -170,14 +187,13 @@ const isAnyFilterActive = computed(() => {
       activeSearch.value.length > 0;
 });
 
-// Watch for filter/page changes
-watch([currentPage, filterStatus, filterRole, filterType], fetchUsers, { deep: true });
+// Watch for changes to trigger fetch
+watch([currentPage, filterStatus, filterRole, filterType], () => {
+  fetchUsers();
+}, { deep: true });
 
 // --- Admin Actions ---
-const canDelete = (user: UserAdminDto) => {
-  // Front-end check: Cannot delete self
-  return auth.user?.Id !== user.Id;
-};
+const canDelete = (user: UserAdminDto) => auth.user?.Id !== user.Id;
 
 const updateStatus = async (user: UserAdminDto, newStatus: number) => {
   actionLoadingId.value = user.Id;
@@ -214,12 +230,32 @@ onMounted(fetchUsers);
 </script>
 
 <template>
-  <div class="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
+  <!-- 
+    Removed animate-in slide-in from top-level to prevent 
+    initial layout jump that affects the scrollbar 
+  -->
+  <div class="space-y-6 fade-in-animation">
 
-    <!-- Action Bar -->
+    <!-- Action Bar: Reordered as per request -->
     <div class="flex flex-col xl:flex-row gap-4 justify-between items-start xl:items-center">
 
-      <!-- Left: Filters & Reset (Fixed Position) -->
+      <!-- Left: Search Input Group -->
+      <div class="flex w-full xl:max-w-sm items-center gap-2">
+        <div class="relative flex-1">
+          <Search class="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <Input
+              v-model="searchInput"
+              :placeholder="t('common.search')"
+              class="pl-9 h-10 bg-background/50 focus-visible:ring-brand-blue"
+              @keyup.enter="handleSearch"
+          />
+        </div>
+        <Button variant="default" class="font-bold h-10 px-6 shadow-sm" @click="handleSearch">
+          {{ t('common.search') }}
+        </Button>
+      </div>
+
+      <!-- Right: Filters & Reset -->
       <div class="flex flex-wrap items-center gap-2">
         <transition name="fade-scale">
           <Button
@@ -244,12 +280,16 @@ onMounted(fetchUsers);
               <ChevronDown class="size-4 ml-1 opacity-50" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent class="w-48 p-2" align="start">
+          <PopoverContent class="w-48 p-2" align="end">
             <div class="grid gap-1">
-              <label v-for="s in [0, 3, 2, 1, 4]" :key="s" class="flex items-center gap-2 p-2 rounded-sm hover:bg-muted cursor-pointer transition-colors">
-                <Checkbox :checked="filterStatus.includes(s)" @update:checked="toggleFilter(filterStatus, s)" />
+              <div
+                  v-for="s in [0, 3, 2, 1, 4]" :key="s"
+                  class="flex items-center gap-2 p-2 rounded-md hover:bg-muted cursor-pointer transition-colors"
+                  @click="toggleFilter('status', s)"
+              >
+                <Checkbox :checked="filterStatus.includes(s)" />
                 <span class="text-sm font-medium leading-none">{{ getStatusLabel(s) }}</span>
-              </label>
+              </div>
             </div>
           </PopoverContent>
         </Popover>
@@ -264,12 +304,16 @@ onMounted(fetchUsers);
               <ChevronDown class="size-4 ml-1 opacity-50" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent class="w-48 p-2" align="start">
+          <PopoverContent class="w-48 p-2" align="end">
             <div class="grid gap-1">
-              <label v-for="r in [-1, 1000, 0]" :key="r" class="flex items-center gap-2 p-2 rounded-sm hover:bg-muted cursor-pointer transition-colors">
-                <Checkbox :checked="filterRole.includes(r)" @update:checked="toggleFilter(filterRole, r)" />
-                <span class="text-sm font-medium leading-none">{{ getRoleLabel(r as any) }}</span>
-              </label>
+              <div
+                  v-for="r in [AccountRoleNames.Root, AccountRoleNames.Admin, AccountRoleNames.User]" :key="r"
+                  class="flex items-center gap-2 p-2 rounded-md hover:bg-muted cursor-pointer transition-colors"
+                  @click="toggleFilter('role', r)"
+              >
+                <Checkbox :checked="filterRole.includes(r)" />
+                <span class="text-sm font-medium leading-none">{{ getRoleLabel(r) }}</span>
+              </div>
             </div>
           </PopoverContent>
         </Popover>
@@ -278,42 +322,31 @@ onMounted(fetchUsers);
         <Popover>
           <PopoverTrigger as-child>
             <Button variant="outline" size="sm" class="h-9 border-dashed">
-              <X class="size-4 mr-2" />
+              <UserCircle class="size-4 mr-2" />
               {{ t('admin.typeFilter') }}
               <Badge v-if="filterType.length" variant="secondary" class="ml-2 rounded-sm px-1 font-normal">{{ filterType.length }}</Badge>
               <ChevronDown class="size-4 ml-1 opacity-50" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent class="w-48 p-2" align="start">
+          <PopoverContent class="w-48 p-2" align="end">
             <div class="grid gap-1">
-              <label v-for="ty in [1, 2, 3, 4, 5]" :key="ty" class="flex items-center gap-2 p-2 rounded-sm hover:bg-muted cursor-pointer transition-colors">
-                <Checkbox :checked="filterType.includes(ty)" @update:checked="toggleFilter(filterType, ty)" />
-                <span class="text-sm font-medium leading-none">{{ getTypeLabel(ty as any) }}</span>
-              </label>
+              <div
+                  v-for="ty in [1, 2, 3, 4, 5]" :key="ty"
+                  class="flex items-center gap-2 p-2 rounded-md hover:bg-muted cursor-pointer transition-colors"
+                  @click="toggleFilter('type', ty)"
+              >
+                <Checkbox :checked="filterType.includes(ty)" />
+                <span class="text-sm font-medium leading-none">{{ getTypeLabel(ty) }}</span>
+              </div>
             </div>
           </PopoverContent>
         </Popover>
       </div>
-
-      <!-- Right: Search Input Group -->
-      <div class="flex w-full xl:max-w-sm items-center gap-2">
-        <div class="relative flex-1">
-          <Search class="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-          <Input
-              v-model="searchInput"
-              :placeholder="t('common.search')"
-              class="pl-9 h-10 bg-background/50 focus-visible:ring-brand-blue"
-              @keyup.enter="handleSearch"
-          />
-        </div>
-        <Button variant="default" class="font-bold h-10" @click="handleSearch">
-          {{ t('common.search') }}
-        </Button>
-      </div>
     </div>
 
     <!-- User Table -->
-    <div class="rounded-xl border bg-card/40 backdrop-blur-sm overflow-hidden relative min-h-[500px]">
+    <!-- Added min-h to prevent page height jumping during data load -->
+    <div class="rounded-xl border bg-card/40 backdrop-blur-sm overflow-hidden relative min-h-[580px]">
 
       <!-- Overlay Loading -->
       <transition name="fade">
@@ -335,7 +368,7 @@ onMounted(fetchUsers);
             <TableHead class="text-right font-black uppercase text-xs tracking-widest">{{ t('common.manage') }}</TableHead>
           </TableRow>
         </TableHeader>
-        <TableBody>
+        <TableBody class="relative">
           <transition-group name="list">
             <TableRow v-for="user in users" :key="user.Id" class="group transition-colors">
               <TableCell>
@@ -470,21 +503,45 @@ onMounted(fetchUsers);
 </template>
 
 <style scoped>
-/* List Animation */
+.fade-in-animation {
+  animation: fadeIn 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 
+  List Animation Optimized:
+  Use position absolute only on leave to prevent the 
+  container from collapsing/expanding rapidly.
+*/
 .list-enter-active,
 .list-leave-active {
-  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s ease;
 }
-.list-enter-from,
+
+.list-enter-from {
+  opacity: 0;
+  transform: translateX(-10px);
+}
+
 .list-leave-to {
   opacity: 0;
-  transform: translateY(10px);
+  transform: translateX(10px);
 }
+
+/* This helps to maintain layout of other rows when one is leaving */
+.list-leave-active {
+  position: absolute;
+  width: 100%;
+}
+
 .list-move {
   transition: transform 0.4s ease;
 }
 
-/* Fade Scale Animation for Reset Button */
 .fade-scale-enter-active,
 .fade-scale-leave-active {
   transition: all 0.2s ease;
