@@ -128,7 +128,7 @@ export const zh = {
         displayName: '显示名称',
         pronouns: '代词',
         bio: '简介 (一句话)',
-        content: '详细介绍 (支持 Markdown)',
+        content: '详细介绍',
         preview: '预览',
         write: '编辑',
         avatar: '头像链接',

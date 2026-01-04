@@ -128,7 +128,7 @@ export const en = {
         displayName: 'Display Name',
         pronouns: 'Pronouns',
         bio: 'Short Bio',
-        content: 'Content (Markdown)',
+        content: 'Content',
         preview: 'Preview',
         write: 'Write',
         avatar: 'Avatar URL',
