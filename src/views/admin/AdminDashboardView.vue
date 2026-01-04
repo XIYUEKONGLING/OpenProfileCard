@@ -64,7 +64,7 @@ onMounted(fetchData);
     </div>
 
     <Tabs default-value="stats" class="w-full">
-      <TabsList class="grid w-full grid-cols-4 lg:w-150">
+      <TabsList class="grid w-full grid-cols-4 lg:w-200">
         <TabsTrigger value="stats"><BarChart3 class="size-4 mr-2" /> {{ t('admin.stats') }}</TabsTrigger>
         <TabsTrigger value="meta"><Globe class="size-4 mr-2" /> {{ t('admin.siteMeta') }}</TabsTrigger>
         <TabsTrigger value="settings"><Settings2 class="size-4 mr-2" /> {{ t('admin.systemSettings') }}</TabsTrigger>
