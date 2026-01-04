@@ -563,6 +563,48 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
                 </div>
               </TabsContent>
 
+              <!-- TAB: Members (Organization Only) -->
+              <TabsContent v-if="isOrg" value="members" class="animate-in fade-in slide-in-from-bottom-2">
+                <div v-if="members.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <router-link
+                      v-for="member in members"
+                      :key="member.AccountId"
+                      :to="`/${member.AccountName}`"
+                      class="group"
+                  >
+                    <Card class="hover:border-brand-purple/50 transition-all duration-300 hover:shadow-md">
+                      <CardContent class="p-4 flex items-center gap-4">
+                        <div class="size-12 rounded-full bg-muted border overflow-hidden shrink-0">
+                          <AssetView
+                              :asset="member.Avatar"
+                              :fallback-name="member.DisplayName"
+                              class-name="w-full h-full object-cover"
+                          />
+                        </div>
+                        <div class="min-w-0 flex-1">
+                          <div class="font-bold truncate group-hover:text-brand-purple transition-colors">
+                            {{ member.DisplayName }}
+                          </div>
+                          <div class="text-xs text-muted-foreground truncate">
+                            @{{ member.AccountName }}
+                          </div>
+                          <div v-if="member.Title" class="mt-1">
+                            <Badge variant="secondary" class="text-[10px] px-1.5 py-0 h-4 font-medium">
+                              {{ member.Title }}
+                            </Badge>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </router-link>
+                </div>
+
+                <div v-else class="text-center py-12 text-muted-foreground border-2 border-dashed rounded-xl">
+                  <Users class="size-8 mx-auto mb-2 opacity-20" />
+                  <p>{{ t('publicProfile.noMembers') }}</p>
+                </div>
+              </TabsContent>
+
               <!-- TAB: Resources -->
               <TabsContent value="resources" class="animate-in fade-in slide-in-from-bottom-2 space-y-10">
                 <!-- Gallery -->
