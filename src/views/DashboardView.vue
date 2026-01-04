@@ -17,7 +17,8 @@ import {
   type CertificateDto,
   type SponsorshipItemDto,
   AccountStatus,
-  AccountType
+  AccountType,
+  AssetType
 } from '@/api/types';
 
 // UI Components
@@ -62,7 +63,15 @@ const copiedId = ref<string | null>(null);
 // --- Computed ---
 const renderedContent = computed(() => renderMarkdown(profile.value?.Content));
 
-const isPersonal = computed(() => auth.user?.Type === AccountType.Personal);
+const isPersonal = computed(() => {
+  const type = profile.value?.Type ?? auth.user?.Type;
+  return type === AccountType.Personal;
+});
+
+const hasBackground = computed(() => {
+  const bg = profile.value?.Background;
+  return bg && bg.Type !== AssetType.Empty && !!bg.Value;
+});
 
 const joinDate = computed(() => {
   if (!auth.user?.CreatedAt) return '';
@@ -192,7 +201,6 @@ const copyToClipboard = async (text: string, id: string) => {
 
     <!-- BLOCKER OVERLAY -->
     <div v-if="isAccountBlocked && blockReason" class="absolute inset-0 z-50 backdrop-blur-xl bg-background/50 flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-500">
-      <!-- Blocker Content... -->
       <div class="max-w-md w-full bg-background border border-border shadow-2xl rounded-3xl p-8 flex flex-col items-center">
         <div class="size-20 rounded-full bg-muted flex items-center justify-center mb-6">
           <component :is="blockReason.icon" class="size-10" :class="blockReason.color" />
@@ -215,17 +223,13 @@ const copyToClipboard = async (text: string, id: string) => {
 
     <div class="w-full animate-in fade-in slide-in-from-bottom-4 duration-700" :class="{'opacity-20 pointer-events-none select-none filter blur-sm': isAccountBlocked}">
 
-      <!-- HEADER BANNER (Fixed) -->
-      <div class="w-full h-48 md:h-64 bg-muted relative overflow-hidden group">
+      <!-- HEADER BANNER (Fixed: Only show if valid background exists) -->
+      <div v-if="hasBackground" class="w-full h-48 md:h-64 bg-muted relative overflow-hidden group">
         <!-- Background Asset -->
         <AssetView
-            v-if="profile?.Background && profile.Background.Type !== 0 && profile.Background.Value"
-            :asset="profile.Background"
+            :asset="profile?.Background"
             class-name="w-full h-full object-cover"
         />
-
-        <!-- Fallback Gradient (Only if no valid background) -->
-        <div v-else class="w-full h-full bg-linear-to-r from-brand-blue/10 to-brand-purple/10"></div>
 
         <!-- Quick Edit Button (Overlay) -->
         <div class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -257,7 +261,7 @@ const copyToClipboard = async (text: string, id: string) => {
           <!-- ========================================== -->
           <!-- LEFT COLUMN: Identity (Profile)           -->
           <!-- ========================================== -->
-          <aside class="lg:col-span-4 xl:col-span-3 flex flex-col gap-6 -mt-16 sm:-mt-20 relative z-10 mb-10">
+          <aside class="lg:col-span-4 xl:col-span-3 flex flex-col gap-6 relative z-10 mb-10" :class="hasBackground ? '-mt-16 sm:-mt-20' : 'mt-10'">
 
             <!-- Avatar & Status -->
             <div class="relative group mx-auto lg:mx-0 w-40 h-40 sm:w-48 sm:h-48">
@@ -323,7 +327,7 @@ const copyToClipboard = async (text: string, id: string) => {
                 </div>
               </div>
 
-              <!-- Social Links (With Manage option implied) -->
+              <!-- Social Links -->
               <div v-if="socials.length > 0" class="flex flex-col gap-2">
                 <div class="flex flex-wrap gap-2">
                   <a v-for="social in socials" :key="social.Id" :href="social.Url" target="_blank" class="size-9 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 hover:scale-110 transition-all border border-border">
@@ -373,7 +377,8 @@ const copyToClipboard = async (text: string, id: string) => {
             <Tabs default-value="overview" class="w-full">
               <!-- Sticky Tab Bar with Rounded Tops -->
               <div class="sticky top-0 z-30 bg-background/95 backdrop-blur-md pb-0 pt-2 -mt-2 border-b border-border/60">
-                <TabsList class="scrollbar-hide w-full justify-start h-auto p-0 bg-transparent rounded-none gap-2 overflow-x-auto">
+                <!-- Fix: Added no-scrollbar class to hide native scrollbar -->
+                <TabsList class="no-scrollbar w-full justify-start h-auto p-0 bg-transparent rounded-none gap-2 overflow-x-auto">
 
                   <TabsTrigger
                       value="overview"
@@ -668,3 +673,14 @@ const copyToClipboard = async (text: string, id: string) => {
     </div>
   </div>
 </template>
+
+<style scoped>
+/* Utility to hide scrollbar but keep functionality */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+</style>

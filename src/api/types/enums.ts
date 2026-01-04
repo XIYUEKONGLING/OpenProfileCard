@@ -27,11 +27,11 @@ export const AssetType = {
 // export type AccountType = 'Personal' | 'Organization' | 'Application' | 'System' | 'Service';
 
 export const AccountType = {
-    Personal: 0,
-    Organization: 1,
-    Application: 2,
-    System: 3,
-    Service: 4
+    Personal: 1,
+    Organization: 2,
+    Application: 3,
+    System: 4,
+    Service: 5
 } as const;
 export type AccountType = typeof AccountType[keyof typeof AccountType];
 
@@ -44,6 +44,7 @@ export const AccountStatus = {
     Suspended: 3,
     Deactivated: 4
 } as const;
+export type AccountStatus = typeof AccountStatus[keyof typeof AccountStatus];
 
 export type AccountRole = -1 | 0 | 1000; // Root | User | Admin
 
