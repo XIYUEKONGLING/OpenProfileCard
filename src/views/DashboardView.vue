@@ -41,7 +41,7 @@ import {
   MapPin, Link as LinkIcon, Building2, Clock,
   Edit2, Plus, Briefcase,
   FolderGit2, Image as ImageIcon,
-  Settings, Shield, BookOpen, Key,
+  Settings, Shield, BookOpen, Key, Cake, GraduationCap,
   Heart, Copy, Check, Ban, AlertTriangle, Trash2, ExternalLink,
   Phone, Mail, MessageSquare, MapPin as MapIcon, Link as LinkIcon2
 } from 'lucide-vue-next';
@@ -379,20 +379,39 @@ const copyToClipboard = async (text: string, id: string) => {
 
               <!-- Metadata Grid -->
               <div class="flex flex-col gap-3 text-sm text-muted-foreground">
+
+                <div v-if="isPersonal && profile?.JobTitle" class="flex items-center gap-3">
+                  <Briefcase class="size-4 shrink-0 opacity-70" />
+                  <span class="font-medium text-foreground">{{ profile.JobTitle }}</span>
+                </div>
+
                 <div v-if="profile?.CurrentCompany" class="flex items-center gap-3">
                   <Building2 class="size-4 shrink-0 opacity-70" />
                   <span class="font-medium text-foreground">{{ profile.CurrentCompany }}</span>
                 </div>
+
+                <div v-if="isPersonal && profile?.CurrentSchool" class="flex items-center gap-3">
+                  <GraduationCap class="size-4 shrink-0 opacity-70" />
+                  <span class="text-foreground">{{ profile.CurrentSchool }}</span>
+                </div>
+
                 <div v-if="profile?.Location" class="flex items-center gap-3">
                   <MapPin class="size-4 shrink-0 opacity-70" />
                   <span>{{ profile.Location }}</span>
                 </div>
+
+                <div v-if="isPersonal && profile?.Birthday" class="flex items-center gap-3">
+                  <Cake class="size-4 shrink-0 opacity-70" />
+                  <span>{{ formatDate(profile.Birthday) }}</span>
+                </div>
+
                 <div v-if="profile?.Website" class="flex items-center gap-3">
                   <LinkIcon class="size-4 shrink-0 opacity-70" />
                   <a :href="profile.Website" target="_blank" class="hover:text-brand-blue hover:underline truncate">
                     {{ profile.Website }}
                   </a>
                 </div>
+
                 <div class="flex items-center gap-3">
                   <Clock class="size-4 shrink-0 opacity-70" />
                   <span>{{ t('dashboard.joined', { date: joinDate }) }}</span>
