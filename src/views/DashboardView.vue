@@ -461,9 +461,10 @@ const copyToClipboard = async (text: string, id: string) => {
                     </Button>
                   </div>
                   <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                    <a v-for="social in socials" :key="social.Id" :href="social.Url" target="_blank" class="flex items-center gap-3 p-3 rounded-xl border border-border/60 bg-card hover:bg-muted/50 transition-colors group">
-                      <div class="size-8 flex items-center justify-center rounded-lg bg-muted group-hover:scale-110 transition-transform">
-                        <AssetView :asset="social.Icon" class-name="size-5" />
+                    <a v-for="social in socials" :key="social.Id" :href="social.Url" target="_blank"
+                       class="flex items-center gap-3 p-2.5 rounded-xl border border-border/60 bg-card hover:bg-muted/50 transition-all group">
+                      <div class="size-9 flex items-center justify-center rounded-lg bg-muted border border-border/40 group-hover:scale-105 transition-transform overflow-hidden">
+                        <AssetView :asset="social.Icon" class-name="w-full h-full" />
                       </div>
                       <span class="font-bold text-sm truncate">{{ social.Platform }}</span>
                     </a>
@@ -485,15 +486,15 @@ const copyToClipboard = async (text: string, id: string) => {
                   </div>
 
                   <div v-if="contacts.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div v-for="contact in contacts" :key="contact.Id" class="flex items-center gap-3 p-3 rounded-xl border border-border/60 bg-card">
-                      <div class="size-8 flex items-center justify-center rounded-lg bg-muted shrink-0 overflow-hidden">
-                        <!-- Prefer Custom Icon, fallback to Type Icon -->
-                        <AssetView v-if="contact.Icon && contact.Icon.Type !== 0" :asset="contact.Icon" class-name="w-full h-full object-cover" />
-                        <component v-else :is="getContactIcon(contact.Type)" class="size-4 text-muted-foreground" />
+                    <div v-for="contact in contacts" :key="contact.Id"
+                         class="flex items-center gap-3 p-3 rounded-xl border border-border/60 bg-card shadow-sm">
+                      <div class="size-9 flex items-center justify-center rounded-lg bg-muted border border-border/40 shrink-0 overflow-hidden">
+                        <AssetView v-if="contact.Icon && contact.Icon.Type !== 0" :asset="contact.Icon" class-name="w-full h-full" />
+                        <component v-else :is="getContactIcon(contact.Type)" class="size-4.5 text-muted-foreground" />
                       </div>
                       <div class="min-w-0 overflow-hidden">
-                        <p class="text-xs text-muted-foreground font-bold uppercase truncate">{{ contact.Label }}</p>
-                        <p class="text-sm font-medium truncate select-all">{{ contact.Value }}</p>
+                        <p class="text-[10px] text-muted-foreground font-black uppercase tracking-wider leading-none mb-1">{{ contact.Label }}</p>
+                        <p class="text-sm font-semibold truncate select-all">{{ contact.Value }}</p>
                       </div>
                     </div>
                   </div>
@@ -598,8 +599,8 @@ const copyToClipboard = async (text: string, id: string) => {
                       <div class="absolute -left-6.25 sm:-left-8.25 top-1.5 size-3.5 rounded-full bg-background border-[3px] border-muted-foreground group-hover:border-brand-purple transition-colors shadow-[0_0_0_4px_rgba(0,0,0,0)] group-hover:shadow-[0_0_0_4px_var(--color-muted)]"></div>
                       <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
                         <div class="flex items-center gap-3">
-                          <div class="size-10 rounded-lg border bg-white dark:bg-black p-0.5 shrink-0 flex items-center justify-center overflow-hidden">
-                            <AssetView :asset="job.Logo" :fallback-name="job.CompanyName" class-name="w-full h-full object-contain rounded-md" />
+                          <div class="size-11 rounded-xl border border-border bg-background p-1 shrink-0 flex items-center justify-center overflow-hidden shadow-xs">
+                            <AssetView :asset="job.Logo" :fallback-name="job.CompanyName" class-name="w-full h-full object-contain rounded-lg" />
                           </div>
                           <div>
                             <h4 class="font-bold text-base leading-none">{{ job.Position }}</h4>

@@ -21,19 +21,16 @@ const isType = (type: AssetType) => {
 const textMetrics = computed(() => {
   const text = props.asset?.Value || '';
   const len = text.length;
-
-  if (len === 0) return { fontSize: 0, y: 50 };
+  
+  if (len === 0) return { fontSize: 0 };
 
   let size = 0;
-  if (len === 1) size = 70;
+  if (len === 1) size = 65;
   else if (len === 2) size = 45;
-  else if (len === 3) size = 35;
-  else size = Math.max(14, 110 / len);
+  else if (len === 3) size = 30;
+  else size = Math.max(12, 100 / len);
 
-  return {
-    fontSize: size,
-    y: len === 1 ? 72 : 68
-  };
+  return { fontSize: size };
 });
 
 const fallbackChar = computed(() => {
@@ -43,22 +40,22 @@ const fallbackChar = computed(() => {
 </script>
 
 <template>
-  <div :class="['relative flex items-center justify-center overflow-hidden shrink-0 select-none', className]">
+  <div :class="['relative flex items-center justify-center overflow-hidden shrink-0 select-none box-border', className]">
 
-    <!-- Background Pattern (Only if NOT empty and has value) -->
+    <!-- Background Pattern -->
     <div v-if="!isType(AssetType.Empty) && asset?.Value"
          class="absolute inset-0 bg-linear-to-br from-foreground/5 to-foreground/10 -z-10">
     </div>
 
-    <!-- Case 1: Explicitly Empty or Null Asset -->
+    <!-- Case 1: Empty / Fallback -->
     <template v-if="isType(AssetType.Empty)">
-      <!-- If fallbackName is provided, show initial char (e.g., for Avatars) -->
       <template v-if="fallbackName">
-        <div class="absolute inset-0 bg-linear-to-br from-foreground/5 to-foreground/10 -z-10"></div>
-        <svg viewBox="0 0 100 100" class="w-[70%] h-[70%]">
+        <div class="absolute inset-0 bg-muted/30 -z-10"></div>
+        <svg viewBox="0 0 100 100" class="w-[60%] h-[60%]">
           <text
-              x="50%" y="72"
+              x="50%" y="50%"
               text-anchor="middle"
+              dominant-baseline="central"
               fill="currentColor"
               class="font-black italic opacity-20"
               style="font-size: 70px"
@@ -72,11 +69,11 @@ const fallbackChar = computed(() => {
 
     <!-- Case 2: Text / Emoji -->
     <template v-else-if="isType(AssetType.Text)">
-      <svg viewBox="0 0 100 100" class="w-[85%] h-[85%]">
+      <svg viewBox="0 0 100 100" class="w-[80%] h-[80%]">
         <text
-            x="50%"
-            :y="textMetrics.y"
+            x="50%" y="50%"
             text-anchor="middle"
+            dominant-baseline="central"
             fill="currentColor"
             class="font-black tracking-tighter"
             :style="{ fontSize: `${textMetrics.fontSize}px` }"
@@ -99,20 +96,27 @@ const fallbackChar = computed(() => {
 
     <!-- Case 4: Icon Style (FontAwesome / Devicon) -->
     <template v-else-if="isType(AssetType.Style)">
-      <i :class="[asset?.Value, 'not-italic flex items-center justify-center text-[2em]']" aria-hidden="true"></i>
+      <i
+          :class="[asset?.Value, 'not-italic flex items-center justify-center leading-none']"
+          style="font-size: 1.5rem; width: 100%; height: 100%;"
+          aria-hidden="true"
+      ></i>
     </template>
 
     <!-- Case 5: Identifier (Restricted) -->
     <template v-else-if="isType(AssetType.Identifier)">
-      <div class="bg-destructive/20 text-destructive text-[8px] font-black p-1 uppercase">Restricted</div>
+      <div class="bg-destructive/10 text-destructive text-[10px] font-bold px-1 py-0.5 uppercase rounded-sm">
+        ID
+      </div>
     </template>
 
   </div>
 </template>
 
 <style scoped>
-text {
-  transition: all 0.3s ease;
-  dominant-baseline: alphabetic;
+:deep(i) {
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
 }
 </style>
