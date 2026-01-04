@@ -87,8 +87,8 @@ const saveDialog = async () => {
             <!-- Boolean Toggle -->
             <template v-if="s.ValueType === 'boolean'">
               <Switch
-                  :checked="isTrue(s.Value)"
-                  @update:checked="(v: boolean) => updateSetting(s.Key, v ? 'true' : 'false')"
+                  :modelValue="isTrue(s.Value)"
+                  @update:model-value="(v: boolean) => updateSetting(s.Key, v ? 'true' : 'false')"
                   :disabled="savingKey === s.Key"
               />
             </template>
