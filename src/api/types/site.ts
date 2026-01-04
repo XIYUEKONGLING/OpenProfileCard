@@ -5,6 +5,7 @@ export interface ServerFeaturesDto {
     Registration: boolean;
     SearchIndexing: boolean;
     EmailVerification: boolean;
+    EmailAddVerification: boolean;
 }
 
 export interface SiteMetadataDto {

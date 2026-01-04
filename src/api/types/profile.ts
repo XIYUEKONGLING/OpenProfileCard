@@ -36,6 +36,11 @@ export interface ProfileDto {
     FollowingCount: number;
 }
 
+export interface ProfilePrivacyDto {
+    ShowFollowers: boolean;
+    ShowFollowing: boolean;
+}
+
 export interface UpdateProfileRequestDto {
     DisplayName?: string;
     Description?: string;
