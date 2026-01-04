@@ -229,7 +229,7 @@ const copyToClipboard = async (text: string, id: string) => {
     <div class="w-full animate-in fade-in slide-in-from-bottom-4 duration-700" :class="{'opacity-20 pointer-events-none select-none filter blur-sm': isAccountBlocked}">
 
       <!-- HEADER BANNER -->
-      <div v-if="hasBackground" class="w-full h-48 md:h-64 bg-muted relative overflow-hidden group">
+      <div v-if="hasBackground" class="w-full h-48 md:h-64 bg-muted relative overflow-hidden group rounded-4xl">
         <!-- Background Asset -->
         <AssetView
             :asset="profile?.Background"
