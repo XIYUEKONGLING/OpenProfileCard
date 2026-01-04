@@ -310,7 +310,7 @@ watch(() => props.accountName, fetchOrgData, { immediate: true });
         <div v-else-if="org" class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
           <!-- LEFT COLUMN -->
-          <aside class="lg:col-span-4 xl:col-span-3 flex flex-col gap-6 relative z-10 mb-10" :class="hasBackground ? '-mt-16 sm:-mt-20' : 'mt-10'">
+          <aside class="lg:col-span-4 xl:col-span-3 flex flex-col gap-6 relative z-10 -mt-16 sm:-mt-20 mb-10">
 
             <!-- Avatar -->
             <div class="relative group mx-auto lg:mx-0 w-40 h-40 sm:w-48 sm:h-48">

@@ -66,8 +66,9 @@ export const en = {
         accountTypeApplication: 'Application',
         accountTypeSystem: 'System',
         accountTypeService: 'Service',
+
+        timeZone: 'Time Zone',
     },
-    // ... existing auth, dashboard, profile, resources, settings, social, publicProfile, admin ...
     auth: {
         loginTitle: 'Open Profile Card',
         signIn: 'Sign In Now',
@@ -442,5 +443,7 @@ export const en = {
         dissolve: 'Dissolve Organization',
         dissolveDesc: 'Permanently delete this organization and all its resources.',
         dissolveConfirm: 'Type {name} to confirm dissolution:',
+
+        noEditPermission: 'You do not have permission to edit this organization\'s profile.',
     }
 };

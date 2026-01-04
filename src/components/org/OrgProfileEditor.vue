@@ -79,7 +79,7 @@ onMounted(loadProfile);
   <div class="space-y-6">
     <!-- Read Only Warning -->
     <div v-if="!isAdmin" class="p-4 bg-muted/50 rounded-lg text-sm text-center text-muted-foreground">
-      You do not have permission to edit this organization's profile.
+      {{ t('organization.noEditPermission') }}
     </div>
 
     <form @submit.prevent="saveProfile" :disabled="!isAdmin" :class="{'opacity-60 pointer-events-none': !isAdmin}">
