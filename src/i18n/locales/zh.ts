@@ -49,6 +49,8 @@ export const zh = {
         membersOnly: '仅成员',
         deleteConfirm: '确定要删除此项目吗？',
         contact: '联系方式',
+        prev: '上一页',
+        next: '下一页',
     },
     auth: {
         loginTitle: 'Open Profile Card',

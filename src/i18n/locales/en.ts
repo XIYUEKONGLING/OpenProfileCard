@@ -49,6 +49,8 @@ export const en = {
         membersOnly: 'Members Only',
         deleteConfirm: 'Are you sure you want to delete this item?',
         contact: 'Contact',
+        prev: 'Previous',
+        next: 'Next',
     },
     auth: {
         loginTitle: 'Open Profile Card',
