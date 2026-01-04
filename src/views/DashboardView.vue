@@ -38,7 +38,7 @@ import {
   Edit2, Plus, Briefcase,
   FolderGit2, Image as ImageIcon,
   Settings, Shield, BookOpen, Key,
-  Heart, Copy, Check, Ban, AlertTriangle, Trash2
+  Heart, Copy, Check, Ban, AlertTriangle, Trash2, ExternalLink
 } from 'lucide-vue-next';
 
 const { t, locale } = useI18n();
@@ -81,6 +81,11 @@ const joinDate = computed(() => {
   }
   return date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 });
+
+// --- Actions ---
+const goToEdit = (tab: string) => {
+  router.push({ path: '/dashboard/profile/edit', query: { tab } });
+};
 
 // --- Blocking Logic ---
 const isAccountBlocked = computed(() => {
@@ -223,7 +228,7 @@ const copyToClipboard = async (text: string, id: string) => {
 
     <div class="w-full animate-in fade-in slide-in-from-bottom-4 duration-700" :class="{'opacity-20 pointer-events-none select-none filter blur-sm': isAccountBlocked}">
 
-      <!-- HEADER BANNER (Fixed: Only show if valid background exists) -->
+      <!-- HEADER BANNER -->
       <div v-if="hasBackground" class="w-full h-48 md:h-64 bg-muted relative overflow-hidden group">
         <!-- Background Asset -->
         <AssetView
@@ -233,7 +238,7 @@ const copyToClipboard = async (text: string, id: string) => {
 
         <!-- Quick Edit Button (Overlay) -->
         <div class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Button variant="secondary" size="sm" class="shadow-lg backdrop-blur-md bg-background/50" @click="router.push('/dashboard/profile/edit')">
+          <Button variant="secondary" size="sm" class="shadow-lg backdrop-blur-md bg-background/50" @click="goToEdit('visuals')">
             <Edit2 class="size-3 mr-2" /> {{ t('common.edit') }}
           </Button>
         </div>
@@ -300,7 +305,7 @@ const copyToClipboard = async (text: string, id: string) => {
               <Button
                   class="w-full font-bold shadow-sm rounded-xl"
                   variant="outline"
-                  @click="router.push('/dashboard/profile/edit')"
+                  @click="goToEdit('basic')"
               >
                 {{ t('profile.editProfile') }}
               </Button>
@@ -328,15 +333,15 @@ const copyToClipboard = async (text: string, id: string) => {
               </div>
 
               <!-- Social Links -->
-              <div v-if="socials.length > 0" class="flex flex-col gap-2">
-                <div class="flex flex-wrap gap-2">
+              <div class="flex flex-col gap-2">
+                <div v-if="socials.length > 0" class="flex flex-wrap gap-2">
                   <a v-for="social in socials" :key="social.Id" :href="social.Url" target="_blank" class="size-9 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 hover:scale-110 transition-all border border-border">
                     <AssetView :asset="social.Icon" class-name="size-5" />
                   </a>
-                  <Button variant="outline" size="icon" class="size-9 rounded-full border-dashed opacity-50 hover:opacity-100" title="Manage Socials">
-                    <Edit2 class="size-3" />
-                  </Button>
                 </div>
+                <Button variant="ghost" size="sm" class="w-full text-xs text-muted-foreground border border-dashed border-border/50" @click="goToEdit('basic')">
+                  <Edit2 class="size-3 mr-2" /> {{ t('common.manage') }} {{ t('dashboard.resources') }}
+                </Button>
               </div>
 
               <Separator />
@@ -377,7 +382,6 @@ const copyToClipboard = async (text: string, id: string) => {
             <Tabs default-value="overview" class="w-full">
               <!-- Sticky Tab Bar with Rounded Tops -->
               <div class="sticky top-0 z-30 bg-background/95 backdrop-blur-md pb-0 pt-2 -mt-2 border-b border-border/60">
-                <!-- Fix: Added no-scrollbar class to hide native scrollbar -->
                 <TabsList class="no-scrollbar w-full justify-start h-auto p-0 bg-transparent rounded-none gap-2 overflow-x-auto">
 
                   <TabsTrigger
@@ -426,7 +430,7 @@ const copyToClipboard = async (text: string, id: string) => {
                 <div class="flex flex-col gap-4">
                   <div class="flex items-center justify-between">
                     <span class="text-xs font-bold uppercase tracking-wider text-muted-foreground">{{ t('dashboard.readme') }}</span>
-                    <Button variant="ghost" size="sm" class="h-6 text-xs">
+                    <Button variant="ghost" size="sm" class="h-6 text-xs" @click="goToEdit('content')">
                       <Edit2 class="size-3 mr-1" /> {{ t('common.edit') }}
                     </Button>
                   </div>
@@ -448,7 +452,7 @@ const copyToClipboard = async (text: string, id: string) => {
                             {{ t('dashboard.tellWorldDesc') }}
                           </p>
                         </div>
-                        <Button variant="outline" class="mt-2">{{ t('dashboard.createReadme') }}</Button>
+                        <Button variant="outline" class="mt-2" @click="goToEdit('content')">{{ t('dashboard.createReadme') }}</Button>
                       </div>
                     </CardContent>
                   </Card>
@@ -580,12 +584,14 @@ const copyToClipboard = async (text: string, id: string) => {
               <TabsContent value="resources" class="animate-in fade-in slide-in-from-bottom-2 duration-500 pt-6 space-y-12">
 
                 <!-- 1. Sponsorships (If any) -->
-                <section v-if="sponsorships.length > 0">
+                <section>
                   <div class="flex justify-between items-center mb-4">
                     <h3 class="font-bold text-lg flex items-center gap-2"><Heart class="size-4 text-pink-500" /> {{ t('dashboard.sponsorships') }}</h3>
-                    <Button variant="ghost" size="sm"><Plus class="size-4 mr-2" /> {{ t('common.manage') }}</Button>
+                    <Button variant="ghost" size="sm" @click="goToEdit('basic')">
+                      <ExternalLink class="size-4 mr-2" /> {{ t('common.manage') }}
+                    </Button>
                   </div>
-                  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                  <div v-if="sponsorships.length > 0" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                     <Card v-for="spon in sponsorships" :key="spon.Id" class="hover:border-pink-500/30 transition-colors">
                       <CardContent class="p-4 flex items-center gap-4">
                         <AssetView :asset="spon.Icon" class-name="size-10 rounded-lg" />
@@ -597,6 +603,9 @@ const copyToClipboard = async (text: string, id: string) => {
                         </div>
                       </CardContent>
                     </Card>
+                  </div>
+                  <div v-else class="text-sm text-muted-foreground italic border border-dashed p-4 rounded-lg text-center">
+                    No sponsorships enabled.
                   </div>
                 </section>
 
