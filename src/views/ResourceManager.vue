@@ -31,7 +31,7 @@ const items = ref<any[]>([]);
 const isLoading = ref(false);
 const isSaving = ref(false);
 const showDialog = ref(false);
-const editingItem = ref<any>(null); // If null, creating new
+const editingItem = ref<any>(null);
 
 // --- Config ---
 const config = computed(() => {
@@ -63,29 +63,38 @@ const fetchItems = async () => {
 };
 
 const openCreate = () => {
-  editingItem.value = {}; // Empty object for new
+  editingItem.value = {};
   showDialog.value = true;
 };
 
 const openEdit = (item: any) => {
-  editingItem.value = JSON.parse(JSON.stringify(item)); // Deep copy
+  editingItem.value = JSON.parse(JSON.stringify(item));
   showDialog.value = true;
+};
+
+// Helper to clean empty strings to null
+const sanitizePayload = (obj: any) => {
+  const clean = { ...obj };
+  for (const key in clean) {
+    if (clean[key] === '') clean[key] = null;
+  }
+  return clean;
 };
 
 const handleSave = async (payload: any) => {
   isSaving.value = true;
+  const cleanPayload = sanitizePayload(payload);
+
   try {
     if (editingItem.value.Id) {
-      // Update
       await httpClient(`${config.value.api}/${editingItem.value.Id}`, {
         method: 'PATCH',
-        body: JSON.stringify(payload)
+        body: JSON.stringify(cleanPayload)
       });
     } else {
-      // Create
       await httpClient(config.value.api, {
         method: 'POST',
-        body: JSON.stringify(payload)
+        body: JSON.stringify(cleanPayload)
       });
     }
     ui.notify(t('common.success'), 'success');
@@ -99,7 +108,7 @@ const handleSave = async (payload: any) => {
 };
 
 const handleDelete = async (id: string) => {
-  if (!confirm('Are you sure you want to delete this item?')) return;
+  if (!confirm(t('common.deleteConfirm'))) return;
   try {
     await httpClient(`${config.value.api}/${id}`, { method: 'DELETE' });
     ui.notify(t('common.success'), 'success');
@@ -109,13 +118,11 @@ const handleDelete = async (id: string) => {
   }
 };
 
-// Watch resource change to refetch
 watch(() => props.resource, fetchItems, { immediate: true });
 </script>
 
 <template>
   <div class="max-w-4xl mx-auto pb-10 space-y-6">
-    <!-- Header -->
     <div class="flex items-center justify-between gap-4">
       <div class="flex items-center gap-2">
         <Button variant="ghost" size="icon" @click="router.push('/dashboard')" class="rounded-full">
@@ -123,7 +130,7 @@ watch(() => props.resource, fetchItems, { immediate: true });
         </Button>
         <div>
           <h1 class="text-2xl font-black tracking-tight">{{ config.title }}</h1>
-          <p class="text-muted-foreground text-sm">Manage your {{ props.resource }}</p>
+          <p class="text-muted-foreground text-sm">{{ t('common.manage') }} {{ config.title }}</p>
         </div>
       </div>
       <Button @click="openCreate" class="font-bold">
@@ -131,22 +138,20 @@ watch(() => props.resource, fetchItems, { immediate: true });
       </Button>
     </div>
 
-    <!-- List -->
     <div v-if="isLoading" class="space-y-4">
       <div v-for="i in 3" :key="i" class="h-24 bg-muted rounded-xl animate-pulse"></div>
     </div>
 
     <div v-else-if="items.length === 0" class="text-center py-12 border-2 border-dashed border-border rounded-xl bg-muted/10">
-      <p class="text-muted-foreground">No items found.</p>
-      <Button variant="link" @click="openCreate">Create one now</Button>
+      <p class="text-muted-foreground">{{ t('dashboard.noAssets') }}</p>
+      <Button variant="link" @click="openCreate">{{ t('common.create') }}</Button>
     </div>
 
     <div v-else class="grid gap-4">
       <Card v-for="item in items" :key="item.Id" class="group">
         <CardContent class="p-4 flex items-center gap-4">
-          <!-- Generic Asset Preview (Logo/Icon/Image) -->
           <div v-if="item.Logo || item.Icon || item.Image" class="size-12 rounded-lg bg-muted border flex items-center justify-center shrink-0 overflow-hidden">
-            <AssetView :asset="item.Logo || item.Icon || item.Image" class-name="w-full h-full object-cover" />
+            <AssetView :asset="item.Logo || item.Icon || item.Image" class-name="w-full h-full object-contain" />
           </div>
 
           <div class="flex-1 min-w-0">
@@ -168,12 +173,11 @@ watch(() => props.resource, fetchItems, { immediate: true });
       </Card>
     </div>
 
-    <!-- Edit Dialog -->
     <Dialog v-model:open="showDialog">
       <DialogContent class="sm:max-w-lg max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{{ editingItem?.Id ? 'Edit' : 'Add' }} {{ config.title }}</DialogTitle>
-          <DialogDescription>Make changes to your item here.</DialogDescription>
+          <DialogTitle>{{ editingItem?.Id ? t('common.edit') : t('common.add') }} {{ config.title }}</DialogTitle>
+          <DialogDescription>{{ t('common.manage') }}</DialogDescription>
         </DialogHeader>
 
         <component
@@ -183,10 +187,6 @@ watch(() => props.resource, fetchItems, { immediate: true });
             @save="handleSave"
             :is-saving="isSaving"
         />
-        <div v-else-if="!CurrentForm" class="text-destructive">
-          Form component not found for {{ props.resource }}
-        </div>
-
       </DialogContent>
     </Dialog>
   </div>
