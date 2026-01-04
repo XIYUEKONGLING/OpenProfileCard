@@ -195,7 +195,6 @@ onMounted(() => {
 // --- Helpers ---
 
 // Helper for Contact Icons
-// Fix: Accept any type to avoid TS errors if type mismatch occurs at runtime, or cast
 const getContactIcon = (type: any) => {
   const t = Number(type);
   switch (t) {
