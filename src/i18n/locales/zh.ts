@@ -53,6 +53,7 @@ export const zh = {
         next: '下一页',
         refresh: '刷新',
         close: '关闭',
+        search: '搜索',
 
         total: '总共',
         expired: '过期',

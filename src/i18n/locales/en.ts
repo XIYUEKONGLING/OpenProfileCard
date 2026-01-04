@@ -53,6 +53,7 @@ export const en = {
         next: 'Next',
         refresh: 'Refresh',
         close: 'Close',
+        search: 'Search',
 
         total: 'Total',
         expired: 'Expired',
