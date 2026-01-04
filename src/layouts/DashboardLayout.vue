@@ -199,7 +199,7 @@ const themeOptions = [
 
                 <router-link
                     v-if="!isCollapsed && (org.MyRole === MemberRole.Owner || org.MyRole === MemberRole.Admin)"
-                    :to="`/orgs/${org.AccountName}/settings`"
+                    :to="`/dashboard/orgs/${org.AccountName}/settings`"
                     class="ml-auto opacity-0 group-hover:opacity-100 p-1 hover:bg-background rounded-md transition-all"
                     @click.stop
                 >
