@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted, computed } from 'vue';
+import { useRouter } from 'vue-router';
 import { useI18n } from '@/i18n';
 import { httpClient } from '@/api/client';
 import { useAuthStore } from '@/stores/auth';
@@ -14,7 +15,8 @@ import {
   type GalleryItemDto,
   type SocialLinkDto,
   type CertificateDto,
-  type SponsorshipItemDto, AccountStatus
+  type SponsorshipItemDto,
+  AccountStatus
 } from '@/api/types';
 
 // UI Components
@@ -40,6 +42,7 @@ import {
 const { t, locale } = useI18n();
 const auth = useAuthStore();
 const ui = useUIStore();
+const router = useRouter();
 
 // --- State ---
 const isLoading = ref(true);
@@ -58,6 +61,9 @@ const copiedId = ref<string | null>(null);
 // --- Computed ---
 const renderedContent = computed(() => renderMarkdown(profile.value?.Content));
 
+// 核心逻辑：判断账户类型
+const isPersonal = computed(() => auth.user?.Type === 'Personal');
+
 const joinDate = computed(() => {
   if (!auth.user?.CreatedAt) return '';
   const date = new Date(auth.user.CreatedAt);
@@ -70,46 +76,35 @@ const joinDate = computed(() => {
 // --- Blocking Logic ---
 const isAccountBlocked = computed(() => {
   if (!auth.user) return false;
-  // const status = auth.user?.Status;
-  // return status !== 'Active';
   return Number(auth.user.Status) !== AccountStatus.Active;
 });
 
 const blockReason = computed(() => {
   if (!auth.user) return null;
-  
-  // const status = auth.user?.Status;
-  // switch (status) {
-  //   case 'Suspended': return { title: t('dashboard.accountSuspended'), desc: t('dashboard.accountSuspendedDesc'), icon: AlertTriangle, color: 'text-orange-500' };
-  //   case 'Banned': return { title: t('dashboard.accountBanned'), desc: t('dashboard.accountBannedDesc'), icon: Ban, color: 'text-destructive' };
-  //   case 'PendingDeletion': return { title: t('dashboard.accountPendingDeletion'), desc: t('dashboard.accountPendingDeletionDesc'), icon: Trash2, color: 'text-muted-foreground' };
-  //   default: return null;
-  // }
-
   const status = Number(auth.user.Status);
   switch (status) {
-    case AccountStatus.Suspended: // Suspended
+    case AccountStatus.Suspended:
       return {
         title: t('dashboard.accountSuspended'),
         desc: t('dashboard.accountSuspendedDesc'),
         icon: AlertTriangle,
         color: 'text-orange-500'
       };
-    case AccountStatus.Banned: // Banned
+    case AccountStatus.Banned:
       return {
         title: t('dashboard.accountBanned'),
         desc: t('dashboard.accountBannedDesc'),
         icon: Ban,
         color: 'text-destructive'
       };
-    case AccountStatus.PendingDeletion: // PendingDeletion
+    case AccountStatus.PendingDeletion:
       return {
         title: t('dashboard.accountPendingDeletion'),
         desc: t('dashboard.accountPendingDeletionDesc'),
         icon: Trash2,
         color: 'text-muted-foreground'
       };
-    case AccountStatus.Deactivated: // Deactivated
+    case AccountStatus.Deactivated:
       return {
         title: t('common.notice'),
         desc: t('dashboard.accountDeactivated'),
@@ -123,8 +118,6 @@ const blockReason = computed(() => {
 
 // --- Data Fetching ---
 const fetchData = async () => {
-  // If blocked, maybe skip fetching sensitive data, or fetch anyway to show read-only
-  // For now, we fetch everything, visual blocker handles the UX
   isLoading.value = true;
   try {
     const [
@@ -209,7 +202,7 @@ const copyToClipboard = async (text: string, id: string) => {
         </p>
 
         <div class="flex flex-col gap-3 w-full">
-          <Button v-if="auth.user?.Status === 'PendingDeletion'" class="w-full font-bold" variant="default">
+          <Button v-if="auth.user?.Status === AccountStatus.PendingDeletion" class="w-full font-bold" variant="default">
             {{ t('dashboard.restoreAccount') }}
           </Button>
           <Button variant="outline" class="w-full font-bold">
@@ -274,7 +267,12 @@ const copyToClipboard = async (text: string, id: string) => {
             {{ profile.Description }}
           </div>
 
-          <Button class="w-full font-bold shadow-sm rounded-xl" variant="outline">
+          <!-- Edit Profile Button (Fixed Router Link) -->
+          <Button
+              class="w-full font-bold shadow-sm rounded-xl"
+              variant="outline"
+              @click="router.push('/dashboard/profile/edit')"
+          >
             {{ t('profile.editProfile') }}
           </Button>
 
@@ -368,7 +366,9 @@ const copyToClipboard = async (text: string, id: string) => {
                   <Badge variant="secondary" class="ml-2 rounded-full px-1.5 h-5 min-w-5 text-[10px] font-black">{{ projects.length }}</Badge>
                 </TabsTrigger>
 
+                <!-- Experience: Only for Personal Accounts -->
                 <TabsTrigger
+                    v-if="isPersonal"
                     value="experience"
                     class="relative rounded-t-lg rounded-b-none border border-transparent data-[state=active]:border-border/60 data-[state=active]:border-b-background data-[state=active]:bg-background text-muted-foreground px-4 py-3 font-bold text-sm transition-all -mb-px hover:text-foreground"
                 >
@@ -484,8 +484,8 @@ const copyToClipboard = async (text: string, id: string) => {
               </div>
             </TabsContent>
 
-            <!-- TAB: Experience (Timeline) -->
-            <TabsContent value="experience" class="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500 pt-6">
+            <!-- TAB: Experience (Timeline) - ONLY FOR PERSONAL -->
+            <TabsContent v-if="isPersonal" value="experience" class="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500 pt-6">
               <!-- Work -->
               <section>
                 <div class="flex items-center justify-between mb-6">
