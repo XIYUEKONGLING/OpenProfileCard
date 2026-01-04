@@ -6,25 +6,25 @@ import { httpClient } from '@/api/client';
 import { type OrganizationDto, MemberRole } from '@/api/types';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-vue-next';
-import OrgProfileEditor from '@/components/org/OrgProfileEditor.vue';
+import OrgSettings from '@/components/org/OrgSettings.vue';
 
 const props = defineProps<{ accountName: string }>();
 const router = useRouter();
 const { t } = useI18n();
 
+const myRole = ref<MemberRole | null>(null);
 const isLoading = ref(true);
-const isAdmin = ref(false);
 
 const checkPermission = async () => {
   try {
     const org = await httpClient<OrganizationDto>(`/orgs/${props.accountName}`);
-    if (org.MyRole === MemberRole.Owner || org.MyRole === MemberRole.Admin) {
-      isAdmin.value = true;
-    } else {
-      // Redirect if not admin
+    myRole.value = org.MyRole;
+
+    // Client-side guard (API also checks)
+    if (org.MyRole !== MemberRole.Owner && org.MyRole !== MemberRole.Admin) {
       router.push(`/dashboard/orgs/${props.accountName}`);
     }
-  } catch {
+  } catch (e) {
     router.push('/dashboard');
   } finally {
     isLoading.value = false;
@@ -41,16 +41,16 @@ onMounted(checkPermission);
         <ArrowLeft class="size-5" />
       </Button>
       <div>
-        <h1 class="text-2xl font-black tracking-tight">{{ t('profile.editProfile') }}</h1>
+        <h1 class="text-2xl font-black tracking-tight">{{ t('organization.settings') }}</h1>
         <p class="text-sm text-muted-foreground">@{{ accountName }}</p>
       </div>
     </div>
 
-    <div v-if="!isLoading && isAdmin">
-      <OrgProfileEditor
+    <div v-if="!isLoading && myRole !== null">
+      <OrgSettings
           :account-name="accountName"
-          :is-admin="isAdmin"
-          @saved="router.push(`/dashboard/orgs/${accountName}`)"
+          :my-role="myRole"
+          @deleted="router.push('/dashboard')"
       />
     </div>
   </div>
