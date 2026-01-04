@@ -17,6 +17,7 @@ export interface UserFilterDto {
     Search?: string;
     Status?: AccountStatus;
     Role?: AccountRole;
+    Type?: AccountType;
 }
 
 export interface CreateUserRequestDto {
