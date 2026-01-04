@@ -22,7 +22,7 @@ import {
   type SocialLinkDto,
   type FollowerDto,
   AccountType,
-  AssetType, type ProfilePrivacyDto
+  AssetType, type ProfilePrivacyDto, type BlockDto
 } from '@/api/types';
 
 // UI Components
@@ -54,7 +54,7 @@ import {
 import {
   MapPin, Link as LinkIcon, Building2, Calendar,
   MoreHorizontal, UserPlus, UserMinus, Ban, Cake,
-  Briefcase, FolderGit2, Users, BookOpen, Heart, Lock,
+  Briefcase, FolderGit2, Users, BookOpen, Heart, Lock, ChevronLeft, ChevronRight,
   Image as ImageIcon, GraduationCap, Key, Mail, Download, Copy, Check, User, Clock, ShieldCheck, Shield
 } from 'lucide-vue-next';
 
@@ -119,6 +119,66 @@ const hasBackground = computed(() =>
 const isFollowersHidden = computed(() => !isMe.value && privacy.value?.ShowFollowers === false);
 const isFollowingHidden = computed(() => !isMe.value && privacy.value?.ShowFollowing === false);
 
+// --- Members Pagination & Actions State ---
+const membersPage = ref(1);
+const membersPageSize = 10;
+const followingIds = ref<Set<string>>(new Set());
+const blockedIds = ref<Set<string>>(new Set());
+const memberActionLoading = ref<Record<string, boolean>>({});
+
+const paginatedMembers = computed(() => {
+  const start = (membersPage.value - 1) * membersPageSize;
+  return members.value.slice(start, start + membersPageSize);
+});
+
+const totalMembersPages = computed(() => Math.ceil(members.value.length / membersPageSize));
+
+const isFollowingMember = (accountId: string) => followingIds.value.has(accountId);
+const isBlockedMember = (accountId: string) => blockedIds.value.has(accountId);
+
+const handleMemberFollow = async (member: OrganizationMemberDto) => {
+  if (!auth.isAuthenticated || isStatic.value) return;
+  const id = member.AccountId;
+  const name = member.AccountName;
+  memberActionLoading.value[name] = true;
+  try {
+    if (isFollowingMember(id)) {
+      await httpClient(`/profiles/${name}/follow`, { method: 'DELETE' });
+      followingIds.value.delete(id);
+    } else {
+      await httpClient(`/profiles/${name}/follow`, { method: 'POST' });
+      followingIds.value.add(id);
+    }
+    ui.notify(t('common.success'), 'success');
+  } catch (e: any) {
+    ui.notify(e.message, 'error');
+  } finally {
+    memberActionLoading.value[name] = false;
+  }
+};
+
+const handleMemberBlock = async (member: OrganizationMemberDto) => {
+  if (!auth.isAuthenticated || isStatic.value) return;
+  const id = member.AccountId;
+  const name = member.AccountName;
+  memberActionLoading.value[name] = true;
+  try {
+    if (isBlockedMember(id)) {
+      await httpClient(`/profiles/${name}/block`, { method: 'DELETE' });
+      blockedIds.value.delete(id);
+    } else {
+      await httpClient(`/profiles/${name}/block`, { method: 'POST' });
+      blockedIds.value.add(id);
+      followingIds.value.delete(id);
+    }
+    ui.notify(t('common.success'), 'success');
+  } catch (e: any) {
+    ui.notify(e.message, 'error');
+  } finally {
+    memberActionLoading.value[name] = false;
+  }
+};
+
 // --- Actions ---
 
 const fetchPublicData = async () => {
@@ -156,6 +216,15 @@ const fetchPublicData = async () => {
 
     if (auth.isAuthenticated && !isStatic.value && auth.user?.AccountName !== profileData.AccountName) {
       promises.push(httpClient<FollowStatusDto>(`/profiles/${id}/follow`).then(res => followStatus.value = res));
+    }
+
+    if (auth.isAuthenticated && !isStatic.value) {
+      const [myFollowing, myBlocks] = await Promise.all([
+        httpClient<FollowerDto[]>('/me/following'),
+        httpClient<BlockDto[]>('/me/blocks')
+      ]);
+      followingIds.value = new Set(myFollowing.map(f => f.AccountId));
+      blockedIds.value = new Set(myBlocks.map(b => b.AccountId));
     }
 
     await Promise.all(promises);
@@ -565,38 +634,84 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
 
               <!-- TAB: Members (Organization Only) -->
               <TabsContent v-if="isOrg" value="members" class="animate-in fade-in slide-in-from-bottom-2">
-                <div v-if="members.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  <router-link
-                      v-for="member in members"
-                      :key="member.AccountId"
-                      :to="`/${member.AccountName}`"
-                      class="group"
-                  >
-                    <Card class="hover:border-brand-purple/50 transition-all duration-300 hover:shadow-md">
-                      <CardContent class="p-4 flex items-center gap-4">
-                        <div class="size-12 rounded-full bg-muted border overflow-hidden shrink-0">
-                          <AssetView
-                              :asset="member.Avatar"
-                              :fallback-name="member.DisplayName"
-                              class-name="w-full h-full object-cover"
-                          />
+                <div v-if="members.length > 0" class="space-y-4">
+                  <div class="flex flex-col divide-y border rounded-xl overflow-hidden bg-card">
+                    <div
+                        v-for="member in paginatedMembers"
+                        :key="member.AccountId"
+                        class="group flex items-center justify-between p-4 hover:bg-muted/50 transition-colors"
+                        :class="{ 'opacity-60': isBlockedMember(member.AccountId) }"
+                    >
+                      <router-link :to="`/${member.AccountName}`" class="flex items-center gap-4 min-w-0 flex-1">
+                        <div class="size-12 rounded-full bg-muted border overflow-hidden shrink-0 relative">
+                          <AssetView :asset="member.Avatar" :fallback-name="member.DisplayName" class-name="w-full h-full object-cover" />
+                          <div v-if="isBlockedMember(member.AccountId)" class="absolute inset-0 bg-background/60 flex items-center justify-center">
+                            <Ban class="size-5 text-destructive" />
+                          </div>
                         </div>
-                        <div class="min-w-0 flex-1">
-                          <div class="font-bold truncate group-hover:text-brand-purple transition-colors">
+                        <div class="min-w-0">
+                          <div class="font-bold truncate group-hover:text-brand-purple transition-colors flex items-center gap-2">
                             {{ member.DisplayName }}
+                            <Badge v-if="isBlockedMember(member.AccountId)" variant="destructive" class="text-[10px] h-4 px-1">已拉黑</Badge>
+                            <Badge v-else-if="member.Title" variant="secondary" class="text-[10px] px-1.5 py-0 h-4 font-medium">{{ member.Title }}</Badge>
                           </div>
-                          <div class="text-xs text-muted-foreground truncate">
-                            @{{ member.AccountName }}
-                          </div>
-                          <div v-if="member.Title" class="mt-1">
-                            <Badge variant="secondary" class="text-[10px] px-1.5 py-0 h-4 font-medium">
-                              {{ member.Title }}
-                            </Badge>
-                          </div>
+                          <div class="text-xs text-muted-foreground truncate">@{{ member.AccountName }}</div>
                         </div>
-                      </CardContent>
-                    </Card>
-                  </router-link>
+                      </router-link>
+                      
+                      <div v-if="auth.isAuthenticated && auth.user?.AccountName !== member.AccountName" class="flex items-center gap-2 ml-4">
+                        <Button
+                            v-if="!isBlockedMember(member.AccountId)"
+                            size="sm"
+                            :variant="isFollowingMember(member.AccountId) ? 'outline' : 'default'"
+                            class="h-8 rounded-full px-3 text-xs"
+                            :disabled="memberActionLoading[member.AccountName]"
+                            @click.stop="handleMemberFollow(member)"
+                        >
+                          <component :is="isFollowingMember(member.AccountId) ? UserMinus : UserPlus" class="size-3 mr-1" />
+                          {{ isFollowingMember(member.AccountId) ? t('profile.unfollow') : t('profile.follow') }}
+                        </Button>
+                        
+                        <DropdownMenu>
+                          <DropdownMenuTrigger as-child>
+                            <Button variant="ghost" size="icon" class="size-8 rounded-full"><MoreHorizontal class="size-4" /></Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                                class="cursor-pointer"
+                                :class="isBlockedMember(member.AccountId) ? 'text-foreground' : 'text-destructive focus:text-destructive'"
+                                @click="handleMemberBlock(member)"
+                            >
+                              <Ban class="size-4 mr-2" />
+                              {{ isBlockedMember(member.AccountId) ? t('social.unblock') : t('social.block') }}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div v-if="totalMembersPages > 1" class="flex items-center justify-center gap-2 pt-4">
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        :disabled="membersPage === 1"
+                        @click="membersPage--"
+                        class="rounded-full size-8"
+                    >
+                      <ChevronLeft class="size-4" />
+                    </Button>
+                    <span class="text-xs font-medium w-12 text-center">{{ membersPage }} / {{ totalMembersPages }}</span>
+                    <Button
+                        variant="outline"
+                        size="icon"
+                        :disabled="membersPage === totalMembersPages"
+                        @click="membersPage++"
+                        class="rounded-full size-8"
+                    >
+                      <ChevronRight class="size-4" />
+                    </Button>
+                  </div>
                 </div>
 
                 <div v-else class="text-center py-12 text-muted-foreground border-2 border-dashed rounded-xl">
@@ -604,7 +719,6 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
                   <p>{{ t('publicProfile.noMembers') }}</p>
                 </div>
               </TabsContent>
-
               <!-- TAB: Resources -->
               <TabsContent value="resources" class="animate-in fade-in slide-in-from-bottom-2 space-y-10">
                 <!-- Gallery -->

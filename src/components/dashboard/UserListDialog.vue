@@ -7,7 +7,7 @@ import { useAuthStore } from '@/stores/auth';
 import { useServerStore } from '@/stores/server';
 import type { FollowerDto } from '@/api/types';
 
-// UI
+// UI Components
 import {
   Dialog,
   DialogContent,
@@ -27,7 +27,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import AssetView from '@/components/ui/AssetView.vue';
-import { Loader2, UserMinus, UserPlus, Ban, Lock } from 'lucide-vue-next';
+import { Loader2, UserMinus, UserPlus, Ban, Lock, ChevronLeft, ChevronRight } from 'lucide-vue-next';
 
 const props = defineProps<{
   open: boolean;
@@ -50,54 +50,54 @@ const myFollowingIds = ref<Set<string>>(new Set());
 const isLoading = ref(false);
 const actionLoading = ref<string | null>(null);
 
+// Pagination State
+const currentPage = ref(1);
+const pageSize = 8;
+
 // Confirmation Dialog State
 const confirmOpen = ref(false);
 const pendingAction = ref<'unfollow' | 'block' | null>(null);
 const pendingUser = ref<FollowerDto | null>(null);
 
-// Computed
+// --- Computed ---
 const title = computed(() => props.type === 'followers' ? t('dashboard.followers') : t('dashboard.following'));
+
+const totalPages = computed(() => Math.ceil(users.value.length / pageSize));
+
+const paginatedUsers = computed(() => {
+  const start = (currentPage.value - 1) * pageSize;
+  return users.value.slice(start, start + pageSize);
+});
+
+const canInteract = computed(() => auth.isAuthenticated && server.info?.Dynamic);
+
 const emptyText = computed(() => {
   if (props.type === 'followers') {
     return props.isMe ? t('social.emptyFollowers') : t('social.emptyFollowersOther');
   }
   return props.isMe ? t('social.emptyFollowing') : t('social.emptyFollowingOther');
 });
-// Check if we can perform actions (Logged in + Dynamic Server)
-const canInteract = computed(() => {
-  return auth.isAuthenticated && server.info?.Dynamic;
-});
 
-// --- Data Fetching ---
+// --- Actions ---
 const fetchList = async () => {
   isLoading.value = true;
-  users.value = [];
-  myFollowingIds.value.clear();
-
+  currentPage.value = 1;
   try {
     // Determine Endpoint
     const base = props.accountName ? `/profiles/${props.accountName}` : '/me';
     const endpoint = props.type === 'followers' ? `${base}/followers` : `${base}/following`;
 
-    const promises: Promise<any>[] = [httpClient<FollowerDto[]>(endpoint)];
-
-    // If logged in, fetch my following list to determine button states
-    if (canInteract.value) {
-      promises.push(httpClient<FollowerDto[]>('/me/following'));
-    }
-
-    const [listData, followingData] = await Promise.all(promises);
+    const [listData, followingData] = await Promise.all([
+      httpClient<FollowerDto[]>(endpoint),
+      canInteract.value ? httpClient<FollowerDto[]>('/me/following') : Promise.resolve([])
+    ]);
 
     users.value = listData || [];
-
-    if (followingData) {
-      followingData.forEach((u: any) => myFollowingIds.value.add(u.AccountId));
-    }
-
+    myFollowingIds.value = new Set(followingData?.map(u => u.AccountId) || []);
   } catch (e) {
     console.error(e);
     ui.notify('Failed to load list', 'error');
-    users.value = [];
+    // users.value = [];
   } finally {
     isLoading.value = false;
   }
@@ -116,12 +116,11 @@ const executeToggleFollow = async (user: FollowerDto) => {
       if (!props.accountName && props.type === 'following') {
         users.value = users.value.filter(u => u.AccountId !== user.AccountId);
       }
-      ui.notify(t('common.success'), 'success');
     } else {
       await httpClient(`/profiles/${user.AccountName}/follow`, { method: 'POST' });
       myFollowingIds.value.add(user.AccountId);
-      ui.notify(t('common.success'), 'success');
     }
+    ui.notify(t('common.success'), 'success');
     emit('change');
   } catch (e: any) {
     ui.notify(e.message, 'error');
@@ -135,11 +134,7 @@ const executeBlock = async (user: FollowerDto) => {
   actionLoading.value = user.AccountId;
   try {
     await httpClient(`/profiles/${user.AccountName}/block`, { method: 'POST' });
-    // If viewing my own lists, remove the user
-    if (!props.accountName) {
-      users.value = users.value.filter(u => u.AccountId !== user.AccountId);
-    }
-    myFollowingIds.value.delete(user.AccountId);
+    users.value = users.value.filter(u => u.AccountId !== user.AccountId);
     ui.notify(t('common.success'), 'success');
     emit('change');
   } catch (e: any) {
@@ -151,8 +146,7 @@ const executeBlock = async (user: FollowerDto) => {
 };
 
 const onToggleFollowClick = (user: FollowerDto) => {
-  const isFollowing = myFollowingIds.value.has(user.AccountId);
-  if (isFollowing) {
+  if (myFollowingIds.value.has(user.AccountId)) {
     pendingUser.value = user;
     pendingAction.value = 'unfollow';
     confirmOpen.value = true;
@@ -173,9 +167,8 @@ const onConfirm = () => {
   else if (pendingAction.value === 'block') executeBlock(pendingUser.value);
 };
 
-watch(() => props.open, (isOpen) => {
-  if (isOpen) fetchList();
-  else setTimeout(() => { users.value = []; }, 300);
+watch(() => props.open, (val) => {
+  if (val) fetchList();
 });
 
 const close = () => emit('update:open', false);
@@ -186,7 +179,7 @@ const close = () => emit('update:open', false);
     <DialogContent class="sm:max-w-md max-h-[80vh] flex flex-col p-0 gap-0 overflow-hidden">
       <DialogHeader class="p-6 pb-2 shrink-0">
         <DialogTitle>{{ title }}</DialogTitle>
-        <DialogDescription class="hidden">List of users</DialogDescription>
+        <DialogDescription class="hidden">User list</DialogDescription>
       </DialogHeader>
 
       <div class="flex-1 overflow-y-auto p-6 pt-2">
@@ -217,12 +210,10 @@ const close = () => emit('update:open', false);
         </div>
 
         <div v-else class="space-y-4">
-          <div v-for="user in users" :key="user.AccountId" class="flex items-center justify-between group">
-            <div class="flex items-center gap-3 overflow-hidden">
-              <router-link :to="`/${user.AccountName}`" @click="close">
-                <div class="size-10 rounded-full bg-muted border border-border overflow-hidden shrink-0">
-                  <AssetView :asset="user.Avatar" :fallback-name="user.DisplayName" class-name="w-full h-full" />
-                </div>
+          <div v-for="user in paginatedUsers" :key="user.AccountId" class="flex items-center justify-between group">
+            <div class="flex items-center gap-3 min-w-0">
+              <router-link :to="`/${user.AccountName}`" @click="close" class="shrink-0">
+                <AssetView :asset="user.Avatar" :fallback-name="user.DisplayName" class-name="size-10 rounded-full border" />
               </router-link>
               <div class="min-w-0">
                 <router-link :to="`/${user.AccountName}`" @click="close" class="font-bold truncate hover:underline block">
@@ -234,33 +225,27 @@ const close = () => emit('update:open', false);
 
             <!-- Actions (Only if logged in and dynamic) -->
             <div v-if="canInteract && user.AccountName !== auth.user?.AccountName" class="flex items-center gap-1">
-              <Button
-                  variant="ghost"
-                  size="icon"
-                  class="size-8"
-                  :class="myFollowingIds.has(user.AccountId) ? 'text-muted-foreground' : 'text-brand-blue'"
-                  :disabled="!!actionLoading"
-                  @click="onToggleFollowClick(user)"
-              >
+              <Button variant="ghost" size="icon" class="size-8" @click="onToggleFollowClick(user)" :disabled="!!actionLoading">
                 <Loader2 v-if="actionLoading === user.AccountId" class="size-4 animate-spin" />
-                <template v-else>
-                  <UserMinus v-if="myFollowingIds.has(user.AccountId)" class="size-4" />
-                  <UserPlus v-else class="size-4" />
-                </template>
+                <component v-else :is="myFollowingIds.has(user.AccountId) ? UserMinus : UserPlus" class="size-4" :class="{'text-brand-blue': !myFollowingIds.has(user.AccountId)}" />
               </Button>
-
-              <Button
-                  variant="ghost"
-                  size="icon"
-                  class="size-8 text-muted-foreground hover:text-destructive opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
-                  :disabled="!!actionLoading"
-                  @click="onBlockClick(user)"
-              >
+              <Button variant="ghost" size="icon" class="size-8 hover:text-destructive" @click="onBlockClick(user)">
                 <Ban class="size-4" />
               </Button>
             </div>
           </div>
         </div>
+      </div>
+
+      <!-- Pagination Footer -->
+      <div v-if="totalPages > 1" class="p-4 border-t bg-muted/20 flex items-center justify-between shrink-0">
+        <Button variant="ghost" size="sm" :disabled="currentPage === 1" @click="currentPage--">
+          <ChevronLeft class="size-4 mr-1" /> {{ t('common.prev') || 'Prev' }}
+        </Button>
+        <span class="text-xs font-mono">{{ currentPage }} / {{ totalPages }}</span>
+        <Button variant="ghost" size="sm" :disabled="currentPage === totalPages" @click="currentPage++">
+          {{ t('common.next') || 'Next' }} <ChevronRight class="size-4 ml-1" />
+        </Button>
       </div>
     </DialogContent>
   </Dialog>
@@ -270,7 +255,7 @@ const close = () => emit('update:open', false);
       <AlertDialogHeader>
         <AlertDialogTitle>{{ pendingAction === 'block' ? t('social.block') : t('profile.unfollow') }}</AlertDialogTitle>
         <AlertDialogDescription>
-          {{ pendingAction === 'block' ? t('social.blockConfirm', { name: pendingUser?.DisplayName }) : t('social.unfollowConfirm', { name: pendingUser?.DisplayName }) }}
+          {{ pendingAction === 'block' ? t('social.blockConfirm', { name: pendingUser?.DisplayName || '' }) : t('social.unfollowConfirm', { name: pendingUser?.DisplayName || '' }) }}
         </AlertDialogDescription>
       </AlertDialogHeader>
       <AlertDialogFooter>
