@@ -125,6 +125,8 @@ export const en = {
         socials: 'Social Links',
         addSocial: 'Add Social Link',
         noSocials: 'No social links added.',
+        addContact: 'Add Contact Info',
+        noSponsorships: 'No sponsorships enabled.',
     },
     profile: {
         noBio: 'No bio provided yet.',
@@ -170,7 +172,7 @@ export const en = {
         description: 'Description',
         projectName: 'Project Name',
         summary: 'Summary',
-        platform: 'Platform',
+        platform: 'Platform Name',
         url: 'URL',
         caption: 'Caption',
         actionUrl: 'Action URL',

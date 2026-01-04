@@ -17,9 +17,10 @@ import {
   type CertificateDto,
   type SponsorshipItemDto,
   type FollowCountsDto,
+  type ContactMethodDto,
   AccountStatus,
   AccountType,
-  AssetType, type ContactMethodDto
+  AssetType
 } from '@/api/types';
 
 // UI Components
@@ -39,7 +40,8 @@ import {
   Edit2, Plus, Briefcase,
   FolderGit2, Image as ImageIcon,
   Settings, Shield, BookOpen, Key,
-  Heart, Copy, Check, Ban, AlertTriangle, Trash2, ExternalLink
+  Heart, Copy, Check, Ban, AlertTriangle, Trash2, ExternalLink,
+  Phone, Mail, MessageSquare, MapPin as MapIcon, Link as LinkIcon2
 } from 'lucide-vue-next';
 
 const { t, locale } = useI18n();
@@ -193,8 +195,10 @@ onMounted(() => {
 // --- Helpers ---
 
 // Helper for Contact Icons
-const getContactIcon = (type: number) => {
-  switch (type) {
+// Fix: Accept any type to avoid TS errors if type mismatch occurs at runtime, or cast
+const getContactIcon = (type: any) => {
+  const t = Number(type);
+  switch (t) {
     case 0: return Mail;
     case 1: return Phone;
     case 2: return MessageSquare;
@@ -449,10 +453,10 @@ const copyToClipboard = async (text: string, id: string) => {
               <!-- TAB: Overview (Socials + README) -->
               <TabsContent value="overview" class="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500 pt-6">
 
-                <!-- Social Links (Contact Info) -->
+                <!-- Social Links -->
                 <div v-if="socials.length > 0" class="space-y-3">
                   <div class="flex items-center justify-between">
-                    <h3 class="font-bold text-sm text-muted-foreground uppercase tracking-wider">{{ t('common.contact') }}</h3>
+                    <h3 class="font-bold text-sm text-muted-foreground uppercase tracking-wider">{{ t('dashboard.socials') }}</h3>
                     <Button variant="ghost" size="sm" class="h-6 text-xs" @click="goToManage('socials')">
                       <Edit2 class="size-3 mr-1" /> {{ t('common.manage') }}
                     </Button>
@@ -483,9 +487,9 @@ const copyToClipboard = async (text: string, id: string) => {
 
                   <div v-if="contacts.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div v-for="contact in contacts" :key="contact.Id" class="flex items-center gap-3 p-3 rounded-xl border border-border/60 bg-card">
-                      <div class="size-8 flex items-center justify-center rounded-lg bg-muted shrink-0">
+                      <div class="size-8 flex items-center justify-center rounded-lg bg-muted shrink-0 overflow-hidden">
                         <!-- Prefer Custom Icon, fallback to Type Icon -->
-                        <AssetView v-if="contact.Icon && contact.Icon.Type !== 0" :asset="contact.Icon" class-name="size-5" />
+                        <AssetView v-if="contact.Icon && contact.Icon.Type !== 0" :asset="contact.Icon" class-name="w-full h-full object-cover" />
                         <component v-else :is="getContactIcon(contact.Type)" class="size-4 text-muted-foreground" />
                       </div>
                       <div class="min-w-0 overflow-hidden">
@@ -496,7 +500,7 @@ const copyToClipboard = async (text: string, id: string) => {
                   </div>
                   <div v-else class="flex justify-start">
                     <Button variant="outline" size="sm" class="text-xs border-dashed" @click="goToManage('contacts')">
-                      <Plus class="size-3 mr-1"/> Add Contact Info
+                      <Plus class="size-3 mr-1"/> {{ t('dashboard.addContact') }}
                     </Button>
                   </div>
                 </div>
@@ -663,7 +667,7 @@ const copyToClipboard = async (text: string, id: string) => {
                     </Card>
                   </div>
                   <div v-else class="text-sm text-muted-foreground italic border border-dashed p-4 rounded-lg text-center">
-                    No sponsorships enabled.
+                    {{ t('dashboard.noSponsorships') }}
                   </div>
                 </section>
 

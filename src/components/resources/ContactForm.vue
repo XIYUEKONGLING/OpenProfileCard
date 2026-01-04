@@ -34,7 +34,7 @@ const form = reactive({ Type: 0, Visibility: 0, ...props.modelValue });
         </Select>
       </div>
       <div class="space-y-2">
-        <Label>{{ t('resources.label') }}</Label>
+        <Label>{{ t('resources.platform') }}</Label>
         <Input v-model="form.Label" placeholder="e.g. Work Email" required />
       </div>
     </div>
@@ -45,6 +45,7 @@ const form = reactive({ Type: 0, Visibility: 0, ...props.modelValue });
     </div>
 
     <AssetEditor v-model="form.Icon" :label="t('resources.icon')" />
+    <AssetEditor v-model="form.Image" :label="t('resources.image')" description="QR Code or other image" />
 
     <div class="space-y-2">
       <Label>{{ t('common.visibility') }}</Label>
