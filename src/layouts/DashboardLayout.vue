@@ -7,7 +7,7 @@ import { useUIStore } from '@/stores/ui';
 import { useThemeStore } from '@/stores/theme';
 import { useI18n } from '@/i18n';
 import { httpClient } from '@/api/client';
-import { type OrganizationDto, AccountType } from '@/api/types';
+import {type OrganizationDto, AccountType, MemberRole} from '@/api/types';
 
 import {
   LayoutDashboard,
@@ -198,7 +198,7 @@ const themeOptions = [
                 <span v-if="!isCollapsed" class="truncate text-sm">{{ org.DisplayName }}</span>
 
                 <router-link
-                    v-if="!isCollapsed && (org.MyRole === 'Owner' || org.MyRole === 'Admin')"
+                    v-if="!isCollapsed && (org.MyRole === MemberRole.Owner || org.MyRole === MemberRole.Admin)"
                     :to="`/orgs/${org.AccountName}/settings`"
                     class="ml-auto opacity-0 group-hover:opacity-100 p-1 hover:bg-background rounded-md transition-all"
                     @click.stop
@@ -226,7 +226,7 @@ const themeOptions = [
       <!-- Bottom Controls -->
       <div class="mt-auto space-y-4 pt-6 border-t border-border/40 w-full shrink-0">
 
-        <div class="flex items-center gap-2" :class="[isCollapsed ? 'flex-col' : 'justify-between px-2']">
+        <div class="flex items-center gap-4" :class="[isCollapsed ? 'flex-col' : 'justify-between px-2']">
           <DropdownMenu>
             <DropdownMenuTrigger as-child>
               <Button variant="ghost" size="sm" :class="[isCollapsed ? 'size-9 p-0' : 'flex-1 justify-start gap-2 h-9 px-2']">
@@ -234,7 +234,7 @@ const themeOptions = [
                 <span v-if="!isCollapsed" class="text-xs font-medium text-muted-foreground">{{ languages.find(l => l.code === locale)?.label }}</span>
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" class="w-32" side="right">
+            <DropdownMenuContent align="start" class="w-48" side="right">
               <DropdownMenuItem v-for="lang in languages" :key="lang.code" @click="setLocale(lang.code as any)">
                 {{ lang.label }}
                 <Check v-if="locale === lang.code" class="ml-auto size-3" />
@@ -250,7 +250,7 @@ const themeOptions = [
                 <Monitor v-else class="size-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" class="w-32" side="right">
+            <DropdownMenuContent align="end" class="w-48" side="right">
               <DropdownMenuItem v-for="opt in themeOptions" :key="opt.mode" @click="themeStore.setTheme(opt.mode)">
                 <component :is="opt.icon" class="mr-2 size-3" />
                 {{ opt.label }}
