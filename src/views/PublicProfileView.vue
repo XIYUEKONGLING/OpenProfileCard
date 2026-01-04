@@ -247,7 +247,12 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
 </script>
 
 <template>
-  <div class="w-full pb-20 relative">
+  <div class="w-full pb-20 relative min-h-screen">
+    <div class="absolute inset-0 pointer-events-none -z-10 overflow-hidden">
+      <div class="absolute top-0 left-0 right-0 h-150 bg-linear-to-b from-brand-blue/4 via-transparent to-transparent"></div>
+      <div class="absolute top-[-10%] left-[-10%] w-[120%] h-[40%] bg-brand-purple/3 blur-[120px] rotate-[-5deg]"></div>
+    </div>
+    
     <ImageViewer v-model:open="showImageViewer" :asset="selectedImage" />
 
     <UserListDialog
