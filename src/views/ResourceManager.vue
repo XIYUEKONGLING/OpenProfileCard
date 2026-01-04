@@ -37,11 +37,12 @@ const isLoading = ref(false);
 const isSaving = ref(false);
 const showDialog = ref(false);
 const editingItem = ref<any>(null);
+const hasWriteAccess = ref(true); // Default to true, will catch 403 on operations
 
 // --- Config ---
 const config = computed(() => {
   const r = props.resource;
-  const prefix = props.apiPrefix || '/me'; // Use prop or default
+  const prefix = props.apiPrefix || '/me';
 
   const map: Record<string, { title: string }> = {
     work: { title: t('dashboard.workExp') },
@@ -68,8 +69,12 @@ const CurrentForm = computed(() => forms[props.resource]);
 const fetchItems = async () => {
   isLoading.value = true;
   try {
+    // GET is allowed for all members
     items.value = await httpClient<any[]>(config.value.api);
-  } catch (e) {
+  } catch (e: any) {
+    if (e.message?.includes('403')) {
+      hasWriteAccess.value = false;
+    }
     console.error(e);
   } finally {
     isLoading.value = false;
@@ -86,7 +91,6 @@ const openEdit = (item: any) => {
   showDialog.value = true;
 };
 
-// Helper to clean empty strings to null
 const sanitizePayload = (obj: any) => {
   const clean = { ...obj };
   for (const key in clean) {
@@ -147,6 +151,7 @@ watch(() => [props.resource, props.apiPrefix], fetchItems, { immediate: true });
           <p class="text-muted-foreground text-sm">{{ t('common.manage') }} {{ config.title }}</p>
         </div>
       </div>
+      <!-- Add Button -->
       <Button @click="openCreate" class="font-bold">
         <Plus class="mr-2 size-4" /> {{ t('common.add') }}
       </Button>
@@ -170,14 +175,14 @@ watch(() => [props.resource, props.apiPrefix], fetchItems, { immediate: true });
 
           <div class="flex-1 min-w-0">
             <h3 class="font-bold truncate">
-              {{ item.Label || item.Name || item.CompanyName || 'Item' }}
+              {{ item.Label || item.Name || item.CompanyName || item.Platform || 'Item' }}
             </h3>
             <p class="text-sm text-muted-foreground truncate">
-              {{ item.Value || item.Position || item.Summary }}
+              {{ item.Value || item.Position || item.Summary || item.Url }}
             </p>
           </div>
 
-
+          <!-- Edit/Delete Actions -->
           <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
             <Button variant="ghost" size="icon" @click="openEdit(item)">
               <Edit2 class="size-4" />

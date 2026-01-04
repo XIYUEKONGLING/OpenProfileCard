@@ -26,14 +26,36 @@ const router = createRouter({
                 { path: 'profile/edit', name: 'profile-edit', component: () => import('@/views/ProfileEditView.vue') },
                 { path: 'manage/:resource', name: 'resource-manager', component: () => import('@/views/ResourceManager.vue'), props: true },
 
-                // Organization Management
+                // Organization Routes
                 {
                     path: 'orgs/:accountName',
-                    name: 'org-manager',
-                    component: () => import('@/views/org/OrgManagerView.vue'),
+                    name: 'org-dashboard',
+                    component: () => import('@/views/org/OrgDashboardView.vue'),
                     props: true
                 },
+                {
+                    path: 'orgs/:accountName/edit',
+                    name: 'org-profile-edit',
+                    component: () => import('@/views/org/OrgProfileEditView.vue'),
+                    props: true
+                },
+                {
+                    path: 'orgs/:accountName/settings',
+                    name: 'org-settings',
+                    component: () => import('@/views/org/OrgSettingsView.vue'),
+                    props: true
+                },
+                {
+                    path: 'orgs/:accountName/manage/:resource',
+                    name: 'org-resource-manager',
+                    component: () => import('@/views/ResourceManager.vue'),
+                    props: (route) => ({
+                        resource: route.params.resource,
+                        apiPrefix: `/orgs/${route.params.accountName}`
+                    })
+                },
 
+                // Admin
                 {
                     path: 'admin',
                     name: 'admin-dashboard',
