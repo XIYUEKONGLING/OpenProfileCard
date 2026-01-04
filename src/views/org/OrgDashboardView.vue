@@ -7,6 +7,7 @@ import { useUIStore } from '@/stores/ui';
 import { renderMarkdown } from '@/lib/markdown';
 import {
   type OrganizationDto,
+  type ProfileDto,
   type ProjectDto,
   type GalleryItemDto,
   type SocialLinkDto,
@@ -14,7 +15,8 @@ import {
   type SponsorshipItemDto,
   type FollowCountsDto,
   MemberRole,
-  AccountStatus
+  AccountStatus,
+  AssetType
 } from '@/api/types';
 
 // UI Components
@@ -24,13 +26,18 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
+import UserListDialog from '@/components/dashboard/UserListDialog.vue';
+
+// Icons
 import {
   MapPin, Link as LinkIcon, Users, Edit2, Plus,
   FolderGit2, Image as ImageIcon, Settings, BookOpen,
   Heart, ExternalLink, LogOut, ShieldAlert,
-  Crown, Mail, Phone, MessageSquare, MapPin as MapIcon, Link as LinkIcon2
+  Crown, Mail, Phone, MessageSquare, MapPin as MapIcon, Link as LinkIcon2,
+  AlertTriangle, Ban, Trash2, Shield
 } from 'lucide-vue-next';
 
+// Lazy Load
 const OrgMembers = defineAsyncComponent(() => import('@/components/org/OrgMembers.vue'));
 
 const props = defineProps<{ accountName: string }>();
@@ -41,7 +48,8 @@ const router = useRouter();
 
 // --- State ---
 const isLoading = ref(true);
-const org = ref<OrganizationDto | null>(null);
+const org = ref<OrganizationDto | null>(null); // Roles, Status
+const profile = ref<ProfileDto | null>(null); // Visuals (Background, Content)
 const followStats = ref<FollowCountsDto | null>(null);
 
 const projects = ref<ProjectDto[]>([]);
@@ -50,25 +58,75 @@ const socials = ref<SocialLinkDto[]>([]);
 const contacts = ref<ContactMethodDto[]>([]);
 const sponsorships = ref<SponsorshipItemDto[]>([]);
 
+const showUserList = ref(false);
+const userListType = ref<'followers' | 'following'>('followers');
+
 // --- Computed Permissions ---
 const isOwner = computed(() => org.value?.MyRole === MemberRole.Owner);
 const isAdmin = computed(() => org.value?.MyRole === MemberRole.Admin || isOwner.value);
-// Guest/Member can view everything, but cannot edit
 const canEdit = computed(() => isAdmin.value);
 
-const renderedContent = computed(() => renderMarkdown(org.value?.Description)); // Note: OrganizationDto needs full profile fetch for Content if distinct
-const hasBackground = computed(() => org.value?.Avatar && !!org.value.Avatar.Value); // Fallback logic
+const renderedContent = computed(() => renderMarkdown(profile.value?.Content));
+const description = computed(() => profile.value?.Description);
+
+// Check ProfileDto for background, fallback to Org avatar or null
+const hasBackground = computed(() =>
+    profile.value?.Background &&
+    profile.value.Background.Type !== AssetType.Empty &&
+    !!profile.value.Background.Value
+);
+
+// --- Status Logic ---
+const blockReason = computed(() => {
+  if (!org.value) return null;
+  const status = Number(org.value.Status);
+  switch (status) {
+    case AccountStatus.Suspended:
+      return {
+        title: t('dashboard.accountSuspended'),
+        desc: t('dashboard.accountSuspendedDesc'),
+        icon: AlertTriangle,
+        color: 'text-orange-500'
+      };
+    case AccountStatus.Banned:
+      return {
+        title: t('dashboard.accountBanned'),
+        desc: t('dashboard.accountBannedDesc'),
+        icon: Ban,
+        color: 'text-destructive'
+      };
+    case AccountStatus.PendingDeletion:
+      return {
+        title: t('dashboard.accountPendingDeletion'),
+        desc: t('dashboard.accountPendingDeletionDesc'),
+        icon: Trash2,
+        color: 'text-muted-foreground'
+      };
+    case AccountStatus.Deactivated:
+      return {
+        title: t('common.notice'),
+        desc: t('dashboard.accountDeactivated'),
+        icon: Shield,
+        color: 'text-brand-blue'
+      };
+    default:
+      return null;
+  }
+});
 
 // --- Actions ---
 const fetchOrgData = async () => {
   isLoading.value = true;
   try {
-    // 1. Fetch Basic Org Info (Dashboard Summary)
+    // 1. Fetch Org Summary (Permissions, Status)
     const orgData = await httpClient<OrganizationDto>(`/orgs/${props.accountName}`);
     org.value = orgData;
 
-    // 2. Fetch Sub-resources (Parallel)
-    // Note: Guests CAN fetch these now based on updated spec
+    // 2. Fetch Profile Visuals (Background, Content) - Accessible to members
+    const profileData = await httpClient<ProfileDto>(`/orgs/${props.accountName}/profile`);
+    profile.value = profileData;
+
+    // 3. Fetch Sub-resources
     const [
       followData,
       projectsData,
@@ -100,6 +158,28 @@ const fetchOrgData = async () => {
   }
 };
 
+const openUserList = (type: 'followers' | 'following') => {
+  userListType.value = type;
+  showUserList.value = true;
+};
+
+const refreshStats = () => {
+  httpClient<FollowCountsDto>(`/orgs/${props.accountName}/follow-stats`).then(data => {
+    followStats.value = data;
+  });
+};
+
+const restoreOrg = async () => {
+  if (!org.value) return;
+  try {
+    await httpClient(`/orgs/${org.value.Id}/restore`, { method: 'POST' });
+    ui.notify(t('settings.accountRestored'), 'success');
+    fetchOrgData();
+  } catch (e: any) {
+    ui.notify(e.message, 'error');
+  }
+};
+
 const goToEditProfile = (tab: string = 'basic') => {
   router.push({ name: 'org-profile-edit', params: { accountName: props.accountName }, query: { tab } });
 };
@@ -123,7 +203,6 @@ const leaveOrg = async () => {
   }
 };
 
-// Helper for Icons
 const getContactIcon = (type: any) => {
   switch (Number(type)) {
     case 0: return Mail;
@@ -140,23 +219,56 @@ watch(() => props.accountName, fetchOrgData, { immediate: true });
 <template>
   <div class="relative min-h-[80vh] w-full pb-20">
 
-    <!-- Loading State -->
-    <div v-if="isLoading" class="container max-w-7xl mx-auto px-4 mt-6 space-y-8">
-      <div class="h-64 bg-muted rounded-xl animate-pulse"></div>
-      <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        <div class="space-y-4">
-          <div class="size-32 rounded-full bg-muted animate-pulse -mt-16 border-4 border-background"></div>
-          <div class="h-8 w-3/4 bg-muted rounded animate-pulse"></div>
+    <!-- User List Dialog -->
+    <UserListDialog
+        v-model:open="showUserList"
+        :type="userListType"
+        :account-name="accountName"
+        :is-me="false"
+        @change="refreshStats"
+    />
+
+    <!-- BLOCKER OVERLAY -->
+    <div v-if="blockReason" class="absolute inset-0 z-50 backdrop-blur-xl bg-background/50 flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-500">
+      <div class="max-w-md w-full bg-background border border-border shadow-2xl rounded-3xl p-8 flex flex-col items-center">
+        <div class="size-20 rounded-full bg-muted flex items-center justify-center mb-6">
+          <component :is="blockReason.icon" class="size-10" :class="blockReason.color" />
         </div>
-        <div class="lg:col-span-3 h-96 bg-muted rounded-xl animate-pulse"></div>
+        <h2 class="text-2xl font-black tracking-tight mb-2">{{ blockReason.title }}</h2>
+        <p class="text-muted-foreground font-medium mb-8 leading-relaxed">
+          {{ blockReason.desc }}
+        </p>
+
+        <div class="flex flex-col gap-3 w-full">
+          <!-- Allow Owners to restore pending deletion orgs -->
+          <Button v-if="org?.Status === AccountStatus.PendingDeletion && isOwner" class="w-full font-bold" variant="default" @click="restoreOrg">
+            {{ t('dashboard.restoreAccount') }}
+          </Button>
+          <Button variant="outline" class="w-full font-bold">
+            {{ t('dashboard.contactSupport') }}
+          </Button>
+        </div>
       </div>
     </div>
 
-    <div v-else-if="org" class="animate-in fade-in slide-in-from-bottom-4 duration-700">
+    <!-- MAIN CONTENT -->
+    <div
+        class="w-full animate-in fade-in slide-in-from-bottom-4 duration-700"
+        :class="{'opacity-20 pointer-events-none select-none filter blur-sm': !!blockReason}"
+    >
 
-      <!-- HEADER BANNER (Optional: Orgs might not have backgrounds in DTO yet, using muted fallback) -->
-      <div class="w-full h-48 md:h-64 bg-muted relative overflow-hidden group rounded-4xl mb-6">
-        <div class="absolute inset-0 bg-linear-to-br from-brand-blue/10 to-brand-purple/10"></div>
+      <!-- HEADER BANNER -->
+      <div v-if="hasBackground" class="w-full h-48 md:h-64 bg-muted relative overflow-hidden group rounded-4xl mb-6">
+        <AssetView :asset="profile?.Background" class-name="w-full h-full object-cover" />
+        <div v-if="canEdit" class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
+          <Button variant="secondary" size="sm" class="shadow-lg backdrop-blur-md bg-background/50" @click="goToEditProfile('visuals')">
+            <Edit2 class="size-3 mr-2" /> {{ t('common.edit') }}
+          </Button>
+        </div>
+      </div>
+      <!-- Fallback banner if no background -->
+      <div v-else class="w-full h-48 md:h-64 bg-muted relative overflow-hidden group rounded-4xl mb-6 flex items-center justify-center">
+        <ImageIcon class="size-12 text-muted-foreground/20" />
         <div v-if="canEdit" class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
           <Button variant="secondary" size="sm" class="shadow-lg backdrop-blur-md bg-background/50" @click="goToEditProfile('visuals')">
             <Edit2 class="size-3 mr-2" /> {{ t('common.edit') }}
@@ -164,44 +276,61 @@ watch(() => props.accountName, fetchOrgData, { immediate: true });
         </div>
       </div>
 
-      <!-- MAIN CONTAINER -->
       <div class="container max-w-7xl mx-auto px-4">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
-          <!-- LEFT COLUMN: Org Identity -->
+        <!-- Skeleton -->
+        <div v-if="isLoading" class="grid grid-cols-1 lg:grid-cols-12 gap-8 -mt-16">
+          <div class="lg:col-span-4 xl:col-span-3 space-y-4">
+            <div class="size-40 rounded-full bg-muted animate-pulse border-6 border-background"></div>
+            <div class="h-8 w-3/4 bg-muted rounded animate-pulse"></div>
+          </div>
+          <div class="lg:col-span-8 xl:col-span-9 h-96 bg-muted rounded-xl animate-pulse mt-20"></div>
+        </div>
+
+        <!-- Content Grid -->
+        <div v-else-if="org" class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+          <!-- LEFT COLUMN -->
           <aside class="lg:col-span-4 xl:col-span-3 flex flex-col gap-6 relative z-10 -mt-16 sm:-mt-20 mb-10">
 
             <!-- Avatar -->
             <div class="relative group mx-auto lg:mx-0 w-40 h-40 sm:w-48 sm:h-48">
-              <div class="w-full h-full rounded-2xl border-[6px] border-background shadow-xl overflow-hidden bg-muted relative z-10">
+              <div class="w-full h-full rounded-full border-[6px] border-background shadow-xl overflow-hidden bg-muted relative z-10">
                 <AssetView :asset="org.Avatar" :fallback-name="org.DisplayName" class-name="w-full h-full object-cover" />
               </div>
+
               <!-- Role Badge -->
-              <div class="absolute -bottom-3 left-1/2 -translate-x-1/2 z-20">
-                <Badge variant="secondary" class="shadow-md border bg-background text-foreground px-3 py-1 text-xs uppercase tracking-wider font-black">
-                  <Crown v-if="isOwner" class="size-3 mr-1 text-yellow-500 fill-yellow-500" />
-                  <ShieldAlert v-else-if="isAdmin" class="size-3 mr-1 text-brand-blue" />
-                  <Users v-else class="size-3 mr-1" />
-                  {{ isOwner ? t('organization.roleOwner') : isAdmin ? t('organization.roleAdmin') : t('organization.roleMember') }}
-                </Badge>
+              <div class="absolute bottom-2 right-2 z-20">
+                <div class="bg-background text-foreground p-1.5 rounded-full shadow-lg border-2 border-muted flex items-center" :title="t('organization.role')">
+                  <Crown v-if="isOwner" class="size-4 text-yellow-500 fill-yellow-500" />
+                  <ShieldAlert v-else-if="isAdmin" class="size-4 text-brand-blue" />
+                  <Users v-else class="size-4 text-muted-foreground" />
+                </div>
               </div>
             </div>
 
-            <div class="flex flex-col gap-6 px-2 text-center lg:text-left pt-4">
+            <div class="flex flex-col gap-6 px-2 text-center lg:text-left pt-2">
               <div class="space-y-1">
                 <h1 class="text-3xl font-black tracking-tight leading-tight">{{ org.DisplayName }}</h1>
                 <p class="text-xl text-muted-foreground font-medium">@{{ org.AccountName }}</p>
-                <div v-if="org.Status !== AccountStatus.Active" class="pt-2">
-                  <Badge variant="destructive">{{ t('dashboard.accountStatus') }}: {{ org.Status }}</Badge>
-                </div>
               </div>
 
               <!-- Follow Stats -->
               <div class="flex items-center justify-center lg:justify-start gap-6 text-sm">
-                <div class="flex items-center gap-1">
-                  <span class="font-black text-foreground">{{ followStats?.FollowersCount || 0 }}</span>
-                  <span class="text-muted-foreground">{{ t('dashboard.followers') }}</span>
-                </div>
+                <button class="flex items-center gap-1 hover:text-brand-blue transition-colors cursor-pointer group" @click="openUserList('followers')">
+                  <span class="font-black text-foreground group-hover:text-brand-blue">{{ followStats?.FollowersCount || 0 }}</span>
+                  <span class="text-muted-foreground group-hover:text-brand-blue/80">{{ t('dashboard.followers') }}</span>
+                </button>
+                <div class="w-px h-4 bg-border"></div>
+                <button class="flex items-center gap-1 hover:text-brand-blue transition-colors cursor-pointer group" @click="openUserList('following')">
+                  <span class="font-black text-foreground group-hover:text-brand-blue">{{ followStats?.FollowingCount || 0 }}</span>
+                  <span class="text-muted-foreground group-hover:text-brand-blue/80">{{ t('dashboard.following') }}</span>
+                </button>
+              </div>
+
+              <!-- Bio -->
+              <div v-if="description" class="text-sm leading-relaxed text-foreground/80">
+                {{ description }}
               </div>
 
               <!-- Actions -->
@@ -214,9 +343,20 @@ watch(() => props.accountName, fetchOrgData, { immediate: true });
                   <Settings class="size-4 mr-2" /> {{ t('organization.settings') }}
                 </Button>
 
-                <Button v-if="!isOwner" variant="ghost" class="w-full text-destructive hover:bg-destructive/10" @click="leaveOrg">
+                <Button v-if="!isOwner" variant="ghost" class="w-full text-destructive hover:bg-destructive/10 rounded-xl" @click="leaveOrg">
                   <LogOut class="size-4 mr-2" /> {{ t('organization.leave') }}
                 </Button>
+              </div>
+
+              <!-- Metadata -->
+              <div class="flex flex-col gap-3 text-sm text-muted-foreground text-left">
+                <div v-if="profile?.Location" class="flex items-center gap-3">
+                  <MapPin class="size-4 shrink-0 opacity-70" /> <span>{{ profile.Location }}</span>
+                </div>
+                <div v-if="profile?.Website" class="flex items-center gap-3">
+                  <LinkIcon class="size-4 shrink-0 opacity-70" />
+                  <a :href="profile.Website" target="_blank" class="hover:text-brand-blue hover:underline truncate">{{ profile.Website }}</a>
+                </div>
               </div>
             </div>
           </aside>
@@ -237,25 +377,30 @@ watch(() => props.accountName, fetchOrgData, { immediate: true });
 
               <!-- TAB: OVERVIEW -->
               <TabsContent value="overview" class="space-y-6 pt-6 animate-in fade-in slide-in-from-bottom-2">
+
                 <!-- Socials -->
-                <div v-if="socials.length > 0 || canEdit" class="space-y-3">
+                <div v-if="socials.length > 0" class="space-y-3">
                   <div class="flex items-center justify-between">
                     <h3 class="font-bold text-sm text-muted-foreground uppercase tracking-wider">{{ t('dashboard.socials') }}</h3>
                     <Button v-if="canEdit" variant="ghost" size="sm" class="h-6 text-xs" @click="goToManage('socials')">
                       <Edit2 class="size-3 mr-1" /> {{ t('common.manage') }}
                     </Button>
                   </div>
-                  <div v-if="socials.length > 0" class="flex flex-wrap gap-3">
-                    <a v-for="social in socials" :key="social.Id" :href="social.Url" target="_blank" class="flex items-center gap-3 px-4 py-2 rounded-xl border bg-card hover:bg-muted transition-colors">
-                      <AssetView :asset="social.Icon" class-name="size-5" />
-                      <span class="font-bold text-sm">{{ social.Platform }}</span>
+                  <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    <a v-for="social in socials" :key="social.Id" :href="social.Url" target="_blank" class="flex items-center gap-3 px-4 py-2.5 rounded-xl border bg-card hover:bg-muted transition-colors group">
+                      <AssetView :asset="social.Icon" class-name="size-5 shrink-0" />
+                      <span class="font-bold text-sm truncate">{{ social.Platform }}</span>
                     </a>
                   </div>
-                  <div v-else class="text-sm text-muted-foreground italic">{{ t('dashboard.noSocials') }}</div>
+                </div>
+                <div v-else-if="canEdit" class="flex justify-end">
+                  <Button variant="ghost" size="sm" class="text-xs" @click="goToManage('socials')">
+                    <Plus class="size-3 mr-1"/> {{ t('dashboard.addSocial') }}
+                  </Button>
                 </div>
 
                 <!-- Contacts -->
-                <div v-if="contacts.length > 0 || canEdit" class="space-y-3">
+                <div v-if="contacts.length > 0" class="space-y-3">
                   <div class="flex items-center justify-between">
                     <h3 class="font-bold text-sm text-muted-foreground uppercase tracking-wider">{{ t('common.contact') }}</h3>
                     <Button v-if="canEdit" variant="ghost" size="sm" class="h-6 text-xs" @click="goToManage('contacts')">
@@ -275,13 +420,37 @@ watch(() => props.accountName, fetchOrgData, { immediate: true });
                     </div>
                   </div>
                 </div>
+                <div v-else-if="canEdit" class="flex justify-start">
+                  <Button variant="outline" size="sm" class="text-xs border-dashed" @click="goToManage('contacts')">
+                    <Plus class="size-3 mr-1"/> {{ t('dashboard.addContact') }}
+                  </Button>
+                </div>
+
+                <!-- Markdown Content -->
+                <Card class="border-border/60 shadow-sm overflow-hidden">
+                  <CardContent class="p-6 sm:p-8">
+                    <div v-if="renderedContent" class="prose dark:prose-invert prose-sm sm:prose-base max-w-none wrap-break-word">
+                      <div v-html="renderedContent"></div>
+                    </div>
+                    <div v-else class="flex flex-col items-center justify-center py-10 text-center gap-4">
+                      <div class="size-16 rounded-2xl bg-muted/50 flex items-center justify-center">
+                        <BookOpen class="size-8 text-muted-foreground/40" />
+                      </div>
+                      <p class="text-muted-foreground text-sm max-w-md">{{ t('dashboard.tellWorldDesc') }}</p>
+                      <Button v-if="canEdit" variant="outline" class="mt-2" @click="goToEditProfile('content')">{{ t('dashboard.createReadme') }}</Button>
+                    </div>
+                  </CardContent>
+                </Card>
               </TabsContent>
 
               <!-- TAB: PROJECTS -->
               <TabsContent value="projects" class="space-y-6 pt-6 animate-in fade-in slide-in-from-bottom-2">
-                <div class="flex items-center justify-between">
-                  <h3 class="font-bold text-lg">{{ t('dashboard.projects') }}</h3>
-                  <Button v-if="canEdit" size="sm" @click="goToManage('projects')">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-muted/30 p-4 rounded-xl border border-border/50">
+                  <div>
+                    <h3 class="font-bold">{{ t('dashboard.repositories') }}</h3>
+                    <p class="text-xs text-muted-foreground">{{ t('dashboard.repoSubtitle') }}</p>
+                  </div>
+                  <Button v-if="canEdit" class="font-bold bg-brand-purple hover:bg-brand-purple/90 text-white" @click="goToManage('projects')">
                     <Plus class="size-4 mr-2" /> {{ t('common.manage') }}
                   </Button>
                 </div>
@@ -298,9 +467,14 @@ watch(() => props.accountName, fetchOrgData, { immediate: true });
                       </div>
                       <p class="text-sm text-muted-foreground truncate">{{ proj.Summary }}</p>
                     </div>
-                    <a v-if="proj.Url" :href="proj.Url" target="_blank" class="text-xs text-brand-blue hover:underline flex items-center gap-1">
-                      <LinkIcon class="size-3" /> Visit
-                    </a>
+                    <div class="flex items-center gap-2">
+                      <a v-if="proj.Url" :href="proj.Url" target="_blank" class="text-xs text-brand-blue hover:underline flex items-center gap-1">
+                        <LinkIcon class="size-3" /> Visit
+                      </a>
+                      <Button v-if="canEdit" variant="ghost" size="icon" class="h-8 w-8" @click="goToManage('projects')">
+                        <Settings class="size-4" />
+                      </Button>
+                    </div>
                   </Card>
                 </div>
                 <div v-else class="text-center py-10 border-2 border-dashed rounded-xl text-muted-foreground">
@@ -323,8 +497,8 @@ watch(() => props.accountName, fetchOrgData, { immediate: true });
                       <ExternalLink class="size-4 mr-2" /> {{ t('common.manage') }}
                     </Button>
                   </div>
-                  <div v-if="sponsorships.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <Card v-for="spon in sponsorships" :key="spon.Id" class="hover:border-pink-500/30">
+                  <div v-if="sponsorships.length > 0" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    <Card v-for="spon in sponsorships" :key="spon.Id" class="hover:border-pink-500/30 transition-colors">
                       <CardContent class="p-4 flex items-center gap-4">
                         <AssetView :asset="spon.Icon" class-name="size-10 rounded-lg" />
                         <div class="min-w-0">
@@ -336,6 +510,7 @@ watch(() => props.accountName, fetchOrgData, { immediate: true });
                       </CardContent>
                     </Card>
                   </div>
+                  <div v-else class="text-sm text-muted-foreground italic border border-dashed p-4 rounded-lg text-center">{{ t('dashboard.noSponsorships') }}</div>
                 </section>
 
                 <!-- Gallery -->
@@ -346,13 +521,20 @@ watch(() => props.accountName, fetchOrgData, { immediate: true });
                       <Plus class="size-4 mr-2" /> {{ t('common.manage') }}
                     </Button>
                   </div>
-                  <div v-if="gallery.length > 0" class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                  <div v-if="gallery.length > 0" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     <div v-for="item in gallery" :key="item.Id" class="group relative aspect-video rounded-xl overflow-hidden border bg-muted">
-                      <AssetView :asset="item.Image" class-name="w-full h-full object-cover" />
-                      <div v-if="item.Caption" class="absolute bottom-0 left-0 right-0 p-2 bg-black/60 text-white text-xs font-bold truncate">
+                      <AssetView :asset="item.Image" class-name="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+                      <div v-if="canEdit" class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Button size="icon" variant="secondary" class="size-8 rounded-full" @click="goToManage('gallery')"><Edit2 class="size-3" /></Button>
+                      </div>
+                      <div v-if="item.Caption" class="absolute bottom-0 left-0 right-0 p-2 bg-linear-to-t from-black/80 to-transparent text-white text-xs font-bold truncate">
                         {{ item.Caption }}
                       </div>
                     </div>
+                  </div>
+                  <div v-else class="text-center py-10 border-2 border-dashed border-border rounded-xl bg-muted/10">
+                    <h3 class="font-bold">{{ t('dashboard.noAssets') }}</h3>
+                    <Button v-if="canEdit" variant="outline" class="mt-4" @click="goToManage('gallery')">{{ t('dashboard.uploadFirst') }}</Button>
                   </div>
                 </section>
               </TabsContent>
@@ -367,7 +549,6 @@ watch(() => props.accountName, fetchOrgData, { immediate: true });
 
 <style scoped>
 @reference '../../style.css';
-
 
 .tab-item {
   @apply relative rounded-t-lg rounded-b-none border border-transparent
