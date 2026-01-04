@@ -105,7 +105,7 @@ onMounted(loadProfile);
               <Input v-model="form.Location" />
             </div>
             <div class="space-y-2">
-              <Label>Time Zone</Label>
+              <Label>{{ t('common.timeZone') }}</Label>
               <Input v-model="form.TimeZone" placeholder="e.g. UTC, Asia/Shanghai" />
             </div>
             <div class="space-y-2">

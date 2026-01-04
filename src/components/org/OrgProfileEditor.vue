@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue';
 import { useI18n } from '@/i18n';
-import { httpClient } from '@/api/client.ts';
-import { useUIStore } from '@/stores/ui.ts';
+import { httpClient } from '@/api/client';
+import { useUIStore } from '@/stores/ui';
 import type { ProfileDto, UpdateProfileRequestDto } from '@/api/types';
-import { renderMarkdown } from '@/lib/markdown.ts';
+import { renderMarkdown } from '@/lib/markdown';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,6 +33,7 @@ const form = reactive<UpdateProfileRequestDto>({
   Description: '',
   Content: '',
   Location: '',
+  TimeZone: '',
   Website: '',
   FoundedDate: '',
   Avatar: undefined,
@@ -82,7 +83,7 @@ onMounted(loadProfile);
       {{ t('organization.noEditPermission') }}
     </div>
 
-    <form @submit.prevent="saveProfile" :disabled="!isAdmin" :class="{'opacity-60 pointer-events-none': !isAdmin}">
+    <form @submit.prevent="saveProfile" :disabled="!isAdmin" :class="{'opacity-60 pointer-events-none select-none filter blur-sm': !isAdmin}">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         <!-- Basic Info -->
@@ -102,6 +103,10 @@ onMounted(loadProfile);
             <div class="space-y-2">
               <Label>{{ t('profile.location') }}</Label>
               <Input v-model="form.Location" />
+            </div>
+            <div class="space-y-2">
+              <Label>{{ t('common.timeZone') }}</Label>
+              <Input v-model="form.TimeZone" placeholder="e.g. UTC, Asia/Shanghai" />
             </div>
             <div class="space-y-2">
               <Label>{{ t('profile.website') }}</Label>
