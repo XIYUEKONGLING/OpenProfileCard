@@ -9,7 +9,10 @@ import {
   type PagedResponse,
   AccountStatus,
   AccountType,
-  AccountRoleNames, type AccountEmailDto, type AddEmailRequestDto, type AdminUpdateEmailRequestDto,
+  AccountRoleNames,
+  type AccountEmailDto,
+  type AddEmailRequestDto,
+  type AdminUpdateEmailRequestDto,
   type AdminResetPasswordRequestDto
 } from '@/api/types';
 
@@ -18,6 +21,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import {
   Table,
   TableBody,
@@ -49,14 +54,21 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
+// Icons
 import {
   Loader2, Search, Shield, Ban, Trash2, CheckCircle,
   AlertTriangle, MoreHorizontal, Filter, ChevronDown, Mail, Key,
-  ChevronLeft, ChevronsLeft, ChevronRight, RotateCcw, UserCircle
+  ChevronLeft, ChevronsLeft, ChevronRight, RotateCcw, UserCircle,
+  Plus, X
 } from 'lucide-vue-next';
-import {Dialog, DialogFooter, DialogHeader} from "@/components/ui/dialog";
-import {Switch} from "@/components/ui/switch";
 
 const { t } = useI18n();
 const ui = useUIStore();
@@ -72,17 +84,15 @@ const searchInput = ref('');
 const activeSearch = ref('');
 const isLoading = ref(false);
 
-// Multi-select Filter States
 const filterStatus = ref<number[]>([]);
 const filterRole = ref<number[]>([]);
 const filterType = ref<number[]>([]);
 
-// Action states
 const actionLoadingId = ref<string | null>(null);
 const showDeleteDialog = ref(false);
 const userToDelete = ref<UserAdminDto | null>(null);
 
-const accountTypeValues = Object.values(AccountType).filter(_v => true) as number[];
+const accountTypeValues = Object.values(AccountType).filter((v): v is number => typeof v === 'number');
 
 const selectedUser = ref<UserAdminDto | null>(null);
 
@@ -102,7 +112,7 @@ const resetPasswordData = ref({
 const isResettingPassword = ref(false);
 
 // --- Mappings ---
-const getStatusLabel = (s: number) => {
+const getStatusLabel = (s: number): string => {
   const map: Record<number, string> = {
     [AccountStatus.Active]: t('admin.statusActive'),
     [AccountStatus.PendingDeletion]: t('admin.statusPendingDeletion'),
@@ -113,13 +123,13 @@ const getStatusLabel = (s: number) => {
   return map[s] || 'Unknown';
 };
 
-const getRoleLabel = (r: number) => {
+const getRoleLabel = (r: number): string => {
   if (r === AccountRoleNames.Root) return t('admin.roleRoot');
   if (r === AccountRoleNames.Admin) return t('admin.roleAdmin');
   return t('admin.roleUser');
 };
 
-const getTypeLabel = (type: number) => {
+const getTypeLabel = (type: number): string => {
   const map: Record<number, string> = {
     [AccountType.Personal]: t('admin.typePersonal'),
     [AccountType.Organization]: t('admin.typeOrganization'),
@@ -130,14 +140,14 @@ const getTypeLabel = (type: number) => {
   return map[type] || 'Unknown';
 };
 
-const getStatusVariant = (s: number) => {
+const getStatusVariant = (s: number): "default" | "destructive" | "secondary" | "outline" => {
   if (s === AccountStatus.Active) return 'default';
   if (s === AccountStatus.Banned || s === AccountStatus.PendingDeletion) return 'destructive';
   return 'secondary';
 };
 
 // --- API Logic ---
-const fetchUsers = async () => {
+const fetchUsers = async (): Promise<void> => {
   isLoading.value = true;
   try {
     const params = new URLSearchParams({
@@ -163,13 +173,13 @@ const fetchUsers = async () => {
   }
 };
 
-const handleSearch = () => {
+const handleSearch = (): void => {
   activeSearch.value = searchInput.value;
   currentPage.value = 1;
   fetchUsers();
 };
 
-const resetFilters = () => {
+const resetFilters = (): void => {
   filterStatus.value = [];
   filterRole.value = [];
   filterType.value = [];
@@ -183,7 +193,7 @@ const resetFilters = () => {
 
 // --- API Logic: Emails ---
 
-const fetchUserEmails = async (userId: string) => {
+const fetchUserEmails = async (userId: string): Promise<void> => {
   isEmailsLoading.value = true;
   try {
     userEmails.value = await httpClient<AccountEmailDto[]>(`/admin/users/${userId}/emails`);
@@ -194,19 +204,19 @@ const fetchUserEmails = async (userId: string) => {
   }
 };
 
-const openEmailModal = (user: UserAdminDto) => {
+const openEmailModal = (user: UserAdminDto): void => {
   selectedUser.value = user;
   showEmailModal.value = true;
   fetchUserEmails(user.Id);
 };
 
-const handleAddEmail = async () => {
+const handleAddEmail = async (): Promise<void> => {
   if (!selectedUser.value || !newEmailAddress.value) return;
   isAddingEmail.value = true;
   try {
     const payload: AddEmailRequestDto = {
       Email: newEmailAddress.value,
-      Code: "" // Admin force add usually doesn't require code validation
+      Code: ""
     };
     await httpClient(`/admin/users/${selectedUser.value.Id}/emails`, {
       method: 'POST',
@@ -222,7 +232,7 @@ const handleAddEmail = async () => {
   }
 };
 
-const handleUpdateEmailStatus = async (email: string, updates: AdminUpdateEmailRequestDto) => {
+const handleUpdateEmailStatus = async (email: string, updates: AdminUpdateEmailRequestDto): Promise<void> => {
   if (!selectedUser.value) return;
   try {
     await httpClient(`/admin/users/${selectedUser.value.Id}/emails/${email}`, {
@@ -236,7 +246,7 @@ const handleUpdateEmailStatus = async (email: string, updates: AdminUpdateEmailR
   }
 };
 
-const handleDeleteEmail = async (email: string) => {
+const handleDeleteEmail = async (email: string): Promise<void> => {
   if (!selectedUser.value) return;
   try {
     await httpClient(`/admin/users/${selectedUser.value.Id}/emails/${email}`, {
@@ -251,13 +261,13 @@ const handleDeleteEmail = async (email: string) => {
 
 // --- API Logic: Password ---
 
-const openResetPasswordModal = (user: UserAdminDto) => {
+const openResetPasswordModal = (user: UserAdminDto): void => {
   selectedUser.value = user;
   resetPasswordData.value = { newPassword: '', confirmPassword: '' };
   showResetPasswordModal.value = true;
 };
 
-const handleResetPassword = async () => {
+const handleResetPassword = async (): Promise<void> => {
   if (!selectedUser.value) return;
   if (resetPasswordData.value.newPassword !== resetPasswordData.value.confirmPassword) {
     ui.notify(t('admin.passwordMismatch'), 'error');
@@ -282,8 +292,7 @@ const handleResetPassword = async () => {
   }
 };
 
-// Fixed Toggle Logic: Ensure we create a new array reference to trigger watchers
-const toggleFilter = (target: 'status' | 'role' | 'type', val: number) => {
+const toggleFilter = (target: 'status' | 'role' | 'type', val: number): void => {
   currentPage.value = 1;
   if (target === 'status') {
     const arr = [...filterStatus.value];
@@ -316,9 +325,9 @@ watch([currentPage, filterStatus, filterRole, filterType], () => {
 }, { deep: true });
 
 // --- Admin Actions ---
-const canDelete = (user: UserAdminDto) => auth.user?.Id !== user.Id;
+const canDelete = (user: UserAdminDto): boolean => auth.user?.Id !== user.Id;
 
-const updateStatus = async (user: UserAdminDto, newStatus: number) => {
+const updateStatus = async (user: UserAdminDto, newStatus: number): Promise<void> => {
   actionLoadingId.value = user.Id;
   try {
     await httpClient(`/admin/users/${user.Id}/status`, {
@@ -334,7 +343,7 @@ const updateStatus = async (user: UserAdminDto, newStatus: number) => {
   }
 };
 
-const updateRole = async (user: UserAdminDto, newRole: number) => {
+const updateRole = async (user: UserAdminDto, newRole: number): Promise<void> => {
   actionLoadingId.value = user.Id;
   try {
     await httpClient(`/admin/users/${user.Id}/role`, {
@@ -350,11 +359,11 @@ const updateRole = async (user: UserAdminDto, newRole: number) => {
   }
 };
 
-const canManageRoles = (targetUser: UserAdminDto) => {
+const canManageRoles = (targetUser: UserAdminDto): boolean => {
   return auth.isRoot && targetUser.Role !== AccountRoleNames.Root;
 };
 
-const confirmDelete = async () => {
+const confirmDelete = async (): Promise<void> => {
   if (!userToDelete.value) return;
   actionLoadingId.value = userToDelete.value.Id;
   try {
@@ -373,13 +382,8 @@ onMounted(fetchUsers);
 </script>
 
 <template>
-  <!-- 
-    Removed animate-in slide-in from top-level to prevent 
-    initial layout jump that affects the scrollbar 
-  -->
   <div class="space-y-6 fade-in-animation">
-
-    <!-- Action Bar: Reordered as per request -->
+    <!-- Action Bar -->
     <div class="flex flex-col xl:flex-row gap-4 justify-between items-start xl:items-center">
 
       <!-- Left: Search Input Group -->
@@ -413,7 +417,7 @@ onMounted(fetchUsers);
           </Button>
         </transition>
 
-        <!-- Status Filter -->
+        <!-- Filters (Status, Role, Type) -->
         <Popover>
           <PopoverTrigger as-child>
             <Button variant="outline" size="sm" class="h-9 border-dashed">
@@ -488,7 +492,6 @@ onMounted(fetchUsers);
     </div>
 
     <!-- User Table -->
-    <!-- Added min-h to prevent page height jumping during data load -->
     <div class="rounded-xl border bg-card/40 backdrop-blur-sm overflow-hidden relative min-h-145">
 
       <!-- Overlay Loading -->
@@ -586,7 +589,7 @@ onMounted(fetchUsers);
                     <DropdownMenuItem @click="openResetPasswordModal(user)">
                       <Key class="mr-2 size-4" /> {{ t('admin.resetPassword') }}
                     </DropdownMenuItem>
-                    
+
                     <DropdownMenuSeparator />
 
                     <DropdownMenuItem
@@ -615,7 +618,7 @@ onMounted(fetchUsers);
       </Table>
     </div>
 
-    <!-- Pagination Footer -->
+    <!-- Pagination -->
     <div class="flex flex-col md:flex-row items-center justify-between gap-4 px-2">
       <div class="flex items-center gap-4 text-xs font-black uppercase tracking-widest text-muted-foreground">
         <div>{{ t('admin.totalUsers') }}: <span class="text-foreground">{{ totalRecords }}</span></div>
@@ -698,14 +701,14 @@ onMounted(fetchUsers);
                       <div class="flex items-center gap-1.5">
                         <Switch
                             :checked="email.IsVerified"
-                            @update:checked="(v) => handleUpdateEmailStatus(email.Email, { IsVerified: v })"
+                            @update:checked="(v: boolean) => handleUpdateEmailStatus(email.Email, { IsVerified: v })"
                         />
                         <span class="text-xs font-medium">{{ t('admin.isVerified') }}</span>
                       </div>
                       <div class="flex items-center gap-1.5">
                         <Switch
                             :checked="email.IsPrimary"
-                            @update:checked="(v) => handleUpdateEmailStatus(email.Email, { IsPrimary: v })"
+                            @update:checked="(v: boolean) => handleUpdateEmailStatus(email.Email, { IsPrimary: v })"
                         />
                         <span class="text-xs font-medium">{{ t('admin.isPrimary') }}</span>
                       </div>
@@ -778,7 +781,7 @@ onMounted(fetchUsers);
         <AlertDialogHeader>
           <AlertDialogTitle class="text-xl font-black">{{ t('common.deleteConfirm') }}</AlertDialogTitle>
           <AlertDialogDescription class="font-medium">
-            {{ t('admin.deleteModalDesc') || 'This will permanently delete the account and all associated data. This action cannot be undone.' }}
+            {{ t('admin.deleteModalDesc') }}
             <div class="mt-4 p-3 bg-destructive/10 rounded-xl border border-destructive/20 text-destructive text-sm font-bold">
               {{ t('common.account') }}: {{ userToDelete?.AccountName }} {{ userToDelete?.Email ? "(" + userToDelete?.Email + ")" : "" }}
             </div>
@@ -808,11 +811,6 @@ onMounted(fetchUsers);
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* 
-  List Animation Optimized:
-  Use position absolute only on leave to prevent the 
-  container from collapsing/expanding rapidly.
-*/
 .list-enter-active,
 .list-leave-active {
   transition: all 0.3s ease;
@@ -828,7 +826,6 @@ onMounted(fetchUsers);
   transform: translateX(10px);
 }
 
-/* This helps to maintain layout of other rows when one is leaving */
 .list-leave-active {
   position: absolute;
   width: 100%;
