@@ -37,6 +37,15 @@ export interface UpdateUserRoleRequestDto {
     Role: AccountRole;
 }
 
+export interface AdminResetPasswordRequestDto {
+    NewPassword: string;
+}
+
+export interface AdminUpdateEmailRequestDto {
+    IsVerified?: boolean;
+    IsPrimary?: boolean;
+}
+
 // --- System Status ---
 
 export interface SystemStatusDto {
