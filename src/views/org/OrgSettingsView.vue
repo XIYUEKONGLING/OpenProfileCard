@@ -7,7 +7,7 @@ import { type OrganizationDto, MemberRole } from '@/api/types';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, AlertTriangle } from 'lucide-vue-next';
 import OrgSettings from '@/components/org/OrgSettings.vue';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useUIStore } from '@/stores/ui';

@@ -13,6 +13,7 @@ import {
   type SocialLinkDto,
   type ContactMethodDto,
   type SponsorshipItemDto,
+  type CertificateDto,
   type FollowCountsDto,
   MemberRole,
   AccountStatus,
@@ -34,7 +35,7 @@ import {
   FolderGit2, Image as ImageIcon, Settings, BookOpen,
   Heart, ExternalLink, LogOut, ShieldAlert,
   Crown, Mail, Phone, MessageSquare, MapPin as MapIcon, Link as LinkIcon2,
-  AlertTriangle, Ban, Trash2, Shield
+  AlertTriangle, Ban, Trash2, Shield, Key, Copy, Check, Clock, Calendar
 } from 'lucide-vue-next';
 
 // Lazy Load
@@ -42,7 +43,7 @@ const OrgMembers = defineAsyncComponent(() => import('@/components/org/OrgMember
 
 const props = defineProps<{ accountName: string }>();
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const ui = useUIStore();
 const router = useRouter();
 
@@ -57,9 +58,11 @@ const gallery = ref<GalleryItemDto[]>([]);
 const socials = ref<SocialLinkDto[]>([]);
 const contacts = ref<ContactMethodDto[]>([]);
 const sponsorships = ref<SponsorshipItemDto[]>([]);
+const certificates = ref<CertificateDto[]>([]);
 
 const showUserList = ref(false);
 const userListType = ref<'followers' | 'following'>('followers');
+const copiedId = ref<string | null>(null);
 
 // --- Computed Permissions ---
 const isOwner = computed(() => org.value?.MyRole === MemberRole.Owner);
@@ -69,7 +72,7 @@ const canEdit = computed(() => isAdmin.value);
 const renderedContent = computed(() => renderMarkdown(profile.value?.Content));
 const description = computed(() => profile.value?.Description);
 
-// Check ProfileDto for background, fallback to Org avatar or null
+// Check ProfileDto for background
 const hasBackground = computed(() =>
     profile.value?.Background &&
     profile.value.Background.Type !== AssetType.Empty &&
@@ -133,7 +136,8 @@ const fetchOrgData = async () => {
       galleryData,
       socialsData,
       contactsData,
-      sponsorshipsData
+      sponsorshipsData,
+      certificatesData
     ] = await Promise.all([
       httpClient<FollowCountsDto>(`/orgs/${props.accountName}/follow-stats`),
       httpClient<ProjectDto[]>(`/orgs/${props.accountName}/projects`),
@@ -141,6 +145,7 @@ const fetchOrgData = async () => {
       httpClient<SocialLinkDto[]>(`/orgs/${props.accountName}/socials`),
       httpClient<ContactMethodDto[]>(`/orgs/${props.accountName}/contacts`),
       httpClient<SponsorshipItemDto[]>(`/orgs/${props.accountName}/sponsorships`),
+      httpClient<CertificateDto[]>(`/orgs/${props.accountName}/certificates`),
     ]);
 
     followStats.value = followData;
@@ -149,6 +154,7 @@ const fetchOrgData = async () => {
     socials.value = socialsData || [];
     contacts.value = contactsData || [];
     sponsorships.value = sponsorshipsData || [];
+    certificates.value = certificatesData || [];
 
   } catch (e: any) {
     ui.notify(e.message || 'Failed to load organization', 'error');
@@ -213,6 +219,28 @@ const getContactIcon = (type: any) => {
   }
 };
 
+const formatDate = (dateString?: string) => {
+  if (!dateString) return t('common.present');
+  const date = new Date(dateString);
+  if (locale.value === 'zh') {
+    return date.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long' });
+  }
+  return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+};
+
+const copyToClipboard = async (text: string, id: string) => {
+  try {
+    await navigator.clipboard.writeText(text);
+    copiedId.value = id;
+    ui.notify(t('common.copied'), 'success');
+    setTimeout(() => {
+      copiedId.value = null;
+    }, 2000);
+  } catch (e) {
+    console.error(e);
+  }
+};
+
 watch(() => props.accountName, fetchOrgData, { immediate: true });
 </script>
 
@@ -266,15 +294,6 @@ watch(() => props.accountName, fetchOrgData, { immediate: true });
           </Button>
         </div>
       </div>
-      <!-- Fallback banner if no background -->
-      <div v-else class="w-full h-48 md:h-64 bg-muted relative overflow-hidden group rounded-4xl mb-6 flex items-center justify-center">
-        <ImageIcon class="size-12 text-muted-foreground/20" />
-        <div v-if="canEdit" class="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-          <Button variant="secondary" size="sm" class="shadow-lg backdrop-blur-md bg-background/50" @click="goToEditProfile('visuals')">
-            <Edit2 class="size-3 mr-2" /> {{ t('common.edit') }}
-          </Button>
-        </div>
-      </div>
 
       <div class="container max-w-7xl mx-auto px-4">
 
@@ -291,7 +310,7 @@ watch(() => props.accountName, fetchOrgData, { immediate: true });
         <div v-else-if="org" class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
 
           <!-- LEFT COLUMN -->
-          <aside class="lg:col-span-4 xl:col-span-3 flex flex-col gap-6 relative z-10 -mt-16 sm:-mt-20 mb-10">
+          <aside class="lg:col-span-4 xl:col-span-3 flex flex-col gap-6 relative z-10 mb-10" :class="hasBackground ? '-mt-16 sm:-mt-20' : 'mt-10'">
 
             <!-- Avatar -->
             <div class="relative group mx-auto lg:mx-0 w-40 h-40 sm:w-48 sm:h-48">
@@ -438,6 +457,7 @@ watch(() => props.accountName, fetchOrgData, { immediate: true });
                       </div>
                       <p class="text-muted-foreground text-sm max-w-md">{{ t('dashboard.tellWorldDesc') }}</p>
                       <Button v-if="canEdit" variant="outline" class="mt-2" @click="goToEditProfile('content')">{{ t('dashboard.createReadme') }}</Button>
+                      <p v-else class="text-xs text-muted-foreground italic">{{ t('common.noDescription') }}</p>
                     </div>
                   </CardContent>
                 </Card>
@@ -511,6 +531,44 @@ watch(() => props.accountName, fetchOrgData, { immediate: true });
                     </Card>
                   </div>
                   <div v-else class="text-sm text-muted-foreground italic border border-dashed p-4 rounded-lg text-center">{{ t('dashboard.noSponsorships') }}</div>
+                </section>
+
+                <!-- Certificates -->
+                <section>
+                  <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-lg flex items-center gap-2"><Key class="size-4 text-emerald-500" /> {{ t('dashboard.certificates') }}</h3>
+                    <Button v-if="canEdit" size="sm" variant="outline" @click="goToManage('certificates')">
+                      <Plus class="size-4 mr-2" /> {{ t('common.manage') }}
+                    </Button>
+                  </div>
+
+                  <div v-if="certificates.length > 0" class="flex flex-col gap-3">
+                    <Card v-for="cert in certificates" :key="cert.Id" class="border-border/60">
+                      <CardContent class="p-4">
+                        <div class="flex items-start justify-between gap-4">
+                          <div class="space-y-1 min-w-0">
+                            <div class="flex items-center gap-2">
+                              <h4 class="font-bold font-mono">{{ cert.Name }}</h4>
+                              <Badge variant="outline" class="text-[10px]">{{ cert.Type }}</Badge>
+                            </div>
+                            <div class="flex items-center gap-2 bg-muted/50 p-1.5 rounded-md w-fit">
+                              <code class="text-xs text-muted-foreground font-mono break-all">{{ cert.Fingerprint }}</code>
+                              <button @click="copyToClipboard(cert.Fingerprint, cert.Id)" class="hover:text-foreground text-muted-foreground transition-colors">
+                                <Check v-if="copiedId === cert.Id" class="size-3 text-emerald-500" />
+                                <Copy v-else class="size-3" />
+                              </button>
+                            </div>
+                          </div>
+                          <div class="text-right text-xs text-muted-foreground">
+                            <div v-if="cert.ExpiresAt">{{ t('dashboard.expiresAt', { date: formatDate(cert.ExpiresAt) }) }}</div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                  <div v-else class="text-sm text-muted-foreground italic border border-dashed p-4 rounded-lg text-center">
+                    {{ t('dashboard.noCertificates') }}
+                  </div>
                 </section>
 
                 <!-- Gallery -->
