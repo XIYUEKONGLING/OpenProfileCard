@@ -443,7 +443,7 @@ export const en = {
         dissolve: 'Dissolve Organization',
         dissolveDesc: 'Permanently delete this organization and all its resources.',
         dissolveConfirm: 'Type {name} to confirm dissolution:',
-
+        saveSuccess: 'Profile updated successfully',
         noEditPermission: 'You do not have permission to edit this organization\'s profile.',
     }
 };

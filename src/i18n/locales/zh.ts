@@ -439,7 +439,7 @@ export const zh = {
         dissolve: '解散组织',
         dissolveDesc: '永久删除此组织及其所有资源。',
         dissolveConfirm: '请输入 {name} 以确认解散：',
-        
+        saveSuccess: '组织资料已更新',
         noEditPermission: '您没有编辑本组织资料的权限。',
     }
 
