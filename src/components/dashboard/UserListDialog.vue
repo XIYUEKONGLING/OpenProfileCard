@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import AssetView from '@/components/ui/AssetView.vue';
-import { Loader2, UserMinus, Ban } from 'lucide-vue-next';
+import { Loader2, UserMinus, UserPlus, Ban } from 'lucide-vue-next';
 
 const props = defineProps<{
   open: boolean;
@@ -28,6 +28,8 @@ const { t } = useI18n();
 const ui = useUIStore();
 
 const users = ref<FollowerDto[]>([]);
+const myFollowingIds = ref<Set<string>>(new Set());
+
 const isLoading = ref(false);
 const actionLoading = ref<string | null>(null);
 
@@ -38,10 +40,22 @@ const emptyText = computed(() => props.type === 'followers' ? t('social.emptyFol
 const fetchList = async () => {
   isLoading.value = true;
   users.value = [];
+  myFollowingIds.value.clear();
+
   try {
     const endpoint = props.type === 'followers' ? '/me/followers' : '/me/following';
-    const data = await httpClient<FollowerDto[]>(endpoint);
-    users.value = data || [];
+
+    const [listData, followingData] = await Promise.all([
+      httpClient<FollowerDto[]>(endpoint),
+      httpClient<FollowerDto[]>('/me/following')
+    ]);
+
+    users.value = listData || [];
+
+    if (followingData) {
+      followingData.forEach(u => myFollowingIds.value.add(u.AccountId));
+    }
+
   } catch (e) {
     console.error(e);
     ui.notify('Failed to load list', 'error');
@@ -53,14 +67,29 @@ const fetchList = async () => {
 
 // --- Actions ---
 
-const handleUnfollow = async (user: FollowerDto) => {
-  if (!confirm(t('social.unfollowConfirm', { name: user.DisplayName }))) return;
+const toggleFollow = async (user: FollowerDto) => {
+  const isFollowing = myFollowingIds.value.has(user.AccountId);
+
+  if (isFollowing) {
+    if (!confirm(t('social.unfollowConfirm', { name: user.DisplayName }))) return;
+  }
 
   actionLoading.value = user.AccountId;
   try {
-    await httpClient(`/profiles/${user.AccountName}/follow`, { method: 'DELETE' });
-    users.value = users.value.filter(u => u.AccountId !== user.AccountId);
-    ui.notify(t('common.success'), 'success');
+    if (isFollowing) {
+      await httpClient(`/profiles/${user.AccountName}/follow`, { method: 'DELETE' });
+      myFollowingIds.value.delete(user.AccountId);
+
+      if (props.type === 'following') {
+        users.value = users.value.filter(u => u.AccountId !== user.AccountId);
+      }
+      ui.notify(t('common.success'), 'success');
+    } else {
+      await httpClient(`/profiles/${user.AccountName}/follow`, { method: 'POST' });
+      myFollowingIds.value.add(user.AccountId);
+      ui.notify(t('common.success'), 'success');
+    }
+
     emit('change');
   } catch (e: any) {
     ui.notify(e.message, 'error');
@@ -76,6 +105,8 @@ const handleBlock = async (user: FollowerDto) => {
   try {
     await httpClient(`/profiles/${user.AccountName}/block`, { method: 'POST' });
     users.value = users.value.filter(u => u.AccountId !== user.AccountId);
+    myFollowingIds.value.delete(user.AccountId);
+
     ui.notify(t('common.success'), 'success');
     emit('change');
   } catch (e: any) {
@@ -89,9 +120,7 @@ watch(() => props.open, (isOpen) => {
   if (isOpen) {
     fetchList();
   } else {
-    setTimeout(() => {
-      users.value = [];
-    }, 300);
+    setTimeout(() => { users.value = []; }, 300);
   }
 });
 
@@ -107,7 +136,7 @@ const close = () => emit('update:open', false);
       </DialogHeader>
 
       <div class="flex-1 overflow-y-auto p-6 pt-2">
-        <!-- Loading State -->
+        <!-- Loading -->
         <div v-if="isLoading" class="space-y-4 mt-2">
           <div v-for="i in 3" :key="i" class="flex items-center gap-3">
             <div class="size-10 rounded-full bg-muted animate-pulse" />
@@ -118,7 +147,7 @@ const close = () => emit('update:open', false);
           </div>
         </div>
 
-        <!-- Empty State -->
+        <!-- Empty -->
         <div v-else-if="!users || users.length === 0" class="flex flex-col items-center justify-center py-12 text-center space-y-3">
           <div class="size-12 rounded-full bg-muted/50 flex items-center justify-center">
             <UserMinus class="size-6 text-muted-foreground/40" />
@@ -126,7 +155,7 @@ const close = () => emit('update:open', false);
           <p class="text-muted-foreground text-sm font-medium">{{ emptyText }}</p>
         </div>
 
-        <!-- List State -->
+        <!-- List -->
         <div v-else class="space-y-4">
           <div v-for="user in users" :key="user.AccountId" class="flex items-center justify-between group">
             <div class="flex items-center gap-3 overflow-hidden">
@@ -143,24 +172,31 @@ const close = () => emit('update:open', false);
               </div>
             </div>
 
-            <div class="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+            <div class="flex items-center gap-1">
+              <!-- Follow / Unfollow Button -->
               <Button
-                  v-if="type === 'following'"
                   variant="ghost"
                   size="icon"
-                  class="size-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-                  :title="t('profile.unfollow')"
+                  class="size-8"
+                  :class="myFollowingIds.has(user.AccountId) 
+                    ? 'text-muted-foreground hover:text-destructive hover:bg-destructive/10' 
+                    : 'text-brand-blue hover:bg-brand-blue/10'"
+                  :title="myFollowingIds.has(user.AccountId) ? t('profile.unfollow') : t('profile.follow')"
                   :disabled="!!actionLoading"
-                  @click="handleUnfollow(user)"
+                  @click="toggleFollow(user)"
               >
                 <Loader2 v-if="actionLoading === user.AccountId" class="size-4 animate-spin" />
-                <UserMinus v-else class="size-4" />
+                <template v-else>
+                  <UserMinus v-if="myFollowingIds.has(user.AccountId)" class="size-4" />
+                  <UserPlus v-else class="size-4" />
+                </template>
               </Button>
 
+              <!-- Block Button -->
               <Button
                   variant="ghost"
                   size="icon"
-                  class="size-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                  class="size-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                   :title="t('social.block')"
                   :disabled="!!actionLoading"
                   @click="handleBlock(user)"
