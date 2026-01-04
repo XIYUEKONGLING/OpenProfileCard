@@ -700,15 +700,15 @@ onMounted(fetchUsers);
                     <div class="flex items-center gap-4">
                       <div class="flex items-center gap-1.5">
                         <Switch
-                            :checked="email.IsVerified"
-                            @update:checked="(v: boolean) => handleUpdateEmailStatus(email.Email, { IsVerified: v })"
+                            :model-value="email.IsVerified"
+                            @update:model-value="(v: boolean) => handleUpdateEmailStatus(email.Email, { IsVerified: v })"
                         />
                         <span class="text-xs font-medium">{{ t('admin.isVerified') }}</span>
                       </div>
                       <div class="flex items-center gap-1.5">
                         <Switch
-                            :checked="email.IsPrimary"
-                            @update:checked="(v: boolean) => handleUpdateEmailStatus(email.Email, { IsPrimary: v })"
+                            :model-value="email.IsPrimary"
+                            @update:model-value="(v: boolean) => handleUpdateEmailStatus(email.Email, { IsPrimary: v })"
                         />
                         <span class="text-xs font-medium">{{ t('admin.isPrimary') }}</span>
                       </div>
