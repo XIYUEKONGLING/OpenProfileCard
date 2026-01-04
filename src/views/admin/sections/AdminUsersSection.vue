@@ -216,7 +216,6 @@ const handleAddEmail = async (): Promise<void> => {
   try {
     const payload: AddEmailRequestDto = {
       Email: newEmailAddress.value,
-      Code: ""
     };
     await httpClient(`/admin/users/${selectedUser.value.Id}/emails`, {
       method: 'POST',

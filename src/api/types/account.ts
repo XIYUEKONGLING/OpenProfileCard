@@ -36,7 +36,7 @@ export interface AccountEmailDto {
 
 export interface AddEmailRequestDto {
     Email: string;
-    Code: string;
+    Code?: string;
 }
 
 export interface VerifyEmailRequestDto {
