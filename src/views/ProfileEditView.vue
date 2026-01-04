@@ -71,7 +71,7 @@ const fetchData = async () => {
   try {
     const data = await httpClient<ProfileDto>('/me/profile');
     currentAccountType.value = data.Type;
-    Object.assign(form, data); // Simplified mapping
+    Object.assign(form, data);
   } catch (error) {
     console.error(error);
     ui.notify(t('common.loading') + ' failed', 'error');
@@ -80,10 +80,32 @@ const fetchData = async () => {
   }
 };
 
+// HELPER: Convert empty strings to null for backend compatibility
+const sanitizeForm = (data: UpdateProfileRequestDto) => {
+  const clean = { ...data };
+  if (clean.Birthday === '') clean.Birthday = undefined; // or null, but undefined usually omits in JSON.stringify if configured, but here we want explicit null if clearing.
+  // Actually, for JSON, undefined removes the key. We want to send null if we want to clear it.
+  // However, if the backend treats missing key as "no change" (PATCH), we need to send null.
+  // If it's POST (Full Update), we need to send null.
+
+  // Let's explicitly set empty strings to null for nullable fields
+  if (!clean.Birthday) clean.Birthday = undefined;
+  if (!clean.FoundedDate) clean.FoundedDate = undefined;
+
+  // Note: If using POST (Full Update), missing fields might be reset. 
+  // If the backend DTO is nullable, JSON `null` is valid. `""` is invalid for DateOnly.
+  return clean;
+};
+
 const saveProfile = async () => {
   isSaving.value = true;
   try {
-    await httpClient('/me/profile', { method: 'POST', body: JSON.stringify(form) });
+    // Manually handle date clearing
+    const payload = { ...form };
+    if (payload.Birthday === '') (payload as any).Birthday = null;
+    if (payload.FoundedDate === '') (payload as any).FoundedDate = null;
+
+    await httpClient('/me/profile', { method: 'POST', body: JSON.stringify(payload) });
     ui.notify(t('profile.saveSuccess'), 'success');
     await auth.fetchMe();
   } catch (e: any) {
@@ -123,7 +145,7 @@ onMounted(() => fetchData());
 
     <div v-else class="space-y-8 animate-in fade-in slide-in-from-bottom-4">
       <Tabs v-model="activeTab" class="w-full">
-        <TabsList class="grid w-full grid-cols-3 lg:w-[400px] mb-6">
+        <TabsList class="grid w-full grid-cols-3 lg:w-100 mb-6">
           <TabsTrigger value="basic">{{ t('profile.basicInfo') }}</TabsTrigger>
           <TabsTrigger value="visuals">{{ t('profile.visuals') }}</TabsTrigger>
           <TabsTrigger value="content">{{ t('profile.content') }}</TabsTrigger>
@@ -136,7 +158,7 @@ onMounted(() => fetchData());
               <div class="flex justify-between items-center">
                 <CardTitle>{{ t('profile.basicInfo') }}</CardTitle>
                 <Button variant="link" size="sm" class="h-auto p-0 text-xs text-muted-foreground gap-1" @click="navigateToSettings">
-                  Manage Visibility <ExternalLink class="size-3" />
+                  {{ t('profile.manageVisibility') }} <ExternalLink class="size-3" />
                 </Button>
               </div>
             </CardHeader>
@@ -189,6 +211,7 @@ onMounted(() => fetchData());
                 </div>
                 <div class="space-y-2">
                   <Label>{{ t('profile.birthday') }}</Label>
+                  <!-- Use .value to bind properly, but handle empty string in save -->
                   <Input type="date" v-model="form.Birthday" />
                 </div>
               </template>
