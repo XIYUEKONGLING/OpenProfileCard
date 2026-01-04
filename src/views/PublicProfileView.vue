@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, defineAsyncComponent } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from '@/i18n';
 import { httpClient } from '@/api/client';
 import { useAuthStore } from '@/stores/auth';
+import { useServerStore } from '@/stores/server';
 import { useUIStore } from '@/stores/ui';
 import { renderMarkdown } from '@/lib/markdown';
 import {
@@ -18,6 +19,7 @@ import {
   type SponsorshipItemDto,
   type CertificateDto,
   type ContactMethodDto,
+  type SocialLinkDto,
   AccountType,
   AssetType
 } from '@/api/types';
@@ -25,11 +27,12 @@ import {
 // UI Components
 import AssetView from '@/components/ui/AssetView.vue';
 import ImageViewer from '@/components/ui/ImageViewer.vue';
+import UserListDialog from '@/components/dashboard/UserListDialog.vue';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,13 +55,14 @@ import {
   MapPin, Link as LinkIcon, Building2, Calendar,
   MoreHorizontal, UserPlus, UserMinus, Ban,
   Briefcase, FolderGit2, Users, BookOpen, Heart,
-  Image as ImageIcon, GraduationCap, Key, Mail, Phone, MessageSquare
+  Image as ImageIcon, GraduationCap, Key, Mail, Download, Copy, Check
 } from 'lucide-vue-next';
 
 const route = useRoute();
 const router = useRouter();
 const { t, locale } = useI18n();
 const auth = useAuthStore();
+const server = useServerStore();
 const ui = useUIStore();
 
 // --- State ---
@@ -77,16 +81,21 @@ const gallery = ref<GalleryItemDto[]>([]);
 const sponsorships = ref<SponsorshipItemDto[]>([]);
 const certificates = ref<CertificateDto[]>([]);
 const contacts = ref<ContactMethodDto[]>([]);
+const socials = ref<SocialLinkDto[]>([]);
 
 // UI State
 const showImageViewer = ref(false);
 const selectedImage = ref<AssetDto | null>(null);
 const showBlockDialog = ref(false);
+const showUserList = ref(false);
+const userListType = ref<'followers' | 'following'>('followers');
+const copiedCertId = ref<string | null>(null);
 
 // --- Computed ---
 const isOrg = computed(() => profile.value?.Type === AccountType.Organization);
 const isPersonal = computed(() => profile.value?.Type === AccountType.Personal);
 const isMe = computed(() => auth.user && profile.value && auth.user.AccountName === profile.value.AccountName);
+const isStatic = computed(() => server.info?.Static === true);
 const renderedContent = computed(() => renderMarkdown(profile.value?.Content));
 
 const joinDate = computed(() => {
@@ -106,16 +115,15 @@ const fetchPublicData = async () => {
   notFound.value = false;
 
   try {
-    // 1. Fetch Main Profile
     const profileData = await httpClient<ProfileDto>(`/profiles/${id}`);
     profile.value = profileData;
 
-    // 2. Fetch Sub-resources (Parallel)
     const promises: Promise<any>[] = [
       httpClient<ProjectDto[]>(`/profiles/${id}/projects`).then(res => projects.value = res || []),
       httpClient<GalleryItemDto[]>(`/profiles/${id}/gallery`).then(res => gallery.value = res || []),
       httpClient<SponsorshipItemDto[]>(`/profiles/${id}/sponsorships`).then(res => sponsorships.value = res || []),
       httpClient<ContactMethodDto[]>(`/profiles/${id}/contacts`).then(res => contacts.value = res || []),
+      httpClient<SocialLinkDto[]>(`/profiles/${id}/socials`).then(res => socials.value = res || []),
     ];
 
     if (profileData.Type === AccountType.Organization) {
@@ -123,7 +131,6 @@ const fetchPublicData = async () => {
           httpClient<OrganizationMemberDto[]>(`/profiles/${id}/members`).then(res => members.value = res || [])
       );
     } else {
-      // Personal Only
       promises.push(
           httpClient<WorkExperienceDto[]>(`/profiles/${id}/work`).then(res => work.value = res || []),
           httpClient<EducationExperienceDto[]>(`/profiles/${id}/education`).then(res => education.value = res || []),
@@ -131,8 +138,8 @@ const fetchPublicData = async () => {
       );
     }
 
-    // 3. Check Follow Status (if logged in and not self)
-    if (auth.isAuthenticated && auth.user?.AccountName !== profileData.AccountName) {
+    // Only fetch follow status if logged in AND dynamic mode
+    if (auth.isAuthenticated && !isStatic.value && auth.user?.AccountName !== profileData.AccountName) {
       promises.push(
           httpClient<FollowStatusDto>(`/profiles/${id}/follow`).then(res => followStatus.value = res)
       );
@@ -149,7 +156,7 @@ const fetchPublicData = async () => {
 };
 
 const handleFollow = async () => {
-  if (!profile.value) return;
+  if (!profile.value || isStatic.value) return;
   actionLoading.value = true;
   try {
     if (followStatus.value?.IsFollowing) {
@@ -173,7 +180,7 @@ const confirmBlock = () => {
 };
 
 const executeBlock = async () => {
-  if (!profile.value) return;
+  if (!profile.value || isStatic.value) return;
   try {
     await httpClient(`/profiles/${profile.value.AccountName}/block`, { method: 'POST' });
     ui.notify(t('common.success'), 'success');
@@ -183,6 +190,11 @@ const executeBlock = async () => {
   } finally {
     showBlockDialog.value = false;
   }
+};
+
+const openUserList = (type: 'followers' | 'following') => {
+  userListType.value = type;
+  showUserList.value = true;
 };
 
 const openImage = (asset?: AssetDto) => {
@@ -202,23 +214,47 @@ const formatDate = (dateStr?: string) => {
   return date.toLocaleDateString(undefined, { year: 'numeric', month: 'short' });
 };
 
-// Watch route change to refetch
+const downloadCert = (content: string, filename: string) => {
+  const blob = new Blob([content], { type: 'text/plain' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${filename}.txt`; // Simple text download
+  a.click();
+  window.URL.revokeObjectURL(url);
+};
+
+const copyCert = async (content: string, id: string) => {
+  try {
+    await navigator.clipboard.writeText(content);
+    copiedCertId.value = id;
+    setTimeout(() => copiedCertId.value = null, 2000);
+    ui.notify(t('common.copied'), 'success');
+  } catch (e) {
+    console.error(e);
+  }
+};
+
 watch(() => route.params.id, fetchPublicData, { immediate: true });
 </script>
 
 <template>
   <div class="w-full pb-20">
 
-    <!-- Image Viewer -->
     <ImageViewer v-model:open="showImageViewer" :asset="selectedImage" />
 
-    <!-- Block Confirmation -->
+    <UserListDialog
+        v-model:open="showUserList"
+        :type="userListType"
+        :account-name="profile?.AccountName"
+    />
+
     <AlertDialog v-model:open="showBlockDialog">
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{{ t('publicProfile.blockConfirmTitle') }}</AlertDialogTitle>
           <AlertDialogDescription>
-            {{ t('publicProfile.blockConfirmDesc', { name: profile?.DisplayName }) }}
+            {{ t('publicProfile.blockConfirmDesc', { name: profile?.DisplayName || 'User' }) }}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
@@ -230,7 +266,7 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
       </AlertDialogContent>
     </AlertDialog>
 
-    <!-- 404 State -->
+    <!-- 404 -->
     <div v-if="notFound" class="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-4">
       <div class="size-20 rounded-full bg-muted flex items-center justify-center">
         <Ban class="size-10 text-muted-foreground" />
@@ -240,23 +276,22 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
       <Button @click="router.push('/')">{{ t('publicProfile.backHome') }}</Button>
     </div>
 
-    <!-- Loading State -->
+    <!-- Loading -->
     <div v-else-if="isLoading" class="container max-w-7xl mx-auto px-4 py-10 space-y-8">
       <div class="h-64 bg-muted rounded-3xl animate-pulse"></div>
       <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
         <div class="space-y-4">
           <div class="size-32 rounded-full bg-muted animate-pulse border-4 border-background -mt-16"></div>
           <div class="h-8 w-3/4 bg-muted rounded animate-pulse"></div>
-          <div class="h-4 w-full bg-muted rounded animate-pulse"></div>
         </div>
         <div class="lg:col-span-3 h-96 bg-muted rounded-xl animate-pulse"></div>
       </div>
     </div>
 
-    <!-- Main Content -->
+    <!-- Content -->
     <div v-else class="animate-in fade-in duration-700">
 
-      <!-- 1. Hero Banner -->
+      <!-- Hero Banner -->
       <div class="h-48 md:h-80 w-full bg-muted overflow-hidden relative group">
         <div class="absolute inset-0 bg-linear-to-b from-transparent to-black/20 z-10 pointer-events-none"></div>
         <AssetView
@@ -269,12 +304,12 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
       <div class="container max-w-7xl mx-auto px-4 sm:px-8">
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
 
-          <!-- LEFT COLUMN: Sticky Info -->
+          <!-- LEFT COLUMN -->
           <div class="lg:col-span-4 xl:col-span-3 relative">
             <div class="lg:sticky lg:top-24 -mt-16 lg:-mt-20 mb-8 space-y-6">
 
-              <!-- Avatar -->
-              <div class="relative group w-fit">
+              <!-- Avatar (Z-Index fix) -->
+              <div class="relative group w-fit z-20">
                 <div class="size-32 md:size-40 rounded-full border-[6px] border-background bg-background shadow-xl overflow-hidden cursor-pointer" @click="openImage(profile?.Avatar)">
                   <AssetView
                       :asset="profile?.Avatar"
@@ -301,8 +336,17 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
                 {{ profile.Description }}
               </p>
 
-              <!-- Actions -->
-              <div class="flex flex-wrap gap-2">
+              <!-- Social Links -->
+              <div v-if="socials.length > 0" class="flex flex-wrap gap-2">
+                <a v-for="social in socials" :key="social.Id" :href="social.Url" target="_blank"
+                   class="size-8 flex items-center justify-center rounded-full bg-muted hover:bg-muted-foreground/20 transition-colors text-muted-foreground hover:text-foreground"
+                   :title="social.Platform">
+                  <AssetView :asset="social.Icon" class-name="size-4" />
+                </a>
+              </div>
+
+              <!-- Actions (Hidden in Static Mode) -->
+              <div v-if="!isStatic" class="flex flex-wrap gap-2">
                 <template v-if="auth.isAuthenticated && !isMe">
                   <Button
                       :variant="followStatus?.IsFollowing ? 'outline' : 'default'"
@@ -361,32 +405,20 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
 
               <!-- Stats -->
               <div class="flex items-center gap-6 text-sm pt-2 border-t border-border/50">
-                <div class="flex items-center gap-1">
+                <button class="flex items-center gap-1 hover:text-foreground transition-colors" @click="openUserList('following')">
                   <span class="font-black text-foreground">{{ profile?.FollowingCount }}</span>
                   <span class="text-muted-foreground">{{ t('publicProfile.following') }}</span>
-                </div>
-                <div class="flex items-center gap-1">
+                </button>
+                <button class="flex items-center gap-1 hover:text-foreground transition-colors" @click="openUserList('followers')">
                   <span class="font-black text-foreground">{{ profile?.FollowersCount }}</span>
                   <span class="text-muted-foreground">{{ t('publicProfile.followers') }}</span>
-                </div>
-              </div>
-
-              <!-- Contacts (Public) -->
-              <div v-if="contacts.length > 0" class="pt-4 space-y-2">
-                <h3 class="text-xs font-bold uppercase text-muted-foreground tracking-wider">{{ t('publicProfile.contact') }}</h3>
-                <div class="flex flex-wrap gap-2">
-                  <div v-for="c in contacts" :key="c.Id" class="flex items-center gap-2 text-sm p-2 rounded-lg bg-muted/50 border border-border/50">
-                    <AssetView v-if="c.Icon && c.Icon.Type !== 0" :asset="c.Icon" class-name="size-4" />
-                    <Mail v-else class="size-4" />
-                    <span class="font-medium select-all">{{ c.Value }}</span>
-                  </div>
-                </div>
+                </button>
               </div>
 
             </div>
           </div>
 
-          <!-- RIGHT COLUMN: Content Tabs -->
+          <!-- RIGHT COLUMN -->
           <div class="lg:col-span-8 xl:col-span-9 pt-8 min-w-0">
             <Tabs defaultValue="overview" class="w-full">
               <TabsList class="w-full justify-start h-auto p-0 bg-transparent border-b border-border rounded-none gap-6 mb-8 overflow-x-auto no-scrollbar">
@@ -426,16 +458,37 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
                   </CardContent>
                 </Card>
 
-                <!-- Sponsorships (Prominent) -->
+                <!-- Contacts -->
+                <div v-if="contacts.length > 0">
+                  <h3 class="font-bold text-lg mb-4 flex items-center gap-2"><Mail class="size-5" /> {{ t('publicProfile.contact') }}</h3>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div v-for="c in contacts" :key="c.Id" class="flex items-center gap-3 p-3 rounded-xl border bg-card">
+                      <div class="size-10 flex items-center justify-center rounded-lg bg-muted shrink-0">
+                        <AssetView v-if="c.Icon && c.Icon.Type !== 0" :asset="c.Icon" class-name="size-5" />
+                        <Mail v-else class="size-5" />
+                      </div>
+                      <div class="min-w-0">
+                        <div class="text-xs font-bold uppercase text-muted-foreground">{{ c.Label }}</div>
+                        <div class="font-medium truncate select-all">{{ c.Value }}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Sponsorships -->
                 <div v-if="sponsorships.length > 0">
                   <h3 class="font-bold text-lg mb-4 flex items-center gap-2"><Heart class="size-5 text-pink-500" /> {{ t('publicProfile.sponsorships') }}</h3>
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Card v-for="spon in sponsorships" :key="spon.Id" class="hover:border-pink-500/30 transition-colors cursor-pointer" @click="openUrl(spon.Url)">
                       <CardContent class="p-4 flex items-center gap-4">
                         <AssetView :asset="spon.Icon" class-name="size-10 rounded-lg" />
-                        <div class="min-w-0">
+                        <div class="min-w-0 flex-1">
                           <div class="font-bold truncate">{{ spon.Platform }}</div>
                           <div class="text-xs text-muted-foreground truncate">{{ spon.Url }}</div>
+                        </div>
+                        <!-- Show QR Code preview if exists -->
+                        <div v-if="spon.QrCode && spon.QrCode.Type !== AssetType.Empty" class="size-10 bg-white p-0.5 rounded shrink-0" @click.stop="openImage(spon.QrCode)">
+                          <AssetView :asset="spon.QrCode" class-name="w-full h-full" />
                         </div>
                       </CardContent>
                     </Card>
@@ -465,7 +518,7 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
                 </div>
               </TabsContent>
 
-              <!-- TAB: Members (Org Only) -->
+              <!-- TAB: Members -->
               <TabsContent v-if="isOrg" value="members" class="animate-in fade-in slide-in-from-bottom-2">
                 <div v-if="members.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   <router-link v-for="member in members" :key="member.AccountId" :to="`/${member.AccountName}`">
@@ -488,8 +541,8 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
                 </div>
               </TabsContent>
 
-              <!-- TAB: Experience (Personal Only) -->
-              <TabsContent v-if="isPersonal" value="experience" class="animate-in fade-in slide-in-from-bottom-2 space-y-8">
+              <!-- TAB: Experience -->
+              <TabsContent v-if="isPersonal" value="experience" class="animate-in fade-in slide-in-from-bottom-2 space-y-10">
                 <!-- Work -->
                 <div v-if="work.length > 0">
                   <h3 class="font-bold text-lg mb-4 flex items-center gap-2"><Briefcase class="size-5" /> {{ t('publicProfile.work') }}</h3>
@@ -510,7 +563,7 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
                           {{ formatDate(job.StartDate) }} - {{ formatDate(job.EndDate) }}
                         </span>
                       </div>
-                      <p v-if="job.Description" class="text-sm text-muted-foreground mt-2 ml-13">{{ job.Description }}</p>
+                      <p v-if="job.Description" class="text-sm text-muted-foreground mt-2 ml-13 whitespace-pre-wrap">{{ job.Description }}</p>
                     </div>
                   </div>
                 </div>
@@ -536,7 +589,7 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
               </TabsContent>
 
               <!-- TAB: Resources -->
-              <TabsContent value="resources" class="animate-in fade-in slide-in-from-bottom-2 space-y-8">
+              <TabsContent value="resources" class="animate-in fade-in slide-in-from-bottom-2 space-y-10">
 
                 <!-- Gallery -->
                 <div v-if="gallery.length > 0">
@@ -557,16 +610,30 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
                   <div class="flex flex-col gap-3">
                     <Card v-for="cert in certificates" :key="cert.Id" class="border-border/60">
                       <CardContent class="p-4">
-                        <div class="flex items-start justify-between gap-4">
+                        <div class="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                           <div class="space-y-1 min-w-0">
                             <div class="flex items-center gap-2">
-                              <h4 class="font-bold font-mono">{{ cert.Name }}</h4>
-                              <Badge variant="outline" class="text-[10px]">{{ cert.Type }}</Badge>
+                              <h4 class="font-bold font-mono text-lg">{{ cert.Name }}</h4>
+                              <Badge variant="outline">{{ cert.Type }}</Badge>
                             </div>
-                            <div class="flex items-center gap-2 bg-muted/50 p-1.5 rounded-md w-fit">
+                            <div class="text-sm text-muted-foreground">
+                              <span v-if="cert.Email" class="mr-3">Email: {{ cert.Email }}</span>
+                              <span v-if="cert.CreatedAt">Created: {{ formatDate(cert.CreatedAt) }}</span>
+                              <span v-if="cert.ExpiresAt" class="ml-3">Expires: {{ formatDate(cert.ExpiresAt) }}</span>
+                            </div>
+                            <div class="flex items-center gap-2 bg-muted/50 p-2 rounded-md w-fit mt-2">
                               <code class="text-xs text-muted-foreground font-mono break-all">{{ cert.Fingerprint }}</code>
+                              <Button variant="ghost" size="icon" class="size-6" @click="copyCert(cert.Fingerprint, cert.Id)">
+                                <Check v-if="copiedCertId === cert.Id" class="size-3 text-green-500" />
+                                <Copy v-else class="size-3" />
+                              </Button>
                             </div>
                           </div>
+
+                          <!-- Download Button -->
+                          <Button v-if="cert.Content" variant="outline" size="sm" @click="downloadCert(cert.Content, cert.Name)">
+                            <Download class="size-4 mr-2" /> Download
+                          </Button>
                         </div>
                       </CardContent>
                     </Card>

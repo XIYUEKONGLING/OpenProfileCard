@@ -33,15 +33,10 @@ const router = createRouter({
             path: '/',
             component: PublicLayout,
             children: [
-                // Landing Page (Redirect to login for now, or create a LandingView)
+                // Landing Page (Redirect to login for now)
                 { path: '', redirect: '/login' },
 
-                // Explicit Routes (Optional, for SEO or specific structures)
-                { path: 'u/:id', redirect: '/:id' },
-                { path: 'orgs/:id', redirect: '/:id' },
-
-                // 4. Catch-all Profile Route (MUST BE LAST CHILD)
-                // Matches /username, /@uuid, /test
+                // Matches /username, /@uuid
                 {
                     path: ':id',
                     name: 'public-profile',
@@ -50,7 +45,7 @@ const router = createRouter({
             ]
         }
     ],
-    scrollBehavior(to, from, savedPosition) {
+    scrollBehavior(_to, _from, savedPosition) {
         if (savedPosition) return savedPosition;
         return { top: 0 };
     }
@@ -58,7 +53,6 @@ const router = createRouter({
 
 router.beforeEach(async (to, _from, next) => {
     const auth = useAuthStore();
-    // Try to fetch user if token exists but user is missing (page refresh)
     if (auth.token && !auth.user) {
         try {
             await auth.fetchMe();

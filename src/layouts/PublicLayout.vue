@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { computed } from 'vue';
 import { useServerStore } from '@/stores/server';
 import { useAuthStore } from '@/stores/auth';
 import { useThemeStore } from '@/stores/theme';
@@ -22,6 +23,8 @@ const themeStore = useThemeStore();
 const { t, setLocale, locale } = useI18n();
 const router = useRouter();
 
+const isStatic = computed(() => server.info?.Static === true);
+
 const languages = [
   { code: 'zh', label: '简体中文' },
   { code: 'en', label: 'English' }
@@ -43,12 +46,23 @@ const languages = [
         <!-- Right Actions -->
         <div class="flex items-center gap-2">
 
-          <!-- Theme/Lang (Simplified) -->
-          <Button variant="ghost" size="icon" @click="themeStore.setTheme(themeStore.theme === 'dark' ? 'light' : 'dark')">
-            <Sun v-if="themeStore.theme === 'light'" class="size-4" />
-            <Moon v-else class="size-4" />
-          </Button>
+          <!-- Theme -->
+          <DropdownMenu>
+            <DropdownMenuTrigger as-child>
+              <Button variant="ghost" size="icon">
+                <Sun v-if="themeStore.theme === 'light'" class="size-4" />
+                <Moon v-else-if="themeStore.theme === 'dark'" class="size-4" />
+                <Monitor v-else class="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem @click="themeStore.setTheme('light')"><Sun class="mr-2 size-4"/> {{ t('common.light') }}</DropdownMenuItem>
+              <DropdownMenuItem @click="themeStore.setTheme('dark')"><Moon class="mr-2 size-4"/> {{ t('common.dark') }}</DropdownMenuItem>
+              <DropdownMenuItem @click="themeStore.setTheme('auto')"><Monitor class="mr-2 size-4"/> {{ t('common.system') }}</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
+          <!-- Language -->
           <DropdownMenu>
             <DropdownMenuTrigger as-child>
               <Button variant="ghost" size="icon">
@@ -62,22 +76,22 @@ const languages = [
             </DropdownMenuContent>
           </DropdownMenu>
 
-          <div class="w-px h-4 bg-border mx-1"></div>
+          <!-- Auth Buttons (Hidden in Static Mode) -->
+          <template v-if="!isStatic">
+            <div class="w-px h-4 bg-border mx-1"></div>
 
-          <!-- Auth Buttons -->
-          <template v-if="auth.isAuthenticated">
-            <Button variant="default" size="sm" class="font-bold rounded-full" @click="router.push('/dashboard')">
-              <LayoutDashboard class="size-4 mr-2" />
-              {{ t('dashboard.title') }}
-            </Button>
-          </template>
-          <template v-else>
-            <Button variant="ghost" size="sm" class="font-bold" @click="router.push('/login')">
-              {{ t('auth.signIn') }}
-            </Button>
-            <Button variant="default" size="sm" class="font-bold rounded-full" @click="router.push('/register')">
-              {{ t('auth.signUp') }}
-            </Button>
+            <template v-if="auth.isAuthenticated">
+              <Button variant="default" size="sm" class="font-bold rounded-full" @click="router.push('/dashboard')">
+                <LayoutDashboard class="size-4 mr-2" />
+                {{ t('dashboard.title') }}
+              </Button>
+            </template>
+            <template v-else>
+              <Button variant="default" size="sm" class="font-bold rounded-full" @click="router.push('/login')">
+                <LogIn class="size-4 mr-2" />
+                {{ t('auth.signIn') }}
+              </Button>
+            </template>
           </template>
         </div>
       </div>

@@ -3,9 +3,11 @@ import { ref, watch, computed } from 'vue';
 import { useI18n } from '@/i18n';
 import { httpClient } from '@/api/client';
 import { useUIStore } from '@/stores/ui';
+import { useAuthStore } from '@/stores/auth';
+import { useServerStore } from '@/stores/server';
 import type { FollowerDto } from '@/api/types';
 
-// UI Components
+// UI
 import {
   Dialog,
   DialogContent,
@@ -30,12 +32,15 @@ import { Loader2, UserMinus, UserPlus, Ban } from 'lucide-vue-next';
 const props = defineProps<{
   open: boolean;
   type: 'followers' | 'following';
+  accountName?: string; // Optional: If viewing another user's list
 }>();
 
 const emit = defineEmits(['update:open', 'change']);
 
 const { t } = useI18n();
 const ui = useUIStore();
+const auth = useAuthStore();
+const server = useServerStore();
 
 // --- State ---
 const users = ref<FollowerDto[]>([]);
@@ -52,6 +57,11 @@ const pendingUser = ref<FollowerDto | null>(null);
 const title = computed(() => props.type === 'followers' ? t('dashboard.followers') : t('dashboard.following'));
 const emptyText = computed(() => props.type === 'followers' ? t('social.emptyFollowers') : t('social.emptyFollowing'));
 
+// Check if we can perform actions (Logged in + Dynamic Server)
+const canInteract = computed(() => {
+  return auth.isAuthenticated && server.info?.Dynamic;
+});
+
 // --- Data Fetching ---
 const fetchList = async () => {
   isLoading.value = true;
@@ -59,17 +69,23 @@ const fetchList = async () => {
   myFollowingIds.value.clear();
 
   try {
-    const endpoint = props.type === 'followers' ? '/me/followers' : '/me/following';
+    // Determine Endpoint
+    const base = props.accountName ? `/profiles/${props.accountName}` : '/me';
+    const endpoint = props.type === 'followers' ? `${base}/followers` : `${base}/following`;
 
-    const [listData, followingData] = await Promise.all([
-      httpClient<FollowerDto[]>(endpoint),
-      httpClient<FollowerDto[]>('/me/following')
-    ]);
+    const promises: Promise<any>[] = [httpClient<FollowerDto[]>(endpoint)];
+
+    // If logged in, fetch my following list to determine button states
+    if (canInteract.value) {
+      promises.push(httpClient<FollowerDto[]>('/me/following'));
+    }
+
+    const [listData, followingData] = await Promise.all(promises);
 
     users.value = listData || [];
 
     if (followingData) {
-      followingData.forEach(u => myFollowingIds.value.add(u.AccountId));
+      followingData.forEach((u: any) => myFollowingIds.value.add(u.AccountId));
     }
 
   } catch (e) {
@@ -81,25 +97,21 @@ const fetchList = async () => {
   }
 };
 
-// --- Execution Logic (Called after confirmation) ---
-
+// --- Actions (Only if canInteract) ---
 const executeToggleFollow = async (user: FollowerDto) => {
   const isFollowing = myFollowingIds.value.has(user.AccountId);
   actionLoading.value = user.AccountId;
 
   try {
     if (isFollowing) {
-      // Unfollow
       await httpClient(`/profiles/${user.AccountName}/follow`, { method: 'DELETE' });
       myFollowingIds.value.delete(user.AccountId);
-
-      // If in "Following" list, remove the row
-      if (props.type === 'following') {
+      // Only remove from list if we are viewing OUR OWN following list
+      if (!props.accountName && props.type === 'following') {
         users.value = users.value.filter(u => u.AccountId !== user.AccountId);
       }
       ui.notify(t('common.success'), 'success');
     } else {
-      // Follow
       await httpClient(`/profiles/${user.AccountName}/follow`, { method: 'POST' });
       myFollowingIds.value.add(user.AccountId);
       ui.notify(t('common.success'), 'success');
@@ -117,9 +129,11 @@ const executeBlock = async (user: FollowerDto) => {
   actionLoading.value = user.AccountId;
   try {
     await httpClient(`/profiles/${user.AccountName}/block`, { method: 'POST' });
-    users.value = users.value.filter(u => u.AccountId !== user.AccountId);
+    // If viewing my own lists, remove the user
+    if (!props.accountName) {
+      users.value = users.value.filter(u => u.AccountId !== user.AccountId);
+    }
     myFollowingIds.value.delete(user.AccountId);
-
     ui.notify(t('common.success'), 'success');
     emit('change');
   } catch (e: any) {
@@ -130,18 +144,13 @@ const executeBlock = async (user: FollowerDto) => {
   }
 };
 
-// --- Interaction Handlers (Triggers Dialog) ---
-
 const onToggleFollowClick = (user: FollowerDto) => {
   const isFollowing = myFollowingIds.value.has(user.AccountId);
-
   if (isFollowing) {
-    // If Unfollowing, require confirmation
     pendingUser.value = user;
     pendingAction.value = 'unfollow';
     confirmOpen.value = true;
   } else {
-    // If Following, do it immediately
     executeToggleFollow(user);
   }
 };
@@ -154,28 +163,19 @@ const onBlockClick = (user: FollowerDto) => {
 
 const onConfirm = () => {
   if (!pendingUser.value || !pendingAction.value) return;
-
-  if (pendingAction.value === 'unfollow') {
-    executeToggleFollow(pendingUser.value);
-  } else if (pendingAction.value === 'block') {
-    executeBlock(pendingUser.value);
-  }
+  if (pendingAction.value === 'unfollow') executeToggleFollow(pendingUser.value);
+  else if (pendingAction.value === 'block') executeBlock(pendingUser.value);
 };
 
-// --- Watchers ---
 watch(() => props.open, (isOpen) => {
-  if (isOpen) {
-    fetchList();
-  } else {
-    setTimeout(() => { users.value = []; }, 300);
-  }
+  if (isOpen) fetchList();
+  else setTimeout(() => { users.value = []; }, 300);
 });
 
 const close = () => emit('update:open', false);
 </script>
 
 <template>
-  <!-- Main List Dialog -->
   <Dialog :open="open" @update:open="emit('update:open', $event)">
     <DialogContent class="sm:max-w-md max-h-[80vh] flex flex-col p-0 gap-0 overflow-hidden">
       <DialogHeader class="p-6 pb-2 shrink-0">
@@ -184,18 +184,15 @@ const close = () => emit('update:open', false);
       </DialogHeader>
 
       <div class="flex-1 overflow-y-auto p-6 pt-2">
-        <!-- Loading -->
         <div v-if="isLoading" class="space-y-4 mt-2">
           <div v-for="i in 3" :key="i" class="flex items-center gap-3">
             <div class="size-10 rounded-full bg-muted animate-pulse" />
             <div class="space-y-1 flex-1">
               <div class="h-4 w-24 bg-muted animate-pulse rounded" />
-              <div class="h-3 w-16 bg-muted animate-pulse rounded" />
             </div>
           </div>
         </div>
 
-        <!-- Empty -->
         <div v-else-if="!users || users.length === 0" class="flex flex-col items-center justify-center py-12 text-center space-y-3">
           <div class="size-12 rounded-full bg-muted/50 flex items-center justify-center">
             <UserMinus class="size-6 text-muted-foreground/40" />
@@ -203,33 +200,29 @@ const close = () => emit('update:open', false);
           <p class="text-muted-foreground text-sm font-medium">{{ emptyText }}</p>
         </div>
 
-        <!-- List -->
         <div v-else class="space-y-4">
           <div v-for="user in users" :key="user.AccountId" class="flex items-center justify-between group">
             <div class="flex items-center gap-3 overflow-hidden">
-              <router-link :to="`/u/${user.AccountName}`" @click="close">
+              <router-link :to="`/${user.AccountName}`" @click="close">
                 <div class="size-10 rounded-full bg-muted border border-border overflow-hidden shrink-0">
                   <AssetView :asset="user.Avatar" :fallback-name="user.DisplayName" class-name="w-full h-full" />
                 </div>
               </router-link>
               <div class="min-w-0">
-                <router-link :to="`/u/${user.AccountName}`" @click="close" class="font-bold truncate hover:underline block">
+                <router-link :to="`/${user.AccountName}`" @click="close" class="font-bold truncate hover:underline block">
                   {{ user.DisplayName }}
                 </router-link>
                 <div class="text-xs text-muted-foreground truncate">@{{ user.AccountName }}</div>
               </div>
             </div>
 
-            <div class="flex items-center gap-1">
-              <!-- Follow / Unfollow Button -->
+            <!-- Actions (Only if logged in and dynamic) -->
+            <div v-if="canInteract && user.AccountName !== auth.user?.AccountName" class="flex items-center gap-1">
               <Button
                   variant="ghost"
                   size="icon"
                   class="size-8"
-                  :class="myFollowingIds.has(user.AccountId) 
-                    ? 'text-muted-foreground hover:text-destructive hover:bg-destructive/10' 
-                    : 'text-brand-blue hover:bg-brand-blue/10'"
-                  :title="myFollowingIds.has(user.AccountId) ? t('profile.unfollow') : t('profile.follow')"
+                  :class="myFollowingIds.has(user.AccountId) ? 'text-muted-foreground' : 'text-brand-blue'"
                   :disabled="!!actionLoading"
                   @click="onToggleFollowClick(user)"
               >
@@ -240,12 +233,10 @@ const close = () => emit('update:open', false);
                 </template>
               </Button>
 
-              <!-- Block Button -->
               <Button
                   variant="ghost"
                   size="icon"
-                  class="size-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
-                  :title="t('social.block')"
+                  class="size-8 text-muted-foreground hover:text-destructive opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
                   :disabled="!!actionLoading"
                   @click="onBlockClick(user)"
               >
@@ -258,24 +249,12 @@ const close = () => emit('update:open', false);
     </DialogContent>
   </Dialog>
 
-  <!-- Confirmation Alert Dialog -->
   <AlertDialog v-model:open="confirmOpen">
     <AlertDialogContent>
       <AlertDialogHeader>
-        <AlertDialogTitle>
-          {{ pendingAction === 'block'
-            ? t('social.block')
-            : t('profile.unfollow')
-          }}
-        </AlertDialogTitle>
+        <AlertDialogTitle>{{ pendingAction === 'block' ? t('social.block') : t('profile.unfollow') }}</AlertDialogTitle>
         <AlertDialogDescription>
-          {{ pendingAction === 'block'
-            ? t('social.blockConfirm', { name: pendingUser?.DisplayName })
-            : t('social.unfollowConfirm', { name: pendingUser?.DisplayName })
-          }}
-          <span v-if="pendingAction === 'block'" class="block mt-2 text-destructive font-medium">
-            {{ t('social.blockDesc') }}
-          </span>
+          {{ pendingAction === 'block' ? t('social.blockConfirm', { name: pendingUser?.DisplayName }) : t('social.unfollowConfirm', { name: pendingUser?.DisplayName }) }}
         </AlertDialogDescription>
       </AlertDialogHeader>
       <AlertDialogFooter>
