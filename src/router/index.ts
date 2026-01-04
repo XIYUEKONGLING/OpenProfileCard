@@ -24,7 +24,14 @@ const router = createRouter({
                 { path: '', name: 'dashboard', component: DashboardView },
                 { path: 'settings', name: 'settings', component: SettingsView },
                 { path: 'profile/edit', name: 'profile-edit', component: () => import('@/views/ProfileEditView.vue') },
-                { path: 'manage/:resource', name: 'resource-manager', component: () => import('@/views/ResourceManager.vue'), props: true }
+                { path: 'manage/:resource', name: 'resource-manager', component: () => import('@/views/ResourceManager.vue'), props: true },
+
+                {
+                    path: 'admin',
+                    name: 'admin-dashboard',
+                    component: () => import('@/views/admin/AdminDashboardView.vue'),
+                    meta: { adminOnly: true }
+                }
             ]
         },
 
@@ -33,10 +40,7 @@ const router = createRouter({
             path: '/',
             component: PublicLayout,
             children: [
-                // Landing Page (Redirect to login for now)
                 { path: '', redirect: '/login' },
-
-                // Matches /username, /@uuid
                 {
                     path: ':id',
                     name: 'public-profile',
@@ -53,14 +57,27 @@ const router = createRouter({
 
 router.beforeEach(async (to, _from, next) => {
     const auth = useAuthStore();
+
     if (auth.token && !auth.user) {
         try {
             await auth.fetchMe();
-        } catch {}
+        } catch (e) {
+            console.error("Failed to restore session", e);
+        }
     }
 
-    if (to.meta.requiresAuth && !auth.isAuthenticated) return next('/login');
-    if (to.meta.guest && auth.isAuthenticated) return next('/dashboard');
+    if (to.meta.requiresAuth && !auth.isAuthenticated) {
+        return next('/login');
+    }
+
+    if (to.meta.adminOnly && !auth.isAdmin) {
+        return next('/dashboard');
+    }
+
+    if (to.meta.guest && auth.isAuthenticated) {
+        return next('/dashboard');
+    }
+
     next();
 });
 

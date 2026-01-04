@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, computed, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useAuthStore } from '@/stores/auth';
 import { useServerStore } from '@/stores/server';
@@ -47,6 +47,7 @@ const route = useRoute();
 const isMobileMenuOpen = ref(false);
 const isCollapsed = ref(localStorage.getItem('sidebar-collapsed') === 'true');
 const myOrgs = ref<OrganizationDto[]>([]);
+const mainContentRef = ref<HTMLElement | null>(null);
 
 // --- Computed ---
 const accountTypeLabel = computed(() => {
@@ -93,6 +94,13 @@ onMounted(() => {
   if (auth.isAuthenticated) {
     fetchOrgs();
     if (!auth.profile) auth.fetchMe();
+  }
+});
+
+// Watch route changes to scroll main content to top
+watch(() => route.path, () => {
+  if (mainContentRef.value) {
+    mainContentRef.value.scrollTo({ top: 0, behavior: 'smooth' });
   }
 });
 
@@ -203,7 +211,7 @@ const themeOptions = [
         </div>
 
         <!-- Admin -->
-        <router-link v-if="auth.isAdmin" to="/admin" v-slot="{ isExactActive }">
+        <router-link v-if="auth.isAdmin" to="/dashboard/admin" v-slot="{ isExactActive }">
           <div :class="[
             'flex items-center rounded-xl font-bold transition-all mt-4 border border-dashed border-border/60 relative group',
             isCollapsed ? 'justify-center size-10 mx-auto' : 'gap-3 px-4 py-3',
@@ -335,7 +343,7 @@ const themeOptions = [
 
             <router-link
                 v-if="auth.isAdmin"
-                to="/admin"
+                to="/dashboard/admin"
                 @click="isMobileMenuOpen = false"
                 v-slot="{ isExactActive }"
             >
@@ -381,7 +389,7 @@ const themeOptions = [
     </Transition>
 
     <!-- MAIN CONTENT -->
-    <main class="flex-1 overflow-y-auto p-4 md:p-10 scroll-smooth relative">
+    <main ref="mainContentRef" class="flex-1 overflow-y-auto p-4 md:p-10 scroll-smooth relative">
       <div class="w-full max-w-screen-2xl mx-auto min-h-full">
         <router-view v-slot="{ Component }">
           <transition name="fade" mode="out-in">
