@@ -370,7 +370,7 @@ watch(() => props.accountName, fetchOrgData, { immediate: true });
                   <Settings class="size-4 mr-2" /> {{ t('organization.settings') }}
                 </Button>
 
-                <Button v-if="!isOwner" variant="ghost" class="w-full text-destructive hover:bg-destructive/10 rounded-xl" @click="leaveOrg">
+                <Button v-if="!isOwner" variant="outline" class="w-full text-destructive hover:bg-destructive/10 rounded-xl" @click="leaveOrg">
                   <LogOut class="size-4 mr-2" /> {{ t('organization.leave') }}
                 </Button>
               </div>
