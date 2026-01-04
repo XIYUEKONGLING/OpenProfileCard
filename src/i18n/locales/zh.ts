@@ -3,6 +3,7 @@ export const zh = {
         save: '保存',
         cancel: '取消',
         remove: '删除',
+        download: '下载',
         loading: '加载中...',
         username: '用户名',
         email: '电子邮箱',
