@@ -252,6 +252,7 @@ const copyToClipboard = async (text: string, id: string) => {
     <UserListDialog
         v-model:open="showUserList"
         :type="userListType"
+        :is-me="true"
         @change="refreshStats"
     />
 
