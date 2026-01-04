@@ -53,7 +53,7 @@ import {
 // Icons
 import {
   MapPin, Link as LinkIcon, Building2, Calendar,
-  MoreHorizontal, UserPlus, UserMinus, Ban,
+  MoreHorizontal, UserPlus, UserMinus, Ban, Cake,
   Briefcase, FolderGit2, Users, BookOpen, Heart,
   Image as ImageIcon, GraduationCap, Key, Mail, Download, Copy, Check, User, Clock, ShieldCheck
 } from 'lucide-vue-next';
@@ -348,10 +348,41 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
 
               <!-- Metadata -->
               <div class="space-y-3 text-sm text-muted-foreground pt-2">
-                <div v-if="profile.CurrentCompany" class="flex items-center gap-3"><Building2 class="size-4 shrink-0" /> <span class="text-foreground">{{ profile.CurrentCompany }}</span></div>
-                <div v-if="profile.Location" class="flex items-center gap-3"><MapPin class="size-4 shrink-0" /> <span>{{ profile.Location }}</span></div>
-                <div v-if="profile.Website" class="flex items-center gap-3"><LinkIcon class="size-4 shrink-0" /> <a :href="profile.Website" target="_blank" class="text-brand-blue hover:underline truncate">{{ profile.Website }}</a></div>
-                <div v-if="joinDate" class="flex items-center gap-3"><Calendar class="size-4 shrink-0" /> <span>{{ t('publicProfile.joined', { date: joinDate }) }}</span></div>
+
+                <div v-if="isPersonal && profile.JobTitle" class="flex items-center gap-3">
+                  <Briefcase class="size-4 shrink-0" />
+                  <span class="text-foreground font-medium">{{ profile.JobTitle }}</span>
+                </div>
+
+                <div v-if="profile.CurrentCompany" class="flex items-center gap-3">
+                  <Building2 class="size-4 shrink-0" />
+                  <span class="text-foreground">{{ profile.CurrentCompany }}</span>
+                </div>
+
+                <div v-if="isPersonal && profile.CurrentSchool" class="flex items-center gap-3">
+                  <GraduationCap class="size-4 shrink-0" />
+                  <span class="text-foreground">{{ profile.CurrentSchool }}</span>
+                </div>
+
+                <div v-if="profile.Location" class="flex items-center gap-3">
+                  <MapPin class="size-4 shrink-0" />
+                  <span>{{ profile.Location }}</span>
+                </div>
+
+                <div v-if="isPersonal && profile.Birthday" class="flex items-center gap-3">
+                  <Cake class="size-4 shrink-0" />
+                  <span>{{ formatDate(profile.Birthday) }}</span>
+                </div>
+
+                <div v-if="profile.Website" class="flex items-center gap-3">
+                  <LinkIcon class="size-4 shrink-0" />
+                  <a :href="profile.Website" target="_blank" class="text-brand-blue hover:underline truncate">{{ profile.Website }}</a>
+                </div>
+
+                <div v-if="joinDate" class="flex items-center gap-3">
+                  <Calendar class="size-4 shrink-0" />
+                  <span>{{ t('publicProfile.joined', { date: joinDate }) }}</span>
+                </div>
               </div>
 
               <!-- Stats (Using calculated counts) -->
