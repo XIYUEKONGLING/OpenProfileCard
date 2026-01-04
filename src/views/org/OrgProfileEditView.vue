@@ -106,7 +106,7 @@ onMounted(loadData);
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div class="max-w-4xl mx-auto space-y-6">
     <!-- Header -->
     <div class="flex items-center gap-2">
       <Button variant="ghost" size="icon" @click="router.back()" class="rounded-full">
@@ -207,28 +207,26 @@ onMounted(loadData);
         </TabsContent>
 
         <!-- Tab Content: Markdown Content -->
-        <TabsContent value="content" class="animate-in fade-in slide-in-from-bottom-2 mt-0">
-          <Card class="border-none shadow-none bg-transparent">
-            <CardHeader class="px-0">
-              <CardTitle>{{ t('profile.content') }}</CardTitle>
-            </CardHeader>
-            <CardContent class="p-0">
-              <Tabs default-value="write" class="w-full">
-                <div class="border-b bg-muted/30 px-6 py-2 flex items-center justify-between rounded-t-lg">
-                  <TabsList class="h-8 bg-transparent">
-                    <TabsTrigger value="write" class="text-xs">{{ t('profile.write') }}</TabsTrigger>
-                    <TabsTrigger value="preview" class="text-xs">{{ t('profile.preview') }}</TabsTrigger>
-                  </TabsList>
-                </div>
+        <TabsContent value="content">
+          <Card class="overflow-hidden">
+            <Tabs default-value="write" class="w-full">
+              <div class="border-b bg-muted/30 px-6 py-2 flex items-center justify-between">
+                <Label class="font-bold">{{ t('profile.content') }}</Label>
+                <TabsList class="h-8">
+                  <TabsTrigger value="write" class="text-xs">{{ t('profile.write') }}</TabsTrigger>
+                  <TabsTrigger value="preview" class="text-xs">{{ t('profile.preview') }}</TabsTrigger>
+                </TabsList>
+              </div>
+              <CardContent class="p-0">
                 <TabsContent value="write" class="p-0 m-0 border-none">
                   <Textarea v-model="form.Content" class="min-h-100 rounded-none border-0 focus-visible:ring-0 resize-none p-6 font-mono text-sm leading-relaxed" :placeholder="t('profile.markdownPlaceholder')" />
                 </TabsContent>
-                <TabsContent value="preview" class="min-h-100 p-6 bg-muted/10 rounded-b-lg">
+                <TabsContent value="preview" class="min-h-100 p-6 bg-muted/10">
                   <div v-if="form.Content" class="prose dark:prose-invert max-w-none prose-sm" v-html="renderedContent"></div>
                   <div v-else class="text-muted-foreground text-sm italic text-center pt-20">{{ t('profile.nothingToPreview') }}</div>
                 </TabsContent>
-              </Tabs>
-            </CardContent>
+              </CardContent>
+            </Tabs>
           </Card>
         </TabsContent>
       </Tabs>
