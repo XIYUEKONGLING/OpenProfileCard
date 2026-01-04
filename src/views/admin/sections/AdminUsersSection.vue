@@ -433,7 +433,7 @@ onMounted(fetchUsers);
                   class="flex items-center gap-2 p-2 rounded-md hover:bg-muted cursor-pointer transition-colors"
                   @click="toggleFilter('status', s)"
               >
-                <Checkbox :checked="filterStatus.includes(s)" />
+                <Checkbox :checked="filterStatus.includes(s)" :modelValue="filterStatus.includes(s)" />
                 <span class="text-sm font-medium leading-none">{{ getStatusLabel(s) }}</span>
               </div>
             </div>
@@ -457,7 +457,7 @@ onMounted(fetchUsers);
                   class="flex items-center gap-2 p-2 rounded-md hover:bg-muted cursor-pointer transition-colors"
                   @click="toggleFilter('role', r)"
               >
-                <Checkbox :checked="filterRole.includes(r)" />
+                <Checkbox :checked="filterRole.includes(r)" :modelValue="filterRole.includes(r)" />
                 <span class="text-sm font-medium leading-none">{{ getRoleLabel(r) }}</span>
               </div>
             </div>
@@ -481,7 +481,7 @@ onMounted(fetchUsers);
                   class="flex items-center gap-2 p-2 rounded-md hover:bg-muted cursor-pointer transition-colors"
                   @click="toggleFilter('type', ty)"
               >
-                <Checkbox :checked="filterType.includes(ty)" />
+                <Checkbox :checked="filterType.includes(ty)" :modelValue="filterType.includes(ty)" />
                 <span class="text-sm font-medium leading-none">{{ getTypeLabel(ty) }}</span>
               </div>
             </div>
