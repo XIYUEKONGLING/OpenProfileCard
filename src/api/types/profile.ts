@@ -1,5 +1,5 @@
 import type { AssetDto } from './core';
-import type { AccountType, AccountStatus, Visibility, MemberRole } from './enums';
+import type {AccountType, AccountStatus, Visibility, MemberRole, ContactType} from './enums';
 
 // --- Main Profile ---
 
@@ -205,5 +205,25 @@ export interface UpdateSponsorshipItemRequestDto {
     Icon?: AssetDto;
     QrCode?: AssetDto;
     DisplayOrder?: number;
+    Visibility?: Visibility;
+}
+
+
+export interface ContactMethodDto {
+    Id: string; // Guid
+    Type: ContactType;
+    Label: string;
+    Value: string;
+    Icon: AssetDto;
+    Image: AssetDto;
+    Visibility: Visibility;
+}
+
+export interface UpdateContactMethodRequestDto {
+    Type?: ContactType;
+    Label?: string;
+    Value: string;
+    Icon?: AssetDto;
+    Image?: AssetDto;
     Visibility?: Visibility;
 }
