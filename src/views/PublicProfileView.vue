@@ -55,7 +55,7 @@ import {
   MapPin, Link as LinkIcon, Building2, Calendar,
   MoreHorizontal, UserPlus, UserMinus, Ban, Cake,
   Briefcase, FolderGit2, Users, BookOpen, Heart,
-  Image as ImageIcon, GraduationCap, Key, Mail, Download, Copy, Check, User, Clock, ShieldCheck
+  Image as ImageIcon, GraduationCap, Key, Mail, Download, Copy, Check, User, Clock, ShieldCheck, Shield
 } from 'lucide-vue-next';
 
 const route = useRoute();
@@ -98,6 +98,7 @@ const copiedId = ref<string | null>(null);
 // --- Computed ---
 const isOrg = computed(() => profile.value?.Type === AccountType.Organization);
 const isPersonal = computed(() => profile.value?.Type === AccountType.Personal);
+const isSystem = computed(() => profile.value?.Type === AccountType.System);
 const isMe = computed(() => auth.user && profile.value && auth.user.AccountName === profile.value.AccountName);
 const isStatic = computed(() => server.info?.Static === true);
 const renderedContent = computed(() => renderMarkdown(profile.value?.Content));
@@ -313,6 +314,9 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
                 </div>
                 <div v-if="isOrg" class="absolute bottom-2 right-2 bg-brand-purple text-white p-1.5 rounded-full border-4 border-background shadow-sm" title="Organization">
                   <Building2 class="size-4" />
+                </div>
+                <div v-if="isSystem" class="absolute bottom-2 right-2 bg-brand-blue text-white p-1.5 rounded-full border-4 border-background shadow-sm" title="Organization">
+                  <Shield class="size-4" />
                 </div>
               </div>
 
