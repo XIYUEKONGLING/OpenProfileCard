@@ -28,7 +28,7 @@ export const zh = {
         system: '跟随系统',
         collapse: '收起侧边栏',
         expand: '展开侧边栏',
-        text: '文本/Emoji',
+        text: '文本 / Emoji',
         image: '上传图片',
         remote: '远程链接',
         style: '图标样式',
