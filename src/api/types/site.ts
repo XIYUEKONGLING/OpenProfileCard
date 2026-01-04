@@ -1,6 +1,7 @@
 import type { AssetDto, ServerInfoDto } from './core';
 
 export interface ServerFeaturesDto {
+    Maintenance: boolean;
     Email: boolean;
     Registration: boolean;
     SearchIndexing: boolean;
