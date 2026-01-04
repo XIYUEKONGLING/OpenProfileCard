@@ -10,14 +10,26 @@ let isRefreshing = false;
 let refreshPromise: Promise<boolean> | null = null;
 
 /**
- * Core HTTP client using fetch API
- * Handles JWT injection and automatic token refresh logic
+ * Helper to determine the static JSON fallback URL
+ */
+function getStaticUrl(url: string): string {
+    // If the URL is just the base (e.g., /api or /api/), fetch index.json
+    if (url === BASE_URL || url === `${BASE_URL}/`) {
+        return `${BASE_URL}/index.json`;
+    }
+    // Otherwise, append .json extension
+    return url.endsWith('.json') ? url : `${url}.json`;
+}
+
+/**
+ * Core HTTP client with static JSON fallback
  */
 export async function httpClient<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
-    const { requiresAuth = true, headers, ...rest } = options;
+    const { requiresAuth = true, headers, method = 'GET', ...rest } = options;
     const authStore = useAuthStore();
 
     const config: RequestInit = {
+        method,
         ...rest,
         headers: {
             'Content-Type': 'application/json',
@@ -29,9 +41,31 @@ export async function httpClient<T>(endpoint: string, options: RequestOptions = 
         (config.headers as Record<string, string>)['Authorization'] = `Bearer ${authStore.token}`;
     }
 
-    const response = await fetch(`${BASE_URL}${endpoint}`, config);
+    const url = `${BASE_URL}${endpoint}`;
+    let response: Response;
 
-    // Trigger refresh if unauthorized
+    try {
+        response = await fetch(url, config);
+
+        // Fallback logic: If GET returns 404, try the .json version
+        if (response.status === 404 && method.toUpperCase() === 'GET') {
+            const fallbackUrl = getStaticUrl(url);
+            const fallbackResponse = await fetch(fallbackUrl, config);
+            if (fallbackResponse.ok) {
+                response = fallbackResponse;
+            }
+        }
+    } catch (error) {
+        // Fallback logic: If network fails on GET, try the .json version
+        if (method.toUpperCase() === 'GET') {
+            const fallbackUrl = getStaticUrl(url);
+            response = await fetch(fallbackUrl, config);
+        } else {
+            throw error;
+        }
+    }
+
+    // Handle Token Refresh (401)
     if (response.status === 401 && requiresAuth) {
         if (!isRefreshing) {
             isRefreshing = true;
@@ -42,7 +76,6 @@ export async function httpClient<T>(endpoint: string, options: RequestOptions = 
         }
 
         const success = await refreshPromise;
-
         if (success) {
             return httpClient<T>(endpoint, options);
         } else {
@@ -51,8 +84,9 @@ export async function httpClient<T>(endpoint: string, options: RequestOptions = 
         }
     }
 
-    let json: any;
     const text = await response.text();
+    let json: any;
+
     try {
         json = text ? JSON.parse(text) : {};
     } catch (e) {
@@ -64,5 +98,6 @@ export async function httpClient<T>(endpoint: string, options: RequestOptions = 
         throw new Error(json.Message || json.detail || `Error ${response.status}`);
     }
 
+    // Unwrap ApiResponse<T> if present
     return (json.Status !== undefined && json.Data !== undefined) ? json.Data : json;
 }

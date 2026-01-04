@@ -15,30 +15,40 @@ export const useServerStore = defineStore('server', () => {
 
     async function detectServer(): Promise<void> {
         const baseUrl = import.meta.env.VITE_API_BASE_URL || '/api';
+
+        const tryFetch = async (url: string) => {
+            const response = await fetch(url);
+            if (!response.ok) throw new Error(`Fetch failed: ${response.status}`);
+            return await response.json();
+        };
+
         try {
-            const response = await fetch(`${baseUrl}`);
-            if (response.ok) {
-                const result = await response.json();
-                // Handle both wrapped (ApiResponse) and unwrapped responses
-                const data: ServerResponseDto = result.Data || result;
+            let result;
+            try {
+                // Attempt 1: Standard API root
+                result = await tryFetch(baseUrl);
+            } catch (e) {
+                // Attempt 2: Static index.json fallback
+                const fallbackUrl = baseUrl.endsWith('/') ? `${baseUrl}index.json` : `${baseUrl}/index.json`;
+                result = await tryFetch(fallbackUrl);
+            }
 
-                meta.value = data.SiteMeta;
-                info.value = data.ServerInfo;
-                features.value = data.Features;
+            const data: ServerResponseDto = result.Data || result;
 
-                // Apply branding to the DOM
-                if (meta.value?.SiteName) {
-                    document.title = meta.value.SiteName;
-                }
+            meta.value = data.SiteMeta;
+            info.value = data.ServerInfo;
+            features.value = data.Features;
 
-                // Optional: Set meta description if present
-                if (meta.value?.SiteDescription) {
-                    const metaDesc = document.querySelector('meta[name="description"]');
-                    if (metaDesc) metaDesc.setAttribute('content', meta.value.SiteDescription);
-                }
+            if (meta.value?.SiteName) {
+                document.title = meta.value.SiteName;
+            }
+
+            if (meta.value?.SiteDescription) {
+                const metaDesc = document.querySelector('meta[name="description"]');
+                if (metaDesc) metaDesc.setAttribute('content', meta.value.SiteDescription);
             }
         } catch (e) {
-            console.error('CRITICAL: Server metadata fetch failed.', e);
+            console.error('CRITICAL: Server metadata fetch failed even with static fallback.', e);
         } finally {
             isInitialized.value = true;
         }
