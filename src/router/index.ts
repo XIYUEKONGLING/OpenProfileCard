@@ -26,6 +26,14 @@ const router = createRouter({
                 { path: 'profile/edit', name: 'profile-edit', component: () => import('@/views/ProfileEditView.vue') },
                 { path: 'manage/:resource', name: 'resource-manager', component: () => import('@/views/ResourceManager.vue'), props: true },
 
+                // Organization Management
+                {
+                    path: 'orgs/:accountName',
+                    name: 'org-manager',
+                    component: () => import('@/views/org/OrgManagerView.vue'),
+                    props: true
+                },
+
                 {
                     path: 'admin',
                     name: 'admin-dashboard',

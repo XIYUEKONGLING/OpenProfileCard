@@ -54,6 +54,7 @@ export const en = {
         refresh: 'Refresh',
         close: 'Close',
         search: 'Search',
+        back: 'Back',
 
         total: 'Total',
         expired: 'Expired',
@@ -66,6 +67,7 @@ export const en = {
         accountTypeSystem: 'System',
         accountTypeService: 'Service',
     },
+    // ... existing auth, dashboard, profile, resources, settings, social, publicProfile, admin ...
     auth: {
         loginTitle: 'Open Profile Card',
         signIn: 'Sign In Now',
@@ -359,7 +361,7 @@ export const en = {
         favicon: 'Favicon',
         metaSaved: 'Site metadata updated successfully',
         filter: 'Filter',
-        
+
         filters: 'Filters',
         resetFilters: 'Reset Filters',
         statusFilter: 'Account Status',
@@ -391,7 +393,7 @@ export const en = {
         deleteModalDesc: 'This action will permanently delete the account and all associated resources, projects, and data from the database. This action cannot be undone.',
 
         permissionControl: 'Permission control',
-        
+
         resetPassword: 'Reset Password',
         manageEmails: 'Manage Emails',
         emailsFor: 'Manage emails for {name}',
