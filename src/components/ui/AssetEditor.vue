@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, watch, computed } from 'vue';
 import { useI18n } from '@/i18n';
-import type { AssetDto, AssetType } from '@/api/types';
+import {type AssetDto, AssetType} from '@/api/types';
 import AssetView from '@/components/ui/AssetView.vue';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,8 +13,8 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
-import { UploadCloud, AlertCircle, Lock } from 'lucide-vue-next';
-import { useUIStore } from '@/stores/ui.ts';
+import { UploadCloud, Lock } from 'lucide-vue-next';
+import { useUIStore } from '@/stores/ui';
 
 const props = defineProps<{
   modelValue?: AssetDto;
@@ -28,31 +28,34 @@ const { t } = useI18n();
 const ui = useUIStore();
 
 // Local state
-const currentType = ref<AssetType>('Remote');
+const currentType = ref<AssetType>(AssetType.Remote);
 const currentValue = ref('');
+const currentTag = ref<string | undefined>(undefined);
 
 // Supported types for selection (Identifier is excluded for manual creation)
 const availableTypes = [
-  { value: 'Remote', label: t('common.remote') },
-  { value: 'Image', label: t('common.image') }, // Base64
-  { value: 'Text', label: t('common.text') },
-  { value: 'Style', label: t('common.style') },
+  { value: AssetType.Remote, label: t('common.remote') },
+  { value: AssetType.Image, label: t('common.image') }, // Base64
+  { value: AssetType.Text, label: t('common.text') },
+  { value: AssetType.Style, label: t('common.style') },
 ];
 
 // Computed Asset for Preview
 const previewAsset = computed<AssetDto>(() => ({
   Type: currentType.value,
-  Value: currentValue.value
+  Value: currentValue.value,
+  Tag: currentTag.value
 }));
 
 // Is the incoming asset a restricted system identifier?
-const isRestricted = computed(() => props.modelValue?.Type === 'Identifier');
+const isRestricted = computed(() => props.modelValue?.Type === AssetType.Identifier);
 
 // Watch for external changes
 watch(() => props.modelValue, (newVal) => {
   if (newVal) {
     currentType.value = newVal.Type;
     currentValue.value = newVal.Value || '';
+    currentTag.value = newVal.Tag;
   }
 }, { immediate: true });
 
@@ -60,14 +63,16 @@ watch(() => props.modelValue, (newVal) => {
 const update = () => {
   emit('update:modelValue', {
     Type: currentType.value,
-    Value: currentValue.value
+    Value: currentValue.value,
+    Tag: currentTag.value || undefined
   });
 };
 
 // Handle Type Switch
-const onTypeChange = (val: string) => {
-  currentType.value = val as AssetType;
-  currentValue.value = ''; // Reset value on type change
+const onTypeChange = (val: AssetType) => {
+  currentType.value = val;
+  currentValue.value = '';
+  currentTag.value = undefined;
   update();
 };
 
@@ -78,8 +83,8 @@ const handleFileUpload = (event: Event) => {
 
   if (!file) return;
 
-  // Limit size (e.g., 2MB)
-  if (file.size > 2 * 1024 * 1024) {
+  // Limit size (5MB)
+  if (file.size > 5 * 1024 * 1024) {
     ui.notify(t('common.fileSizeLimit'), 'error');
     input.value = ''; // reset
     return;
@@ -89,7 +94,17 @@ const handleFileUpload = (event: Event) => {
   reader.onload = (e) => {
     const result = e.target?.result;
     if (typeof result === 'string') {
+      // result: "data:image/png;base64,......"
+
+      // MIME Type
+      const mimeMatch = result.match(/^data:(.+);base64,/);
+      if (mimeMatch) {
+        currentTag.value = mimeMatch[1]; // e.g., "image/png"
+      }
+
       currentValue.value = result;
+      currentType.value = AssetType.Image;
+
       update();
     }
   };
@@ -126,7 +141,12 @@ const handleFileUpload = (event: Event) => {
             <Lock class="size-3" /> {{ t('common.identifier') }}
           </div>
           <p class="text-xs opacity-80 break-all font-mono">{{ props.modelValue?.Value }}</p>
-          <Button size="sm" variant="outline" class="h-7 text-xs border-orange-200 hover:bg-orange-100 dark:hover:bg-orange-900/40" @click="currentType = 'Remote'; currentValue = ''; emit('update:modelValue', { Type: 'Remote', Value: '' })">
+          <Button
+              size="sm"
+              variant="outline"
+              class="h-7 text-xs border-orange-200 hover:bg-orange-100 dark:hover:bg-orange-900/40"
+              @click="onTypeChange(AssetType.Remote)"
+          >
             {{ t('common.replace') }}
           </Button>
         </div>
@@ -137,7 +157,10 @@ const handleFileUpload = (event: Event) => {
           <!-- Type Selector -->
           <Select :model-value="currentType" @update:model-value="onTypeChange">
             <SelectTrigger class="w-full sm:w-48 h-8 text-xs">
-              <SelectValue :placeholder="t('common.selectType')" />
+              <!-- 显示当前选中的 label -->
+              <SelectValue>
+                {{ availableTypes.find(t => t.value === currentType)?.label || t('common.selectType') }}
+              </SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem v-for="type in availableTypes" :key="type.value" :value="type.value">
@@ -147,12 +170,12 @@ const handleFileUpload = (event: Event) => {
           </Select>
 
           <!-- Input: Remote URL -->
-          <div v-if="currentType === 'Remote'">
+          <div v-if="currentType === AssetType.Remote">
             <Input v-model="currentValue" @input="update" placeholder="https://example.com/image.png" class="font-mono text-xs" />
           </div>
 
           <!-- Input: File Upload (Image) -->
-          <div v-else-if="currentType === 'Image'">
+          <div v-else-if="currentType === AssetType.Image">
             <div v-if="!currentValue" class="relative group cursor-pointer">
               <div class="flex items-center justify-center w-full h-20 px-4 transition bg-background border-2 border-muted border-dashed rounded-md hover:border-brand-blue/50 hover:bg-muted/20">
                 <div class="flex flex-col items-center space-y-1">
@@ -164,21 +187,21 @@ const handleFileUpload = (event: Event) => {
             </div>
             <div v-else class="flex items-center gap-2">
               <div class="text-[10px] text-green-600 font-bold bg-green-50 px-2 py-1 rounded border border-green-200">
-                Base64 Data ({{ Math.round(currentValue.length / 1024) }} KB)
+                {{ currentTag ? currentTag : 'Image' }} ({{ Math.round(currentValue.length / 1024) }} KB)
               </div>
-              <Button size="sm" variant="ghost" class="h-6 text-xs text-destructive hover:text-destructive" @click="currentValue = ''; update()">
+              <Button size="sm" variant="ghost" class="h-6 text-xs text-destructive hover:text-destructive" @click="currentValue = ''; currentTag = undefined; update()">
                 {{ t('common.cancel') }}
               </Button>
             </div>
           </div>
 
           <!-- Input: Text / Emoji -->
-          <div v-else-if="currentType === 'Text'">
+          <div v-else-if="currentType === AssetType.Text">
             <Input v-model="currentValue" @input="update" placeholder="😊 or Initials" maxlength="5" class="text-center text-lg font-black tracking-widest" />
           </div>
 
           <!-- Input: Style (Icon Class) -->
-          <div v-else-if="currentType === 'Style'">
+          <div v-else-if="currentType === AssetType.Style">
             <Input v-model="currentValue" @input="update" placeholder="fa-solid fa-user" class="font-mono text-xs" />
             <p class="text-[10px] text-muted-foreground mt-1">FontAwesome 6 Free or Devicon classes</p>
           </div>

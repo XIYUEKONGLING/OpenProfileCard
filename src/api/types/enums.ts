@@ -10,7 +10,18 @@ export type InvitationStatus = 'Pending' | 'Accepted' | 'Declined' | 'Cancelled'
 
 export type ContactType = 'Email' | 'Phone' | 'Message' | 'Address' | 'Link' | 'Other';
 
-export type AssetType = 'Text' | 'Image' | 'Remote' | 'Style' | 'Identifier';
+// export type AssetType = 'Text' | 'Image' | 'Remote' | 'Style' | 'Identifier';
+
+export type AssetType = typeof AssetType[keyof typeof AssetType];
+
+export const AssetType = {
+    Text: 0,
+    Image: 1,
+    Remote: 2,
+    Style: 3,
+    Identifier: 4
+} as const;
+
 
 export type AccountType = 'Personal' | 'Organization' | 'Application' | 'System' | 'Service';
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue';
-import type { AssetDto } from '@/api/types';
+import {type AssetDto, AssetType} from '@/api/types';
 
 const props = defineProps<{
   asset?: AssetDto | null;
@@ -9,17 +9,8 @@ const props = defineProps<{
   className?: string;
 }>();
 
-const isType = (type: string) => {
-  const val = props.asset?.Type;
-  if (val === undefined || val === null) return false;
-  const map: Record<string, (string | number)[]> = {
-    Text: ['Text', 0],
-    Image: ['Image', 1],
-    Remote: ['Remote', 2],
-    Style: ['Style', 3],
-    Identifier: ['Identifier', 4]
-  };
-  return map[type]?.includes(val);
+const isType = (type: AssetType) => {
+  return props.asset?.Type === type;
 };
 
 const textMetrics = computed(() => {
@@ -32,7 +23,7 @@ const textMetrics = computed(() => {
   if (len === 1) size = 70;
   else if (len === 2) size = 45;
   else if (len === 3) size = 35;
-  else size = Math.max(14, 110 / len); 
+  else size = Math.max(14, 110 / len);
 
   return {
     fontSize: size,
@@ -50,7 +41,7 @@ const fallbackChar = computed(() => {
   <div :class="['relative flex items-center justify-center overflow-hidden shrink-0 select-none', className]">
 
     <!-- Fallback & Text Background -->
-    <div v-if="!asset?.Value || isType('Text')"
+    <div v-if="!asset?.Value || isType(AssetType.Text)"
          class="absolute inset-0 bg-linear-to-br from-foreground/5 to-foreground/10 -z-10">
     </div>
 
@@ -70,7 +61,7 @@ const fallbackChar = computed(() => {
     </template>
 
     <!-- Text -->
-    <template v-else-if="isType('Text')">
+    <template v-else-if="isType(AssetType.Text)">
       <svg viewBox="0 0 100 100" class="w-[85%] h-[85%]">
         <text
             x="50%"
@@ -85,8 +76,8 @@ const fallbackChar = computed(() => {
       </svg>
     </template>
 
-    <!-- Image -->
-    <template v-else-if="isType('Image') || isType('Remote')">
+    <!-- Image or Remote -->
+    <template v-else-if="isType(AssetType.Image) || isType(AssetType.Remote)">
       <img
           :src="asset.Value"
           :alt="alt ?? 'Identity Asset'"
@@ -96,12 +87,12 @@ const fallbackChar = computed(() => {
     </template>
 
     <!-- Style -->
-    <template v-else-if="isType('Style')">
+    <template v-else-if="isType(AssetType.Style)">
       <i :class="[asset.Value, 'not-italic flex items-center justify-center text-[2em]']" aria-hidden="true"></i>
     </template>
 
     <!-- Identifier -->
-    <template v-else-if="isType('Identifier')">
+    <template v-else-if="isType(AssetType.Identifier)">
       <div class="bg-destructive/20 text-destructive text-[8px] font-black p-1 uppercase">Restricted</div>
     </template>
 
