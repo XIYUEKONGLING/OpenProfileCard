@@ -504,8 +504,12 @@ const copyToClipboard = async (text: string, id: string) => {
 
                 <div class="flex flex-col gap-3">
                   <Card v-for="proj in projects" :key="proj.Id" class="flex flex-col sm:flex-row sm:items-center p-4 gap-4 border-border/60 hover:bg-muted/10 transition-colors">
-                    <div class="size-12 rounded-xl bg-muted border border-border flex items-center justify-center shrink-0 shadow-sm">
-                      <AssetView :asset="proj.Logo" :fallback-name="proj.Name" />
+                    <div class="size-12 rounded-xl bg-muted border border-border flex items-center justify-center shrink-0 shadow-sm overflow-hidden">
+                      <AssetView
+                          :asset="proj.Logo"
+                          :fallback-name="proj.Name"
+                          class-name="w-full h-full object-cover"
+                      />
                     </div>
                     <div class="flex-1 min-w-0 space-y-1">
                       <div class="flex items-center gap-2">
