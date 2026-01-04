@@ -141,79 +141,97 @@ onMounted(loadData);
       </CardContent>
     </Card>
 
-    <!-- Edit Form -->
+    <!-- Edit Form (Tab Layout) -->
     <form v-else @submit.prevent="saveProfile" class="space-y-6">
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <Tabs default-value="basic" class="w-full">
+        <!-- Tabs List -->
+        <TabsList class="w-full justify-start h-auto p-0 bg-transparent border-b border-border rounded-none gap-6 mb-6 overflow-x-auto no-scrollbar">
+          <TabsTrigger value="basic" class="rounded-md border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent px-0 py-3 font-bold text-muted-foreground data-[state=active]:text-foreground transition-all">
+            {{ t('profile.basicInfo') }}
+          </TabsTrigger>
+          <TabsTrigger value="visuals" class="rounded-md border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent px-0 py-3 font-bold text-muted-foreground data-[state=active]:text-foreground transition-all">
+            {{ t('profile.visuals') }}
+          </TabsTrigger>
+          <TabsTrigger value="content" class="rounded-md border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent px-0 py-3 font-bold text-muted-foreground data-[state=active]:text-foreground transition-all">
+            {{ t('profile.content') }}
+          </TabsTrigger>
+        </TabsList>
 
-        <!-- Basic Info -->
-        <Card class="lg:col-span-1">
-          <CardHeader>
-            <CardTitle>{{ t('profile.basicInfo') }}</CardTitle>
-          </CardHeader>
-          <CardContent class="space-y-4">
-            <div class="space-y-2">
-              <Label>{{ t('profile.displayName') }}</Label>
-              <Input v-model="form.DisplayName" required />
-            </div>
-            <div class="space-y-2">
-              <Label>{{ t('profile.bio') }}</Label>
-              <Input v-model="form.Description" maxlength="200" />
-            </div>
-            <div class="space-y-2">
-              <Label>{{ t('profile.location') }}</Label>
-              <Input v-model="form.Location" />
-            </div>
-            <div class="space-y-2">
-              <Label>{{ t('common.timeZone') }}</Label>
-              <Input v-model="form.TimeZone" placeholder="e.g. UTC, Asia/Shanghai" />
-            </div>
-            <div class="space-y-2">
-              <Label>{{ t('profile.website') }}</Label>
-              <Input v-model="form.Website" placeholder="https://" />
-            </div>
-            <div class="space-y-2">
-              <Label>{{ t('profile.foundedDate') }}</Label>
-              <Input type="date" v-model="form.FoundedDate" />
-            </div>
-          </CardContent>
-        </Card>
-
-        <!-- Visuals -->
-        <Card class="lg:col-span-1">
-          <CardHeader>
-            <CardTitle>{{ t('profile.visuals') }}</CardTitle>
-            <CardDescription>{{ t('profile.visualsDesc') }}</CardDescription>
-          </CardHeader>
-          <CardContent class="space-y-6">
-            <AssetEditor v-model="form.Avatar" :label="t('profile.avatar')" />
-            <AssetEditor v-model="form.Background" :label="t('profile.background')" />
-          </CardContent>
-        </Card>
-
-        <!-- Markdown Content -->
-        <Card class="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>{{ t('profile.content') }}</CardTitle>
-          </CardHeader>
-          <CardContent class="p-0">
-            <Tabs default-value="write" class="w-full">
-              <div class="border-b bg-muted/30 px-6 py-2 flex items-center justify-between">
-                <TabsList class="h-8">
-                  <TabsTrigger value="write" class="text-xs">{{ t('profile.write') }}</TabsTrigger>
-                  <TabsTrigger value="preview" class="text-xs">{{ t('profile.preview') }}</TabsTrigger>
-                </TabsList>
+        <!-- Tab Content: Basic Info -->
+        <TabsContent value="basic" class="animate-in fade-in slide-in-from-bottom-2 mt-0">
+          <Card>
+            <CardHeader>
+              <CardTitle>{{ t('profile.basicInfo') }}</CardTitle>
+            </CardHeader>
+            <CardContent class="space-y-4">
+              <div class="space-y-2">
+                <Label>{{ t('profile.displayName') }}</Label>
+                <Input v-model="form.DisplayName" required />
               </div>
-              <TabsContent value="write" class="p-0 m-0 border-none">
-                <Textarea v-model="form.Content" class="min-h-100 rounded-none border-0 focus-visible:ring-0 resize-none p-6 font-mono text-sm leading-relaxed" :placeholder="t('profile.markdownPlaceholder')" />
-              </TabsContent>
-              <TabsContent value="preview" class="min-h-100 p-6 bg-muted/10">
-                <div v-if="form.Content" class="prose dark:prose-invert max-w-none prose-sm" v-html="renderedContent"></div>
-                <div v-else class="text-muted-foreground text-sm italic text-center pt-20">{{ t('profile.nothingToPreview') }}</div>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-      </div>
+              <div class="space-y-2">
+                <Label>{{ t('profile.bio') }}</Label>
+                <Input v-model="form.Description" maxlength="200" />
+              </div>
+              <div class="space-y-2">
+                <Label>{{ t('profile.location') }}</Label>
+                <Input v-model="form.Location" />
+              </div>
+              <div class="space-y-2">
+                <Label>{{ t('common.timeZone') }}</Label>
+                <Input v-model="form.TimeZone" placeholder="e.g. UTC, Asia/Shanghai" />
+              </div>
+              <div class="space-y-2">
+                <Label>{{ t('profile.website') }}</Label>
+                <Input v-model="form.Website" placeholder="https://" />
+              </div>
+              <div class="space-y-2">
+                <Label>{{ t('profile.foundedDate') }}</Label>
+                <Input type="date" v-model="form.FoundedDate" />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <!-- Tab Content: Visuals -->
+        <TabsContent value="visuals" class="animate-in fade-in slide-in-from-bottom-2 mt-0">
+          <Card>
+            <CardHeader>
+              <CardTitle>{{ t('profile.visuals') }}</CardTitle>
+              <CardDescription>{{ t('profile.visualsDesc') }}</CardDescription>
+            </CardHeader>
+            <CardContent class="space-y-6">
+              <AssetEditor v-model="form.Avatar" :label="t('profile.avatar')" />
+              <AssetEditor v-model="form.Background" :label="t('profile.background')" />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <!-- Tab Content: Markdown Content -->
+        <TabsContent value="content" class="animate-in fade-in slide-in-from-bottom-2 mt-0">
+          <Card class="border-none shadow-none bg-transparent">
+            <CardHeader class="px-0">
+              <CardTitle>{{ t('profile.content') }}</CardTitle>
+            </CardHeader>
+            <CardContent class="p-0">
+              <Tabs default-value="write" class="w-full">
+                <div class="border-b bg-muted/30 px-6 py-2 flex items-center justify-between rounded-t-lg">
+                  <TabsList class="h-8 bg-transparent">
+                    <TabsTrigger value="write" class="text-xs">{{ t('profile.write') }}</TabsTrigger>
+                    <TabsTrigger value="preview" class="text-xs">{{ t('profile.preview') }}</TabsTrigger>
+                  </TabsList>
+                </div>
+                <TabsContent value="write" class="p-0 m-0 border-none">
+                  <Textarea v-model="form.Content" class="min-h-100 rounded-none border-0 focus-visible:ring-0 resize-none p-6 font-mono text-sm leading-relaxed" :placeholder="t('profile.markdownPlaceholder')" />
+                </TabsContent>
+                <TabsContent value="preview" class="min-h-100 p-6 bg-muted/10 rounded-b-lg">
+                  <div v-if="form.Content" class="prose dark:prose-invert max-w-none prose-sm" v-html="renderedContent"></div>
+                  <div v-else class="text-muted-foreground text-sm italic text-center pt-20">{{ t('profile.nothingToPreview') }}</div>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       <div class="sticky bottom-4 flex justify-end pt-6 pointer-events-auto">
         <Button type="submit" size="lg" :disabled="isSaving" class="font-bold shadow-xl">
@@ -225,3 +243,8 @@ onMounted(loadData);
     </form>
   </div>
 </template>
+
+<style scoped>
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+</style>
