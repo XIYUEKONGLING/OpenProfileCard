@@ -7,6 +7,9 @@ import { useServerStore } from './stores/server';
 import './style.css';
 import 'vue-sonner/style.css'
 
+import '@fortawesome/fontawesome-free/css/all.css';
+import 'devicon/devicon.min.css';
+
 /**
  * Bootstrap the application
  * Ensures server detection is completed before mounting
