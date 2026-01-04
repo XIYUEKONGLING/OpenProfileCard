@@ -47,7 +47,7 @@ const languages = [
         <div class="flex items-center gap-2">
 
           <!-- Theme -->
-          <DropdownMenu>
+          <DropdownMenu :modal="false">
             <DropdownMenuTrigger as-child>
               <Button variant="ghost" size="icon">
                 <Sun v-if="themeStore.theme === 'light'" class="size-4" />
@@ -63,7 +63,7 @@ const languages = [
           </DropdownMenu>
 
           <!-- Language -->
-          <DropdownMenu>
+          <DropdownMenu :modal="false">
             <DropdownMenuTrigger as-child>
               <Button variant="ghost" size="icon">
                 <Languages class="size-4" />
