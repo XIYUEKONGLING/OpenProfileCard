@@ -157,11 +157,14 @@ watch(() => props.resource, fetchItems, { immediate: true });
           </div>
 
           <div class="flex-1 min-w-0">
-            <h3 class="font-bold truncate">{{ item.Name || item.CompanyName || item.SchoolName || item.Platform || 'Item' }}</h3>
+            <h3 class="font-bold truncate">
+              {{ item.Label || item.Name || item.CompanyName || 'Item' }}
+            </h3>
             <p class="text-sm text-muted-foreground truncate">
-              {{ item.Position || item.Degree || item.Summary || item.Url || item.Caption }}
+              {{ item.Value || item.Position || item.Summary }}
             </p>
           </div>
+
 
           <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
             <Button variant="ghost" size="icon" @click="openEdit(item)">

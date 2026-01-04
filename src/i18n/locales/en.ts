@@ -162,6 +162,15 @@ export const en = {
         manageVisibility: 'Manage Visibility',
     },
     resources: {
+        // Generic
+        label: 'Label',
+        value: 'Value',
+        icon: 'Icon',
+        image: 'Image',
+        description: 'Description',
+        type: 'Type',
+
+        // Specific
         companyName: 'Company Name',
         position: 'Position',
         schoolName: 'School Name',
@@ -169,7 +178,6 @@ export const en = {
         major: 'Major',
         startDate: 'Start Date',
         endDate: 'End Date',
-        description: 'Description',
         projectName: 'Project Name',
         summary: 'Summary',
         platform: 'Platform Name',
@@ -185,11 +193,17 @@ export const en = {
         content: 'Full Key Content',
         qrCode: 'QR Code',
         logo: 'Logo',
-        icon: 'Icon',
-        image: 'Image',
-        type: 'Type',
-        label: 'Label',
-        value: 'Value',
+
+        // Contact Specific (Flattened)
+        contactType: 'Contact Type',
+        contactPlatform: 'Platform / Method',
+        contactPlatformPlaceholder: 'e.g. Work Email, WeChat, Telegram',
+        contactValue: 'Contact Detail',
+        contactValuePlaceholder: 'Enter email, phone number or link',
+        contactIcon: 'Brand Icon',
+        contactIconDesc: 'Brand icon shown in the list',
+        contactImage: 'QR Code / Image',
+        contactImageDesc: 'Optional, upload a QR code image',
     },
     settings: {
         subtitle: 'Manage your profile and account preferences',

@@ -12,15 +12,22 @@ const props = defineProps<{ modelValue: any; isSaving: boolean }>();
 const emit = defineEmits(['save']);
 const { t } = useI18n();
 
-// Default Type to 0 (Email) and Visibility to 0 (Public)
-const form = reactive({ Type: 0, Visibility: 0, ...props.modelValue });
+const form = reactive({
+  Type: 0,
+  Label: '',
+  Value: '',
+  Icon: null,
+  Image: null,
+  Visibility: 0,
+  ...props.modelValue
+});
 </script>
 
 <template>
-  <div class="space-y-4 py-4">
-    <div class="grid grid-cols-2 gap-4">
+  <div class="space-y-5 py-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div class="space-y-2">
-        <Label>{{ t('resources.type') }}</Label>
+        <Label>{{ t('resources.contactType') }}</Label>
         <Select v-model.number="form.Type">
           <SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -34,18 +41,28 @@ const form = reactive({ Type: 0, Visibility: 0, ...props.modelValue });
         </Select>
       </div>
       <div class="space-y-2">
-        <Label>{{ t('resources.platform') }}</Label>
-        <Input v-model="form.Label" placeholder="e.g. Work Email" required />
+        <Label>{{ t('resources.contactPlatform') }}</Label>
+        <Input v-model="form.Label" :placeholder="t('resources.contactPlatformPlaceholder')" required />
       </div>
     </div>
 
     <div class="space-y-2">
-      <Label>{{ t('resources.value') }}</Label>
-      <Input v-model="form.Value" placeholder="alice@example.com" required />
+      <Label>{{ t('resources.contactValue') }}</Label>
+      <Input v-model="form.Value" :placeholder="t('resources.contactValuePlaceholder')" required />
     </div>
 
-    <AssetEditor v-model="form.Icon" :label="t('resources.icon')" />
-    <AssetEditor v-model="form.Image" :label="t('resources.image')" description="QR Code or other image" />
+    <div class="space-y-6">
+      <AssetEditor
+          v-model="form.Icon"
+          :label="t('resources.contactIcon')"
+          :description="t('resources.contactIconDesc')"
+      />
+      <AssetEditor
+          v-model="form.Image"
+          :label="t('resources.contactImage')"
+          :description="t('resources.contactImageDesc')"
+      />
+    </div>
 
     <div class="space-y-2">
       <Label>{{ t('common.visibility') }}</Label>
@@ -60,7 +77,7 @@ const form = reactive({ Type: 0, Visibility: 0, ...props.modelValue });
       </Select>
     </div>
 
-    <Button class="w-full" @click="emit('save', form)" :disabled="isSaving">
+    <Button class="w-full mt-2" @click="emit('save', form)" :disabled="isSaving">
       <Loader2 v-if="isSaving" class="mr-2 size-4 animate-spin" /> {{ t('common.save') }}
     </Button>
   </div>
