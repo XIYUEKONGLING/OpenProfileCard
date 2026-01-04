@@ -181,6 +181,8 @@ const handleMemberBlock = async (member: OrganizationMemberDto) => {
 
 // --- Actions ---
 
+// ... 之前的代码
+
 const fetchPublicData = async () => {
   const id = route.params.id as string;
   if (!id) return;
@@ -192,49 +194,49 @@ const fetchPublicData = async () => {
     const profileData = await httpClient<ProfileDto>(`/profiles/${id}`);
     profile.value = profileData;
 
+    const safeFetch = async <T>(url: string, fallback: T): Promise<T> => {
+      try {
+        return await httpClient<T>(url);
+      } catch (e) {
+        console.warn(`Optional resource fetch failed: ${url}`, e);
+        return fallback;
+      }
+    };
+
     const promises: Promise<any>[] = [
-      httpClient<ProjectDto[]>(`/profiles/${id}/projects`).then(res => projects.value = res || []),
-      httpClient<GalleryItemDto[]>(`/profiles/${id}/gallery`).then(res => gallery.value = res || []),
-      httpClient<SponsorshipItemDto[]>(`/profiles/${id}/sponsorships`).then(res => sponsorships.value = res || []),
-      httpClient<ContactMethodDto[]>(`/profiles/${id}/contacts`).then(res => contacts.value = res || []),
-      httpClient<SocialLinkDto[]>(`/profiles/${id}/socials`).then(res => socials.value = res || []),
-      // Direct count calculation from lists
-      httpClient<FollowerDto[]>(`/profiles/${id}/followers`).then(res => followersCount.value = res?.length || 0),
-      httpClient<FollowerDto[]>(`/profiles/${id}/following`).then(res => followingCount.value = res?.length || 0),
-      httpClient<ProfilePrivacyDto>(`/profiles/${id}/privacy`).then(res => privacy.value = res),
+      safeFetch<ProjectDto[]>(`/profiles/${id}/projects`, []).then(res => projects.value = res),
+      safeFetch<GalleryItemDto[]>(`/profiles/${id}/gallery`, []).then(res => gallery.value = res),
+      safeFetch<SponsorshipItemDto[]>(`/profiles/${id}/sponsorships`, []).then(res => sponsorships.value = res),
+      safeFetch<ContactMethodDto[]>(`/profiles/${id}/contacts`, []).then(res => contacts.value = res),
+      safeFetch<SocialLinkDto[]>(`/profiles/${id}/socials`, []).then(res => socials.value = res),
+      safeFetch<FollowerDto[]>(`/profiles/${id}/followers`, []).then(res => followersCount.value = res.length),
+      safeFetch<FollowerDto[]>(`/profiles/${id}/following`, []).then(res => followingCount.value = res.length),
+      safeFetch<ProfilePrivacyDto>(`/profiles/${id}/privacy`, { ShowFollowers: true, ShowFollowing: true } as ProfilePrivacyDto).then(res => privacy.value = res),
     ];
 
     if (profileData.Type === AccountType.Organization) {
-      promises.push(httpClient<OrganizationMemberDto[]>(`/profiles/${id}/members`).then(res => members.value = res || []));
-    } else {
+      promises.push(safeFetch<OrganizationMemberDto[]>(`/profiles/${id}/members`, []).then(res => members.value = res));
+    } else if (profileData.Type === AccountType.Personal) {
       promises.push(
-          httpClient<WorkExperienceDto[]>(`/profiles/${id}/work`).then(res => work.value = res || []),
-          httpClient<EducationExperienceDto[]>(`/profiles/${id}/education`).then(res => education.value = res || []),
-          httpClient<CertificateDto[]>(`/profiles/${id}/certificates`).then(res => certificates.value = res || [])
+          safeFetch<WorkExperienceDto[]>(`/profiles/${id}/work`, []).then(res => work.value = res),
+          safeFetch<EducationExperienceDto[]>(`/profiles/${id}/education`, []).then(res => education.value = res),
+          safeFetch<CertificateDto[]>(`/profiles/${id}/certificates`, []).then(res => certificates.value = res)
       );
     }
-
     if (auth.isAuthenticated && !isStatic.value && auth.user?.AccountName !== profileData.AccountName) {
-      promises.push(httpClient<FollowStatusDto>(`/profiles/${id}/follow`).then(res => followStatus.value = res));
-    }
-
-    if (auth.isAuthenticated && !isStatic.value) {
-      const [myFollowing, myBlocks] = await Promise.all([
-        httpClient<FollowerDto[]>('/me/following'),
-        httpClient<BlockDto[]>('/me/blocks')
-      ]);
-      followingIds.value = new Set(myFollowing.map(f => f.AccountId));
-      blockedIds.value = new Set(myBlocks.map(b => b.AccountId));
+      promises.push(safeFetch<FollowStatusDto>(`/profiles/${id}/follow`, null).then(res => followStatus.value = res));
     }
 
     await Promise.all(promises);
+
   } catch (e) {
-    console.error(e);
+    console.error("Main profile fetch failed:", e);
     notFound.value = true;
   } finally {
     isLoading.value = false;
   }
 };
+
 
 const handleFollow = async () => {
   if (!profile.value || isStatic.value) return;
