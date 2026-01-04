@@ -7,7 +7,6 @@ import type { SystemStatusDto, SystemSettingDto, SiteMetadataDto } from '@/api/t
 
 // Components
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, ShieldCheck, BarChart3, Globe, Settings2, Users } from 'lucide-vue-next';
 
@@ -15,6 +14,7 @@ import { Loader2, ShieldCheck, BarChart3, Globe, Settings2, Users } from 'lucide
 import AdminStatsSection from '@/views/admin/sections/AdminStatsSection.vue';
 import AdminMetaSection from '@/views/admin/sections/AdminMetaSection.vue';
 import AdminSettingsSection from '@/views/admin/sections/AdminSettingsSection.vue';
+import AdminUsersSection from '@/views/admin/sections/AdminUsersSection.vue';
 
 const { t } = useI18n();
 const ui = useUIStore();
@@ -89,15 +89,7 @@ onMounted(fetchData);
         </TabsContent>
 
         <TabsContent value="users" class="mt-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>{{ t('admin.userManagement') }}</CardTitle>
-              <CardDescription>Placeholder for advanced user management.</CardDescription>
-            </CardHeader>
-            <CardContent class="h-64 flex items-center justify-center border-2 border-dashed m-6 rounded-xl">
-              <p class="text-muted-foreground italic">User Management Module Coming Soon...</p>
-            </CardContent>
-          </Card>
+          <AdminUsersSection />
         </TabsContent>
       </template>
     </Tabs>

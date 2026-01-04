@@ -61,17 +61,17 @@ const saveDialog = async () => {
     <Card v-for="s in settings" :key="s.Key" class="overflow-hidden">
       <CardContent class="p-6">
         <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div class="space-y-1 flex-1">
-            <div class="flex items-center gap-2">
-              <Label class="text-base font-bold font-mono">{{ s.Key }}</Label>
-              <span class="text-[10px] px-1.5 py-0.5 bg-muted rounded text-muted-foreground uppercase font-bold">
+          <div class="space-y-1 flex-1 min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <Label class="text-base font-bold font-mono break-all">{{ s.Key }}</Label>
+              <span class="text-[10px] px-1.5 py-0.5 bg-muted rounded text-muted-foreground uppercase font-bold shrink-0">
                 {{ s.ValueType }}
               </span>
             </div>
             <p class="text-sm text-muted-foreground">{{ s.Description }}</p>
           </div>
 
-          <div class="flex items-center gap-4 min-w-75 justify-end">
+          <div class="flex items-center gap-4 min-w-[200px] justify-end shrink-0">
             <!-- Boolean Toggle -->
             <template v-if="s.ValueType === 'boolean'">
               <Switch
@@ -81,23 +81,25 @@ const saveDialog = async () => {
               />
             </template>
 
-            <!-- Number/String Input -->
-            <template v-else-if="s.ValueType === 'number' || s.ValueType === 'string'">
+            <!-- Number Input -->
+            <template v-else-if="s.ValueType === 'number'">
               <div class="flex gap-2 w-full">
                 <Input
                     :value="s.Value"
                     @change="(e: any) => updateSetting(s.Key, e.target.value)"
-                    class="h-9"
-                    :type="s.ValueType === 'number' ? 'number' : 'text'"
+                    class="h-9 font-mono"
+                    type="number"
                 />
               </div>
             </template>
 
-            <!-- HTML/Textarea -->
+            <!-- String/HTML/Other -->
             <template v-else>
-              <Button variant="outline" size="sm" @click="openEditDialog(s)">
-                {{ t('admin.editContent') }}
-              </Button>
+              <div class="flex gap-2 w-full justify-end">
+                <Button variant="outline" size="sm" @click="openEditDialog(s)">
+                  {{ t('admin.editContent') }}
+                </Button>
+              </div>
             </template>
           </div>
         </div>
@@ -106,13 +108,13 @@ const saveDialog = async () => {
 
     <!-- Edit Dialog -->
     <Dialog :open="!!editingSetting" @update:open="(v) => !v && (editingSetting = null)">
-      <DialogContent class="sm:max-w-2xl">
+      <DialogContent class="sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>{{ t('admin.editContent') }}</DialogTitle>
-          <DialogDescription>{{ editingSetting?.Key }}</DialogDescription>
+          <DialogDescription class="font-mono text-xs break-all">{{ editingSetting?.Key }}</DialogDescription>
         </DialogHeader>
         <div class="py-4">
-          <Textarea v-model="editValue" class="min-h-75 font-mono text-sm" />
+          <Textarea v-model="editValue" class="min-h-[400px] font-mono text-sm leading-relaxed" />
         </div>
         <DialogFooter>
           <Button variant="outline" @click="editingSetting = null">{{ t('common.cancel') }}</Button>
