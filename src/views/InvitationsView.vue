@@ -92,7 +92,7 @@ onMounted(fetchInvitations);
               </div>
 
               <!-- Actions -->
-              <div class="p-6 sm:border-l bg-muted/30 sm:w-auto flex sm:flex-col justify-center gap-3">
+              <div class="p-6 sm:w-auto flex sm:flex-col justify-center gap-3">
                 <Button
                     class="w-full sm:w-auto font-bold"
                     @click="handleAction(inv.Id, 'accept')"
