@@ -175,13 +175,15 @@ const themeOptions = [
         </router-link>
 
         <!-- Organizations -->
-        <div v-if="myOrgs.length > 0" class="mt-8">
-          <div v-if="!isCollapsed" class="px-4 mb-2 text-xs font-black text-muted-foreground/50 uppercase tracking-widest flex items-center justify-between">
+        <div class="mt-8">
+          <!-- Header: Only show if orgs exist -->
+          <div v-if="!isCollapsed && myOrgs.length > 0" class="px-4 mb-2 text-xs font-black text-muted-foreground/50 uppercase tracking-widest flex items-center justify-between">
             {{ t('dashboard.organizations') }}
           </div>
-          <div v-else class="h-px bg-border/50 mx-2 my-4"></div>
+          <div v-else-if="!isCollapsed && myOrgs.length === 0" class="h-px bg-border/50 mx-2 my-4"></div>
 
-          <div class="space-y-1">
+          <!-- List: Only show if orgs exist -->
+          <div v-if="myOrgs.length > 0" class="space-y-1">
             <router-link
                 v-for="org in myOrgs"
                 :key="org.Id"
@@ -189,7 +191,7 @@ const themeOptions = [
                 v-slot="{ isExactActive }"
             >
               <div :class="[
-                    'flex items-center rounded-xl font-medium transition-all duration-200 relative group',
+                    'flex items-center rounded-xl font-medium transition-all duration-200 relative group', 'mt-2',
                     isCollapsed ? 'justify-center size-10 mx-auto' : 'gap-3 px-4 py-2',
                     isExactActive ? 'bg-muted text-foreground' : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground'
                  ]" :title="org.DisplayName">
@@ -209,6 +211,20 @@ const themeOptions = [
               </div>
             </router-link>
           </div>
+
+          <!-- Create Organization Button (Always visible here) -->
+          <div class="mt-2">
+            <Button
+                variant="ghost"
+                size="sm"
+                class="w-full border border-dashed border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 justify-start gap-2"
+                :class="isCollapsed ? 'justify-center px-0' : 'px-4'"
+                @click="router.push('/dashboard/create-org')"
+            >
+              <Plus class="size-4" />
+              <span v-if="!isCollapsed" class="font-bold">{{ t('organization.createOrg') }}</span>
+            </Button>
+          </div>
         </div>
 
         <!-- Admin -->
@@ -226,18 +242,6 @@ const themeOptions = [
 
       <!-- Bottom Controls -->
       <div class="mt-auto space-y-4 pt-6 border-t border-border/40 w-full shrink-0">
-
-        <Button
-            variant="ghost"
-            size="sm"
-            class="w-full border border-dashed border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 justify-start gap-2"
-            :class="isCollapsed ? 'justify-center px-0' : 'px-4'"
-            @click="router.push('/dashboard/create-org')"
-        >
-          <Plus class="size-4" />
-          <span v-if="!isCollapsed" class="font-bold">{{ t('organization.createOrg') }}</span>
-        </Button>
-
         <div class="flex items-center gap-4" :class="[isCollapsed ? 'flex-col' : 'justify-between px-2']">
           <DropdownMenu>
             <DropdownMenuTrigger as-child>
@@ -369,9 +373,11 @@ const themeOptions = [
             </router-link>
           </nav>
 
-          <div v-if="myOrgs.length > 0">
-            <div class="px-4 mb-2 text-xs font-black text-muted-foreground/50 uppercase tracking-widest">{{ t('dashboard.organizations') }}</div>
-            <div class="space-y-2">
+          <!-- Mobile Organizations Section -->
+          <div>
+            <div v-if="myOrgs.length > 0" class="px-4 mb-2 text-xs font-black text-muted-foreground/50 uppercase tracking-widest">{{ t('dashboard.organizations') }}</div>
+
+            <div v-if="myOrgs.length > 0" class="space-y-2">
               <router-link
                   v-for="org in myOrgs"
                   :key="org.Id"
@@ -384,6 +390,16 @@ const themeOptions = [
                 </div>
               </router-link>
             </div>
+
+            <!-- Mobile Create Button -->
+            <Button
+                variant="outline"
+                class="w-full rounded-xl font-bold border-dashed mt-2"
+                @click="router.push('/dashboard/create-org'); isMobileMenuOpen = false"
+            >
+              <Plus class="size-4 mr-2" />
+              {{ t('organization.createOrg') }}
+            </Button>
           </div>
         </div>
 
