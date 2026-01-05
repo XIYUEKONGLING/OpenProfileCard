@@ -198,7 +198,7 @@ const openLeaveModal = () => {
 
 const canManage = (target: OrganizationMemberDto) => {
   if (!isAdmin.value) return false;
-  if (target.AccountId == props.accountId) return false;
+  // if (target.AccountId == props.accountId) return false;
   if (props.myRole === MemberRole.Admin && target.Role === MemberRole.Admin) return false;
   return true;
 };
