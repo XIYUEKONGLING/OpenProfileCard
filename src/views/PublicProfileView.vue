@@ -57,7 +57,7 @@ import {
   MoreHorizontal, UserPlus, UserMinus, Ban, Cake,
   Briefcase, FolderGit2, Users, BookOpen, Heart, Lock, ChevronLeft, ChevronRight, Landmark,
   Image as ImageIcon, GraduationCap, Key, Mail, Download, Copy, Check, User, Clock, ShieldCheck, Shield, AlertTriangle,
-  Trash2
+  Trash2, Plus
 } from 'lucide-vue-next';
 
 const route = useRoute();
@@ -594,6 +594,26 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
                       <span class="text-muted-foreground">{{ t('publicProfile.followers') }}</span>
                     </template>
                   </button>
+                </div>
+
+                <!-- Organizations -->
+                <div v-if="memberships.length > 0" class="space-y-4">
+                  <div class="flex items-center justify-between">
+                    <h3 class="font-bold text-sm">{{ t('dashboard.organizations') }}</h3>
+                  </div>
+
+                  <div v-if="memberships.length > 0" class="flex flex-wrap gap-2">
+                    <router-link
+                        v-for="membership in memberships"
+                        :key="membership.OrganizationId"
+                        :to="`/${membership.AccountName}`"
+                        class="relative group"
+                    >
+                      <div class="size-10 rounded-lg bg-muted border border-border overflow-hidden transition-transform group-hover:scale-110 shadow-sm" :title="membership.DisplayName">
+                        <AssetView :asset="membership.Avatar" :fallback-name="membership.DisplayName" class-name="w-full h-full" />
+                      </div>
+                    </router-link>
+                  </div>
                 </div>
               </template>
             </div>
