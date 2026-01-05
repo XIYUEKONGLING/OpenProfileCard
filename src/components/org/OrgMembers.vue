@@ -267,6 +267,7 @@ onMounted(fetchMembers);
               <SelectContent>
                 <SelectItem :value="0">{{ t('organization.roleMember') }}</SelectItem>
                 <SelectItem :value="1">{{ t('organization.roleAdmin') }}</SelectItem>
+                <SelectItem :value="2">{{ t('organization.roleOwner') }}</SelectItem>
                 <SelectItem :value="3">{{ t('organization.roleGuest') }}</SelectItem>
               </SelectContent>
             </Select>
