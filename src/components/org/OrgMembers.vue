@@ -232,14 +232,10 @@ onMounted(fetchMembers);
     <div class="flex items-center justify-between">
       <h3 class="text-lg font-bold">{{ t('organization.members') }} ({{ members.length }})</h3>
       <div class="flex gap-2">
-        <Button v-if="!isOwner" variant="outline" class="text-destructive border-destructive/30 hover:bg-destructive/10" @click="openLeaveModal">
-          <LogOut class="size-4 mr-2" /> {{ t('organization.leave') }}
-        </Button>
-
         <!-- My Visibility Dropdown (Next to Leave Org) -->
         <DropdownMenu v-if="myMemberData">
           <DropdownMenuTrigger as-child>
-            <Button variant="outline" size="sm" :disabled="actionLoading === myMemberData.AccountId">
+            <Button variant="outline" :disabled="actionLoading === myMemberData.AccountId">
               <Loader2 v-if="actionLoading === myMemberData.AccountId" class="size-4 animate-spin mr-2" />
               <Eye v-else class="size-4 mr-2" />
               {{ getVisibilityLabel(myMemberData.Visibility) }}
@@ -261,6 +257,10 @@ onMounted(fetchMembers);
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
+        
+        <Button v-if="!isOwner" variant="outline" class="text-destructive border-destructive/30 hover:bg-destructive/10" @click="openLeaveModal">
+          <LogOut class="size-4 mr-2" /> {{ t('organization.leave') }}
+        </Button>
 
         <Button v-if="isAdmin" @click="showInviteDialog = true">
           <UserPlus class="size-4 mr-2" /> {{ t('organization.inviteMember') }}
