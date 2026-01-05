@@ -107,7 +107,8 @@ export const en = {
         alreadyHaveAccount: 'Already have an account?',
         registrationDisabled: 'Registration is currently disabled',
         registerSuccess: 'Welcome! Registration complete.',
-        registerFailed: 'Registration failed'
+        registerFailed: 'Registration failed',
+        staticModeActive: 'System Notice: Static Mode Active. Login is restricted.',
     },
     dashboard: {
         title: 'Dashboard',

@@ -106,7 +106,8 @@ export const zh = {
         alreadyHaveAccount: '已经有账户了？',
         registrationDisabled: '当前系统已关闭注册功能',
         registerSuccess: '注册成功，欢迎加入',
-        registerFailed: '注册失败，请检查填写信息'
+        registerFailed: '注册失败，请检查填写信息',
+        staticModeActive: '系统提示：静态模式已激活。登录受限。',
     },
     dashboard: {
         title: '控制台',

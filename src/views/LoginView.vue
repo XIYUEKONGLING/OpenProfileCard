@@ -161,7 +161,7 @@ const languages = [
           <div v-if="isStaticMode" class="mb-8 p-4 rounded-2xl bg-destructive/10 border border-destructive/20 flex gap-4 text-destructive">
             <AlertCircle class="size-5 shrink-0" />
             <div class="text-xs font-bold leading-relaxed uppercase">
-              System Notice: Static Mode Active. Login is restricted.
+               {{ t('auth.staticModeActive') }}
             </div>
           </div>
 
