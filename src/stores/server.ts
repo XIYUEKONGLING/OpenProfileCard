@@ -6,6 +6,7 @@ import type {
     ServerResponseDto,
     ServerFeaturesDto
 } from '@/api/types';
+import { AssetType } from '@/api/types';
 
 export const useServerStore = defineStore('server', () => {
     const meta = ref<SiteMetadataDto | null>(null);
@@ -51,10 +52,14 @@ export const useServerStore = defineStore('server', () => {
             }
 
             // 3. Update Favicon
-            if (meta.value?.Favicon && meta.value.Favicon.Value) {
-                const faviconLink = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
-                if (faviconLink) {
-                    faviconLink.href = meta.value.Favicon.Value;
+            // Only AssetType.Image (Base64) and AssetType.Remote (URL) are valid for <link rel="icon">
+            if (meta.value?.Favicon) {
+                const fav = meta.value.Favicon;
+                if ((fav.Type === AssetType.Image || fav.Type === AssetType.Remote) && fav.Value) {
+                    const faviconLink = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+                    if (faviconLink) {
+                        faviconLink.href = fav.Value;
+                    }
                 }
             }
         } catch (e) {
