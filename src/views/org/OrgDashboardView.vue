@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router';
 import { useI18n } from '@/i18n';
 import { httpClient } from '@/api/client';
 import { useUIStore } from '@/stores/ui';
+import { useAuthStore } from '@/stores/auth';
 import { renderMarkdown } from '@/lib/markdown';
 import {
   type OrganizationDto,
@@ -55,6 +56,7 @@ const props = defineProps<{ accountName: string }>();
 
 const { t, locale } = useI18n();
 const ui = useUIStore();
+const auth = useAuthStore();
 const router = useRouter();
 
 // --- State ---
@@ -555,7 +557,7 @@ watch(() => props.accountName, fetchOrgData, { immediate: true });
 
               <!-- TAB: MEMBERS -->
               <TabsContent value="members" class="pt-6 animate-in fade-in slide-in-from-bottom-2">
-                <OrgMembers :account-name="accountName" :my-role="org.MyRole" />
+                <OrgMembers :account-name="accountName" :my-role="org.MyRole" :account-id="auth.user?.Id" />
               </TabsContent>
 
               <!-- TAB: RESOURCES -->
