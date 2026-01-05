@@ -133,14 +133,16 @@ const isSendingNotification = ref(false);
 const showCreateUserModal = ref(false);
 const isCreatingUser = ref(false);
 
-const createUserForm = ref<CreateUserRequestDto>({
+const createUserForm = ref<CreateUserRequestDto & { confirmPassword?: string }>({
   AccountName: '',
   Email: '',
   Password: '',
+  confirmPassword: '',
   Type: AccountType.Personal,
   Role: AccountRole.User,
   DisplayName: ''
 });
+
 
 // --- Mappings ---
 const getStatusLabel = (s: number): string => {
@@ -375,29 +377,56 @@ const openCreateUserModal = (): void => {
 };
 
 const handleCreateUser = async (): Promise<void> => {
-  // Basic Validation
-  if (!createUserForm.value.AccountName || !createUserForm.value.Email || !createUserForm.value.Password) {
-    ui.notify(t('common.requiredFields'), 'error');
+  // 1. Validate Required: AccountName
+  if (!createUserForm.value.AccountName) {
+    ui.notify(t('admin.accountNameLabel') + ' ' + t('common.requiredFields'), 'error'); // Or specific key
     return;
   }
 
+  // 2. Conditional Validation: Password (Only for Personal accounts)
+  if (createUserForm.value.Type === AccountType.Personal) {
+    if (!createUserForm.value.Password) {
+      ui.notify(t('common.password') + ' ' + t('common.requiredFields'), 'error');
+      return;
+    }
+    if (createUserForm.value.Password !== createUserForm.value.confirmPassword) {
+      ui.notify(t('auth.passwordMismatch'), 'error');
+      return;
+    }
+  }
+  
+  // 3. Prepare Payload (Exclude confirmPassword)
+  // Destructure confirmPassword out, keep the rest
+  const { confirmPassword, ...payload } = createUserForm.value;
+  
+  // Clean up empty optional strings to undefined/null if backend prefers it, 
+  // though usually empty strings are fine for optional strings in DTOs.
+  // Explicitly handling undefined for optional fields if needed:
+  const finalPayload: CreateUserRequestDto = {
+    AccountName: payload.AccountName,
+    Type: payload.Type,
+    Role: payload.Role,
+    Email: payload.Email || undefined,
+    Password: payload.Password || undefined,
+    DisplayName: payload.DisplayName || undefined,
+  };
+  
   isCreatingUser.value = true;
   try {
     await httpClient<UserAdminDto>('/admin/users', {
       method: 'POST',
-      body: JSON.stringify(createUserForm.value)
+      body: JSON.stringify(finalPayload)
     });
 
     ui.notify(t('admin.createUserSuccess'), 'success');
     showCreateUserModal.value = false;
-    fetchUsers(); // Refresh list
+    fetchUsers();
   } catch (e: any) {
     ui.notify(e.message, 'error');
   } finally {
     isCreatingUser.value = false;
   }
 };
-
 
 
 // Helper for Select options
@@ -1007,19 +1036,23 @@ onMounted(fetchUsers);
         </DialogHeader>
 
         <div class="grid gap-4 py-4">
-          <!-- Account Name -->
+          <!-- Account Name (Required) -->
           <div class="space-y-1.5">
-            <Label class="text-xs font-bold uppercase tracking-wider opacity-60">{{ t('admin.accountNameLabel') }}</Label>
+            <Label class="text-xs font-bold uppercase tracking-wider opacity-60">
+              {{ t('admin.accountNameLabel') }} <span class="text-destructive">*</span>
+            </Label>
             <Input
                 v-model="createUserForm.AccountName"
-                placeholder="username"
+                :placeholder="t('auth.usernamePlaceholder')"
                 class="h-10"
             />
           </div>
 
-          <!-- Display Name -->
+          <!-- Display Name (Optional) -->
           <div class="space-y-1.5">
-            <Label class="text-xs font-bold uppercase tracking-wider opacity-60">{{ t('admin.displayNameLabel') }}</Label>
+            <Label class="text-xs font-bold uppercase tracking-wider opacity-60">
+              {{ t('admin.displayNameLabel') }}
+            </Label>
             <Input
                 v-model="createUserForm.DisplayName"
                 :placeholder="t('profile.displayName')"
@@ -1027,32 +1060,26 @@ onMounted(fetchUsers);
             />
           </div>
 
-          <!-- Email -->
+          <!-- Email (Optional) -->
           <div class="space-y-1.5">
-            <Label class="text-xs font-bold uppercase tracking-wider opacity-60">{{ t('common.email') }}</Label>
+            <Label class="text-xs font-bold uppercase tracking-wider opacity-60">
+              {{ t('common.email') }}
+            </Label>
             <Input
                 v-model="createUserForm.Email"
                 type="email"
-                placeholder="user@example.com"
+                :placeholder="t('common.email')"
                 class="h-10"
             />
           </div>
 
-          <!-- Password -->
-          <div class="space-y-1.5">
-            <Label class="text-xs font-bold uppercase tracking-wider opacity-60">{{ t('common.password') }}</Label>
-            <Input
-                v-model="createUserForm.Password"
-                type="password"
-                placeholder="••••••••"
-                class="h-10"
-            />
-          </div>
-
+          <!-- Type & Role Selection -->
           <div class="grid grid-cols-2 gap-4">
             <!-- Type -->
             <div class="space-y-1.5">
-              <Label class="text-xs font-bold uppercase tracking-wider opacity-60">{{ t('admin.typeLabel') }}</Label>
+              <Label class="text-xs font-bold uppercase tracking-wider opacity-60">
+                {{ t('admin.typeLabel') }}
+              </Label>
               <Select v-model="createUserForm.Type">
                 <SelectTrigger class="h-10">
                   <SelectValue />
@@ -1070,7 +1097,9 @@ onMounted(fetchUsers);
 
             <!-- Role -->
             <div class="space-y-1.5">
-              <Label class="text-xs font-bold uppercase tracking-wider opacity-60">{{ t('admin.roleLabel') }}</Label>
+              <Label class="text-xs font-bold uppercase tracking-wider opacity-60">
+                {{ t('admin.roleLabel') }}
+              </Label>
               <Select v-model="createUserForm.Role">
                 <SelectTrigger class="h-10">
                   <SelectValue />
@@ -1079,7 +1108,6 @@ onMounted(fetchUsers);
                   <SelectItem :value="AccountRole.User">
                     {{ t('admin.roleUser') }}
                   </SelectItem>
-                  <!-- Only allow creating Admins if current user is Root (Optional Logic, keeping simple for now) -->
                   <SelectItem :value="AccountRole.Admin">
                     {{ t('admin.roleAdmin') }}
                   </SelectItem>
@@ -1087,6 +1115,34 @@ onMounted(fetchUsers);
               </Select>
             </div>
           </div>
+
+          <!-- Password Section: Only for Personal Accounts -->
+          <div v-if="createUserForm.Type === AccountType.Personal" class="space-y-3 pt-2 border-t border-muted/50">
+            <div class="space-y-1.5">
+              <Label class="text-xs font-bold uppercase tracking-wider opacity-60">
+                {{ t('common.password') }} <span class="text-destructive">*</span>
+              </Label>
+              <Input
+                  v-model="createUserForm.Password"
+                  type="password"
+                  :placeholder="t('auth.newPassword')"
+                  class="h-10"
+              />
+            </div>
+
+            <div class="space-y-1.5">
+              <Label class="text-xs font-bold uppercase tracking-wider opacity-60">
+                {{ t('auth.confirmPassword') }} <span class="text-destructive">*</span>
+              </Label>
+              <Input
+                  v-model="createUserForm.confirmPassword"
+                  type="password"
+                  :placeholder="t('auth.confirmPassword')"
+                  class="h-10"
+              />
+            </div>
+          </div>
+
         </div>
 
         <DialogFooter>
