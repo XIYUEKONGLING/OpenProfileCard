@@ -36,7 +36,17 @@ import {
   SelectTrigger,
   SelectValue
 } from '@/components/ui/select';
-import { Loader2, MoreHorizontal, UserPlus, Shield, UserX, Crown, LogOut } from 'lucide-vue-next';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Loader2, MoreHorizontal, UserPlus, UserX, Crown, LogOut } from 'lucide-vue-next';
 
 const props = defineProps<{
   accountName: string;
@@ -61,6 +71,12 @@ const isInviting = ref(false);
 
 const isOwner = computed(() => props.myRole === MemberRole.Owner);
 const isAdmin = computed(() => props.myRole === MemberRole.Admin || isOwner.value);
+
+const showKickModal = ref(false);
+const memberToKick = ref<OrganizationMemberDto | null>(null);
+const showLeaveModal = ref(false);
+
+// --- Actions ---
 
 const fetchMembers = async () => {
   isLoading.value = true;
@@ -109,16 +125,18 @@ const updateRole = async (member: OrganizationMemberDto, newRole: MemberRole) =>
   }
 };
 
-const kickMember = async (member: OrganizationMemberDto) => {
-  if (!confirm(t('organization.kickConfirm', { name: member.DisplayName }))) return;
+const kickMember = async () => {
+  if (!memberToKick.value) return;
 
-  actionLoading.value = member.AccountId;
+  actionLoading.value = memberToKick.value.AccountId;
   try {
-    await httpClient(`/orgs/${props.accountName}/members/${member.AccountName}`, {
+    await httpClient(`/orgs/${props.accountName}/members/${memberToKick.value.AccountId}`, {
       method: 'DELETE'
     });
-    members.value = members.value.filter(m => m.AccountId !== member.AccountId);
+    members.value = members.value.filter(m => m.AccountId !== memberToKick.value!.AccountId);
     ui.notify(t('common.success'), 'success');
+    showKickModal.value = false;
+    memberToKick.value = null;
   } catch (e: any) {
     ui.notify(e.message, 'error');
   } finally {
@@ -126,14 +144,23 @@ const kickMember = async (member: OrganizationMemberDto) => {
   }
 };
 
+const openKickModal = (member: OrganizationMemberDto) => {
+  memberToKick.value = member;
+  showKickModal.value = true;
+};
+
 const leaveOrg = async () => {
-  if (!confirm(t('organization.leaveConfirm'))) return;
   try {
     await httpClient(`/orgs/${props.accountName}/members/me`, { method: 'DELETE' });
+    showLeaveModal.value = false;
     window.location.href = '/dashboard';
   } catch (e: any) {
     ui.notify(e.message, 'error');
   }
+};
+
+const openLeaveModal = () => {
+  showLeaveModal.value = true;
 };
 
 // Helper to determine if I can manage target user
@@ -163,7 +190,7 @@ onMounted(fetchMembers);
     <div class="flex items-center justify-between">
       <h3 class="text-lg font-bold">{{ t('organization.members') }} ({{ members.length }})</h3>
       <div class="flex gap-2">
-        <Button v-if="!isOwner" variant="outline" class="text-destructive border-destructive/30 hover:bg-destructive/10" @click="leaveOrg">
+        <Button v-if="!isOwner" variant="outline" class="text-destructive border-destructive/30 hover:bg-destructive/10" @click="openLeaveModal">
           <LogOut class="size-4 mr-2" /> {{ t('organization.leave') }}
         </Button>
         <Button v-if="isAdmin" @click="showInviteDialog = true">
@@ -209,7 +236,7 @@ onMounted(fetchMembers);
                   <DropdownMenuItem @click="updateRole(member, MemberRole.Member)">Set as Member</DropdownMenuItem>
                   <DropdownMenuSeparator />
                 </template>
-                <DropdownMenuItem class="text-destructive" @click="kickMember(member)">
+                <DropdownMenuItem class="text-destructive" @click="openKickModal(member)">
                   <UserX class="size-4 mr-2" /> {{ t('organization.kick') }}
                 </DropdownMenuItem>
               </DropdownMenuContent>
@@ -251,5 +278,41 @@ onMounted(fetchMembers);
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    <!-- Kick Member Modal -->
+    <AlertDialog v-model:open="showKickModal">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{{ t('organization.kick') }}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {{ t('organization.kickConfirm', { name: memberToKick?.DisplayName || '' }) }}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>{{ t('common.cancel') }}</AlertDialogCancel>
+          <AlertDialogAction @click="kickMember" class="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            {{ t('organization.kick') }}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
+    <!-- Leave Organization Modal -->
+    <AlertDialog v-model:open="showLeaveModal">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{{ t('organization.leave') }}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {{ t('organization.leaveConfirm') }}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>{{ t('common.cancel') }}</AlertDialogCancel>
+          <AlertDialogAction @click="leaveOrg" class="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            {{ t('organization.leave') }}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   </div>
 </template>
