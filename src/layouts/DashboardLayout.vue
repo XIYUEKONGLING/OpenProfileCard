@@ -26,6 +26,8 @@ import {
   PanelLeftOpen,
   Cog,
   Plus,
+  Bell,
+  Mailbox,
 } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import AssetView from '@/components/ui/AssetView.vue';
@@ -108,6 +110,8 @@ watch(() => route.path, () => {
 // --- Config ---
 const navigation = [
   { name: t('dashboard.overview'), href: '/dashboard', icon: LayoutDashboard },
+  { name: t('common.notifications'), href: '/dashboard/notifications', icon: Bell },
+  { name: t('common.invitations'), href: '/dashboard/invitations', icon: Mailbox },
   { name: t('common.settings'), href: '/dashboard/settings', icon: Settings },
 ];
 

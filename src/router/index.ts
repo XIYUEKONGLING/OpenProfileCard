@@ -7,6 +7,8 @@ import SettingsView from "@/views/SettingsView.vue";
 import PublicLayout from "@/layouts/PublicLayout.vue";
 import PublicProfileView from "@/views/PublicProfileView.vue";
 import CreateOrganizationView from "@/views/CreateOrganizationView.vue";
+import NotificationsView from "@/views/NotificationsView.vue";
+import InvitationsView from "@/views/InvitationsView.vue";
 
 const router = createRouter({
     history: createWebHistory(),
@@ -24,6 +26,8 @@ const router = createRouter({
             children: [
                 { path: '', name: 'dashboard', component: DashboardView },
                 { path: 'settings', name: 'settings', component: SettingsView },
+                { path: 'notifications', name: 'notifications', component: NotificationsView },
+                { path: 'invitations', name: 'invitations', component: InvitationsView },
                 { path: 'profile/edit', name: 'profile-edit', component: () => import('@/views/ProfileEditView.vue') },
                 { path: 'manage/:resource', name: 'resource-manager', component: () => import('@/views/ResourceManager.vue'), props: true },
 
