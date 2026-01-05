@@ -69,6 +69,7 @@ export const zh = {
         timeZone: '时区',
         requiredFields: '请填写所有必填项。',
         to: '以',
+        sameTime: '相同时间',
     },
     auth: {
         loginTitle: 'Open Profile Card',

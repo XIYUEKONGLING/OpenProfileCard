@@ -92,6 +92,28 @@ const joinDate = computed(() => {
 const showUserList = ref(false);
 const userListType = ref<'followers' | 'following'>('followers');
 
+const timeZoneDisplay = computed(() => {
+  const tz = profile.value?.TimeZone;
+  if (!tz) return null;
+
+  const systemTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const isSame = systemTz === tz;
+
+  if (isSame) {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      timeZone: tz
+    });
+    return `${timeString} (${tz})`;
+  }
+
+  return tz;
+});
+
+
 // --- Actions ---
 const goToEditProfile = (tab: string) => {
   router.push({ path: '/dashboard/profile/edit', query: { tab } });
@@ -403,6 +425,11 @@ const copyToClipboard = async (text: string, id: string) => {
                 <div v-if="profile?.Location" class="flex items-center gap-3">
                   <MapPin class="size-4 shrink-0 opacity-70" />
                   <span>{{ profile.Location }}</span>
+                </div>
+
+                <div v-if="timeZoneDisplay" class="flex items-center gap-3">
+                  <Clock class="size-4 shrink-0 opacity-70" />
+                  <span>{{ timeZoneDisplay }}</span>
                 </div>
 
                 <div v-if="isPersonal && profile?.Birthday" class="flex items-center gap-3">

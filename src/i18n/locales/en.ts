@@ -70,6 +70,7 @@ export const en = {
         timeZone: 'Time Zone',
         requiredFields: 'Please fill in all required fields.',
         to: 'to',
+        sameTime: 'Same time',
     },
     auth: {
         loginTitle: 'Open Profile Card',

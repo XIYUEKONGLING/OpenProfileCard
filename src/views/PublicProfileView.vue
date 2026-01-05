@@ -120,6 +120,27 @@ const joinDate = computed(() => {
   return date.toLocaleDateString(locale.value === 'zh' ? 'zh-CN' : 'en-US', { year: 'numeric', month: 'long' });
 });
 
+const timeZoneDisplay = computed(() => {
+  const tz = profile.value?.TimeZone;
+  if (!tz) return null;
+
+  const systemTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const isSame = systemTz === tz;
+
+  if (isSame) {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      timeZone: tz
+    });
+    return `${timeString} (${tz})`;
+  }
+
+  return tz;
+});
+
 const hasBackground = computed(() =>
     profile.value?.Background && profile.value.Background.Type !== AssetType.Empty
 );
@@ -519,6 +540,11 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
                   <div v-if="profile.Location" class="flex items-center gap-3">
                     <MapPin class="size-4 shrink-0" />
                     <span>{{ profile.Location }}</span>
+                  </div>
+
+                  <div v-if="timeZoneDisplay" class="flex items-center gap-3">
+                    <Clock class="size-4 shrink-0 opacity-70" />
+                    <span>{{ timeZoneDisplay }}</span>
                   </div>
 
                   <div v-if="isPersonal && profile.Birthday" class="flex items-center gap-3">

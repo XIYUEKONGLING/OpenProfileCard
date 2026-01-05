@@ -34,7 +34,7 @@ import {
   FolderGit2, Image as ImageIcon, Settings, BookOpen,
   Heart, ExternalLink, LogOut, ShieldAlert,
   Crown, Mail, Phone, MessageSquare, MapPin as MapIcon, Link as LinkIcon2,
-  AlertTriangle, Ban, Trash2, Shield, Key, Copy, Check, Landmark,
+  AlertTriangle, Ban, Trash2, Shield, Key, Copy, Check, Landmark, Clock,
 } from 'lucide-vue-next';
 import {
   AlertDialog,
@@ -83,6 +83,27 @@ const canEdit = computed(() => isAdmin.value);
 
 const renderedContent = computed(() => renderMarkdown(profile.value?.Content));
 const description = computed(() => profile.value?.Description);
+
+const timeZoneDisplay = computed(() => {
+  const tz = profile.value?.TimeZone;
+  if (!tz) return null;
+
+  const systemTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const isSame = systemTz === tz;
+
+  if (isSame) {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+      timeZone: tz
+    });
+    return `${timeString} (${tz})`;
+  }
+
+  return tz;
+});
 
 // Check ProfileDto for background
 const hasBackground = computed(() =>
@@ -394,6 +415,10 @@ watch(() => props.accountName, fetchOrgData, { immediate: true });
               <div class="flex flex-col gap-3 text-sm text-muted-foreground text-left">
                 <div v-if="profile?.Location" class="flex items-center gap-3">
                   <MapPin class="size-4 shrink-0 opacity-70" /> <span>{{ profile.Location }}</span>
+                </div>
+                <div v-if="timeZoneDisplay" class="flex items-center gap-3">
+                  <Clock class="size-4 shrink-0 opacity-70" />
+                  <span>{{ timeZoneDisplay }}</span>
                 </div>
                 <div v-if="profile?.FoundedDate" class="flex items-center gap-3">
                   <Landmark class="size-4 shrink-0 opacity-70" /> <span>{{ formatDate(profile.FoundedDate) }}</span>
