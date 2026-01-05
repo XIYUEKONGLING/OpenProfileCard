@@ -366,6 +366,9 @@ export const zh = {
         accountPendingDeletion: '等待删除',
         accountPendingDeletionDesc: '该户已进入删除倒计时。',
         accountDeactivated: '该账户已被停用。',
+
+        privateProfile: '私密主页',
+        privateProfileDesc: '该主页为私密状态，仅显示基本信息。',
     },
     admin: {
         title: '系统管理',

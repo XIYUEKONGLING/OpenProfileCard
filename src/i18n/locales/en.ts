@@ -370,6 +370,9 @@ export const en = {
         accountPendingDeletion: 'Pending Deletion',
         accountPendingDeletionDesc: 'This account is scheduled for deletion.',
         accountDeactivated: 'This account has been deactivated.',
+
+        privateProfile: 'Private Profile',
+        privateProfileDesc: 'This profile is private. Only basic information is visible.',
     },
     admin: {
         title: 'System Administration',

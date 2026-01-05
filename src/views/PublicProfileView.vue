@@ -23,7 +23,7 @@ import {
   type FollowerDto,
   type PublicOrganizationMembershipDto,
   AccountType,
-  AssetType, type ProfilePrivacyDto, AccountStatus
+  AssetType, type ProfilePrivacyDto, AccountStatus, Visibility
 } from '@/api/types';
 
 // UI Components
@@ -108,6 +108,9 @@ const isMe = computed(() => (auth.user && profile.value && auth.user.AccountName
 const isStatic = computed(() => server.info?.Static === true);
 const renderedContent = computed(() => renderMarkdown(profile.value?.Content));
 
+// Check if the profile is private (Visibility != Public)
+const isPrivate = computed(() => profile.value?.Visibility !== Visibility.Public);
+
 // const joinDate = computed(() => {
 //   const dateStr = profile.value?.FoundedDate || (profile.value as any)?.CreatedAt;
 //   if (!dateStr) return '';
@@ -151,7 +154,13 @@ const isFollowersHidden = computed(() => privacy.value?.ShowFollowers === false)
 const isFollowingHidden = computed(() => privacy.value?.ShowFollowing === false); // !isMe.value && 
 
 const profileStatus = computed(() => Number(profile.value?.Status ?? AccountStatus.Active));
-const isRestricted = computed(() => profileStatus.value !== AccountStatus.Active);
+// Check if the account is restricted by system status (Banned, Suspended, etc.)
+const isRestricted = computed(() => {
+  const status = Number(profile.value?.Status ?? AccountStatus.Active);
+  return status !== AccountStatus.Active;
+});
+
+const isContentMasked = computed(() => isRestricted.value || isPrivate.value);
 
 const statusNotice = computed(() => {
   if (!profile.value) return null;
@@ -184,6 +193,52 @@ const statusNotice = computed(() => {
     default:
       return null;
   }
+});
+
+// Unified mask configuration
+const maskNotice = computed(() => {
+  if (isRestricted.value) {
+    // Existing System Status Logic
+    const status = Number(profile.value?.Status ?? AccountStatus.Active);
+    switch (status) {
+      case AccountStatus.Banned:
+        return {
+          title: t('publicProfile.accountBanned'),
+          desc: t('publicProfile.accountBannedDesc'),
+          icon: Ban,
+          color: 'text-destructive',
+          blur: 'blur-md'
+        };
+      case AccountStatus.Suspended:
+        return {
+          title: t('publicProfile.accountSuspended'),
+          desc: t('publicProfile.accountSuspendedDesc'),
+          icon: AlertTriangle,
+          color: 'text-orange-500',
+          blur: 'blur-sm'
+        };
+      case AccountStatus.PendingDeletion:
+        return {
+          title: t('publicProfile.accountPendingDeletion'),
+          desc: t('publicProfile.accountPendingDeletionDesc'),
+          icon: Trash2,
+          color: 'text-muted-foreground',
+          blur: 'blur-md'
+        };
+      default:
+        return null;
+    }
+  } else if (isPrivate.value) {
+    // New Private Profile Logic
+    return {
+      title: t('publicProfile.privateProfile'),
+      desc: t('publicProfile.privateProfileDesc'),
+      icon: Lock,
+      color: 'text-brand-blue',
+      blur: 'blur-sm'
+    };
+  }
+  return null;
 });
 
 // --- Members Pagination & Actions State ---
@@ -481,7 +536,7 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
                   <Shield class="size-4" />
                 </div>
                 <div v-if="isRestricted" class="absolute top-2 right-2 bg-background rounded-full p-1.5 shadow-lg border border-border">
-                  <component :is="statusNotice?.icon" class="size-5" :class="statusNotice?.color" />
+                  <component :is="maskNotice?.icon" class="size-5" :class="maskNotice?.color" />
                 </div>
               </div>
 
@@ -495,8 +550,8 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
               </div>
 
               <div v-if="isRestricted" class="mt-6 p-4 rounded-2xl bg-muted/30 border border-dashed border-border text-center">
-                <p class="text-xs font-bold uppercase tracking-widest" :class="statusNotice?.color">
-                  {{ statusNotice?.title }}
+                <p class="text-xs font-bold uppercase tracking-widest" :class="maskNotice?.color">
+                  {{ maskNotice?.title }}
                 </p>
               </div>
 
@@ -620,23 +675,24 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
           </div>
 
           <!-- RIGHT COLUMN -->
-          <div class="lg:col-span-8 xl:col-span-9 pt-8 min-w-0">
-            <div v-if="isRestricted" class="absolute inset-0 z-30 flex flex-col items-center justify-start pt-20 text-center px-6">
-              <div class="glass-card p-16 rounded-3xl border-border/50 shadow-2xl max-w-md animate-in zoom-in-95 duration-300">
+          <div class="lg:col-span-8 xl:col-span-9 pt-8 min-w-0 relative">
+            <div v-if="isContentMasked" class="absolute inset-0 z-30 flex flex-col items-center justify-start pt-20 text-center px-6 pointer-events-none">
+              <div class="glass-card p-16 rounded-3xl border-border/50 shadow-2xl max-w-md animate-in zoom-in-95 duration-300 pointer-events-auto">
                 <div class="size-16 rounded-2xl bg-muted flex items-center justify-center mx-auto mb-4">
-                  <component :is="statusNotice?.icon" class="size-8" :class="statusNotice?.color" />
+                  <component :is="maskNotice?.icon" class="size-8" :class="maskNotice?.color" />
                 </div>
-                <h2 class="text-xl font-black mb-2">{{ statusNotice?.title }}</h2>
+                <h2 class="text-xl font-black mb-2">{{ maskNotice?.title }}</h2>
                 <p class="text-sm text-muted-foreground leading-relaxed">
-                  {{ statusNotice?.desc }}
+                  {{ maskNotice?.desc }}
                 </p>
-                <!-- <Button variant="outline" class="mt-6 w-full font-bold" @click="router.push('/')"> -->
-                <!--   {{ t('publicProfile.backHome') }} -->
-                <!-- </Button> -->
               </div>
             </div>
-            
-            <Tabs defaultValue="overview" class="w-full" :class="[isRestricted ? 'filter blur-lg pointer-events-none select-none opacity-40' : '']">
+
+            <Tabs
+                defaultValue="overview"
+                class="w-full"
+                :class="[isContentMasked ? 'filter blur-lg pointer-events-none select-none opacity-40' : '']"
+            >
               <TabsList class="w-full justify-start h-auto p-0 bg-transparent border-b border-border rounded-none gap-6 mb-8 overflow-x-auto no-scrollbar">
                 <TabsTrigger value="overview" class="rounded-md border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent px-0 py-3 font-bold text-muted-foreground data-[state=active]:text-foreground transition-all"><BookOpen class="size-4 mr-2" /> {{ t('publicProfile.about') }}</TabsTrigger>
                 <TabsTrigger value="projects" class="rounded-md border-b-2 border-transparent data-[state=active]:border-foreground data-[state=active]:bg-transparent px-0 py-3 font-bold text-muted-foreground data-[state=active]:text-foreground transition-all"><FolderGit2 class="size-4 mr-2" /> {{ t('publicProfile.projects') }} <Badge variant="secondary" class="ml-2">{{ projects.length }}</Badge></TabsTrigger>
