@@ -181,7 +181,7 @@ onMounted(() => fetchData());
                 <Input v-model="form.Location" placeholder="City, Country" />
               </div>
               <div class="space-y-2">
-                <Label>Time Zone</Label>
+                <Label>{{ t('common.timeZone') }}</Label>
                 <Input v-model="form.TimeZone" placeholder="e.g. UTC, Asia/Shanghai" />
               </div>
               <div class="space-y-2 md:col-span-2">
