@@ -6,7 +6,6 @@ import { useUIStore } from '@/stores/ui';
 import { MemberRole } from '@/api/types';
 import type { OrganizationInvitationDto } from '@/api/types';
 
-
 // UI Components
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -39,7 +38,6 @@ const handleAction = async (id: string, action: 'accept' | 'decline') => {
   try {
     await httpClient(`/me/invitations/${id}/${action}`, { method: 'POST' });
     ui.notify(action === 'accept' ? t('invitations.acceptSuccess') : t('invitations.declineSuccess'), 'success');
-    // Remove from list
     invitations.value = invitations.value.filter(inv => inv.Id !== id);
   } catch (e: any) {
     ui.notify(e.message, 'error');
@@ -58,7 +56,7 @@ const toRoleString = (role: MemberRole) => {
       return t('organization.member');
     case MemberRole.Guest:
       return t('organization.guest');
-    default: t('organization.roleUnknown');
+    default: return t('organization.roleUnknown');
   }
 };
 
@@ -89,17 +87,17 @@ onMounted(fetchInvitations);
           <CardContent class="p-0">
             <div class="flex flex-col sm:flex-row">
               <!-- Org Info -->
-              <div class="p-6 flex-1 flex items-start gap-4">
-                <div class="size-14 rounded-xl bg-muted border overflow-hidden shrink-0">
+              <div class="p-4 sm:p-6 flex-1 flex items-start gap-4">
+                <div class="size-12 sm:size-14 rounded-xl bg-muted border overflow-hidden shrink-0">
                   <AssetView :asset="inv.OrganizationAvatar" :fallback-name="inv.OrganizationName" class-name="w-full h-full" />
                 </div>
-                <div class="space-y-1">
+                <div class="space-y-1 min-w-0">
                   <div class="flex items-center gap-2">
-                    <h3 class="font-bold text-lg">{{ inv.OrganizationName }}</h3>
-                    <Badge variant="secondary" class="text-[10px]">{{ inv.Status }}</Badge>
+                    <h3 class="font-bold text-lg truncate">{{ inv.OrganizationName }}</h3>
+                    <Badge variant="secondary" class="text-[10px] shrink-0">{{ inv.Status }}</Badge>
                   </div>
                   <p class="text-sm text-muted-foreground">
-                    <span class="font-medium">{{ t('invitations.invitedBy') }}:</span> @{{ inv.InviterName }}
+                    <span class="font-medium">{{ t('invitations.invitedBy') }}:</span> {{ inv.InviterName }}
                   </p>
                   <p class="text-xs text-muted-foreground mt-1">
                     {{ t('organization.role') }}: {{ toRoleString(inv.Role) }} • {{ new Date(inv.CreatedAt).toLocaleDateString() }}
@@ -108,25 +106,25 @@ onMounted(fetchInvitations);
               </div>
 
               <!-- Actions -->
-              <div class="p-6 sm:w-auto flex sm:flex-col justify-center gap-3">
+              <div class="p-4 sm:p-6 sm:w-auto flex flex-col justify-center gap-3 border-t sm:border-t-0 sm:border-l border-border/50 bg-muted/30 sm:bg-transparent">
                 <Button
-                    class="w-full sm:w-auto font-bold"
+                    class="w-full sm:w-auto font-bold whitespace-normal sm:whitespace-nowrap"
                     @click="handleAction(inv.Id, 'accept')"
                     :disabled="actionLoadingId === inv.Id"
                 >
-                  <Check v-if="actionLoadingId !== inv.Id" class="mr-2 size-4" />
-                  <Loader2 v-else class="mr-2 size-4 animate-spin" />
-                  {{ t('common.accept') }}
+                  <Check v-if="actionLoadingId !== inv.Id" class="mr-2 size-4 shrink-0" />
+                  <Loader2 v-else class="mr-2 size-4 shrink-0 animate-spin" />
+                  <span class="wrap-break-word">{{ t('common.accept') }}</span>
                 </Button>
                 <Button
                     variant="outline"
-                    class="w-full sm:w-auto"
+                    class="w-full sm:w-auto whitespace-normal sm:whitespace-nowrap"
                     @click="handleAction(inv.Id, 'decline')"
                     :disabled="actionLoadingId === inv.Id"
                 >
-                  <X v-if="actionLoadingId !== inv.Id" class="mr-2 size-4" />
-                  <Loader2 v-else class="mr-2 size-4 animate-spin" />
-                  {{ t('common.decline') }}
+                  <X v-if="actionLoadingId !== inv.Id" class="mr-2 size-4 shrink-0" />
+                  <Loader2 v-else class="mr-2 size-4 shrink-0 animate-spin" />
+                  <span class="wrap-break-word">{{ t('common.decline') }}</span>
                 </Button>
               </div>
             </div>
