@@ -41,6 +41,10 @@ export interface ProfilePrivacyDto {
     ShowFollowing: boolean;
 }
 
+export interface AccountCreatedDateDto {
+    CreatedDate: string; // DateOnly (string)
+}
+
 export interface UpdateProfileRequestDto {
     DisplayName?: string;
     Description?: string;
