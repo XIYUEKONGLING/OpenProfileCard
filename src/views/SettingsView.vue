@@ -14,7 +14,7 @@ import {
   type AddEmailRequestDto,
   type VerifyEmailRequestDto,
   type ChangePasswordRequestDto,
-  type BlockDto
+  type BlockDto, VerificationType
 } from '@/api/types';
 
 // Components
@@ -200,7 +200,7 @@ const addEmail = async () => {
     // Logic: Verification Required vs Direct Add
     if (requiresVerification.value) {
       if (!verifyCode.value) {
-        await auth.sendCode({ Email: newEmail.value, Type: 'VerifyEmail' });
+        await auth.sendCode({ Email: newEmail.value, Type: VerificationType.VerifyEmail });
         ui.notify(t('auth.codeSent'), 'success');
         return;
       }
@@ -249,7 +249,7 @@ const setPrimaryEmail = async (email: string) => {
 
 const verifyExistingEmail = async (email: string) => {
   if (requiresVerification.value && !verifyCode.value) {
-    await auth.sendCode({ Email: email, Type: 'VerifyEmail' });
+    await auth.sendCode({ Email: email, Type: VerificationType.VerifyEmail });
     ui.notify(t('auth.codeSent'), 'success');
     return;
   }
@@ -689,7 +689,7 @@ onMounted(() => {
               <div v-for="user in blockedUsers" :key="user.AccountId" class="flex items-center justify-between p-4 border rounded-lg bg-card hover:bg-muted/50 transition-colors">
                 <div class="flex items-center gap-4">
                   <div class="size-10 rounded-full bg-muted border overflow-hidden shrink-0">
-                    <AssetView :asset="user.Avatar" :fallback-name="user.DisplayName" class-name="w-full h-full" />
+                    <AssetView :asset="(user as any).Avatar" :fallback-name="user.DisplayName" class-name="w-full h-full" />
                   </div>
                   <div>
                     <div class="font-bold">{{ user.DisplayName }}</div>

@@ -26,6 +26,7 @@ import {
   Languages, ChevronDown, Check, AlertCircle,
   Mail, Lock, ShieldCheck, ArrowLeft
 } from 'lucide-vue-next';
+import {VerificationType} from "@/api/types";
 
 const router = useRouter();
 const { t, setLocale, locale } = useI18n();
@@ -60,7 +61,7 @@ async function handleSendCode() {
   try {
     await auth.sendCode({
       Email: form.value.email,
-      Type: 'ResetPassword'
+      Type: VerificationType.ResetPassword
     });
     ui.notify(t('auth.codeSent'), 'success');
 

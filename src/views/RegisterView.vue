@@ -26,6 +26,7 @@ import {
   Languages, ChevronDown, Check, AlertCircle,
   User, Mail, Lock, ShieldCheck, ArrowLeft
 } from 'lucide-vue-next';
+import {VerificationType} from "@/api/types";
 
 const router = useRouter();
 const { t, setLocale, locale } = useI18n();
@@ -64,7 +65,7 @@ async function handleSendCode() {
   try {
     await auth.sendCode({
       Email: form.value.email,
-      Type: 'Registration'
+      Type: VerificationType.Registration
     });
     ui.notify(t('auth.codeSent'), 'success');
 
