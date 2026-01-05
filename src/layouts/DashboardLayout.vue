@@ -385,7 +385,7 @@ const themeOptions = [
               <router-link
                   v-for="org in myOrgs"
                   :key="org.Id"
-                  :to="`/orgs/${org.AccountName}`"
+                  :to="`/dashboard/orgs/${org.AccountName}`"
                   @click="isMobileMenuOpen = false"
               >
                 <div class="flex items-center gap-3 px-4 py-3 rounded-xl bg-muted/20 border border-transparent hover:border-border/50 transition-all">
