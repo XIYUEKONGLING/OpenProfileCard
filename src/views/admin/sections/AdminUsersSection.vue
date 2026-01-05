@@ -358,7 +358,7 @@ const updateRole = async (user: UserAdminDto, newRole: number): Promise<void> =>
 };
 
 const canManageRoles = (targetUser: UserAdminDto): boolean => {
-  return auth.isRoot && targetUser.Role !== AccountRoleNames.Root;
+  return auth.isRoot && targetUser.Role !== AccountRole.Root;
 };
 
 const confirmDelete = async (): Promise<void> => {
@@ -452,7 +452,7 @@ onMounted(fetchUsers);
           <PopoverContent class="w-48 p-2" align="end">
             <div class="grid gap-1">
               <div
-                  v-for="r in [AccountRoleNames.Root, AccountRoleNames.Admin, AccountRoleNames.User]" :key="r"
+                  v-for="r in [AccountRole.Root, AccountRole.Admin, AccountRole.User]" :key="r"
                   class="flex items-center gap-2 p-2 rounded-md hover:bg-muted cursor-pointer transition-colors"
                   @click="toggleFilter('role', r)"
               >
@@ -564,15 +564,15 @@ onMounted(fetchUsers);
                       <DropdownMenuLabel class="text-xs opacity-50 uppercase tracking-tighter"> {{ t('admin.permissionControl') }} </DropdownMenuLabel>
 
                       <DropdownMenuItem
-                          v-if="user.Role === AccountRoleNames.User"
-                          @click="updateRole(user, AccountRoleNames.Admin)"
+                          v-if="user.Role === AccountRole.User"
+                          @click="updateRole(user, AccountRole.Admin)"
                       >
                         <Shield class="mr-2 size-4 text-brand-blue" /> {{ t('admin.actionsPromote') }}
                       </DropdownMenuItem>
 
                       <DropdownMenuItem
-                          v-if="user.Role === AccountRoleNames.Admin"
-                          @click="updateRole(user, AccountRoleNames.User)"
+                          v-if="user.Role === AccountRole.Admin"
+                          @click="updateRole(user, AccountRole.User)"
                       >
                         <UserCircle class="mr-2 size-4 text-muted-foreground" /> {{ t('admin.actionsDemote') }}
                       </DropdownMenuItem>
