@@ -1,4 +1,4 @@
-import type { AccountType, AccountRole, AccountStatus } from './enums';
+import type {AccountType, AccountRole, AccountStatus, NotificationType} from './enums';
 
 // --- Users ---
 
@@ -44,6 +44,14 @@ export interface AdminResetPasswordRequestDto {
 export interface AdminUpdateEmailRequestDto {
     IsVerified?: boolean;
     IsPrimary?: boolean;
+}
+
+export interface CreateNotificationRequestDto {
+    Title: string;
+    Body: string;
+    Type: NotificationType;
+    Url?: string;
+    Data?: string; // Optional JSON data payload.
 }
 
 // --- System Status ---

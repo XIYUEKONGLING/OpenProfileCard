@@ -9,6 +9,8 @@ export interface ProfileDto {
     Type: AccountType;
     Status: AccountStatus;
 
+    Visibility: Visibility;
+
     // Basic
     DisplayName?: string;
     Avatar?: AssetDto;
