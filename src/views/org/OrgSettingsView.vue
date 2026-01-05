@@ -5,12 +5,14 @@ import { useI18n } from '@/i18n';
 import { httpClient } from '@/api/client';
 import { type OrganizationDto, MemberRole } from '@/api/types';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, AlertTriangle } from 'lucide-vue-next';
+import { ArrowLeft, AlertTriangle, Settings, Mail } from 'lucide-vue-next';
 import OrgSettings from '@/components/org/OrgSettings.vue';
+import OrgOutgoingInvitations from '@/components/org/OrgOutgoingInvitations.vue';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useUIStore } from '@/stores/ui';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const props = defineProps<{ accountName: string }>();
 const router = useRouter();
@@ -28,7 +30,6 @@ const checkPermission = async () => {
     const org = await httpClient<OrganizationDto>(`/orgs/${props.accountName}`);
     myRole.value = org.MyRole;
 
-    // Client-side guard
     if (org.MyRole !== MemberRole.Owner && org.MyRole !== MemberRole.Admin) {
       router.push(`/dashboard/orgs/${props.accountName}`);
     }
@@ -71,14 +72,35 @@ onMounted(checkPermission);
 
     <div v-if="!isLoading && myRole !== null" class="space-y-8 animate-in fade-in slide-in-from-bottom-2">
 
-      <!-- Normal Settings Component -->
-      <OrgSettings
-          :account-name="accountName"
-          :my-role="myRole"
-          @deleted="router.push('/dashboard')"
-      />
+      <!-- TABS CONTAINER -->
+      <Tabs default-value="general" class="w-full">
+        <TabsList class="grid w-full max-w-md grid-cols-2">
+          <TabsTrigger value="general">
+            <Settings class="size-4 mr-2" />
+            {{ t('common.settings') }}
+          </TabsTrigger>
+          <TabsTrigger value="invitations">
+            <Mail class="size-4 mr-2" />
+            {{ t('organization.outgoingInvitations') }}
+          </TabsTrigger>
+        </TabsList>
 
-      <!-- Danger Zone (Improved UI via View) -->
+        <!-- TAB 1: General Settings -->
+        <TabsContent value="general" class="mt-6">
+          <OrgSettings
+              :account-name="accountName"
+              :my-role="myRole"
+              @deleted="router.push('/dashboard')"
+          />
+        </TabsContent>
+
+        <!-- TAB 2: Outgoing Invitations -->
+        <TabsContent value="invitations" class="mt-6">
+          <OrgOutgoingInvitations :account-name="accountName" />
+        </TabsContent>
+      </Tabs>
+
+      <!-- Danger Zone (Outside Tabs) -->
       <Card v-if="myRole === MemberRole.Owner" class="border-destructive/30 overflow-hidden">
         <CardHeader class="bg-destructive/10 py-6">
           <CardTitle class="flex items-center gap-2 text-destructive">

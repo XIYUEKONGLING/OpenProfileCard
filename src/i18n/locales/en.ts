@@ -519,6 +519,12 @@ export const en = {
         descriptionPlaceholder: 'Brief description of your organization...',
         createFailed: 'Failed to create organization',
         changeMyVisibility: 'Change My Visibility',
+        outgoingInvitations: 'Outgoing Invitations',
+        invitee: 'Invitee',
+        revoke: 'Revoke',
+        revokeConfirm: 'Are you sure you want to revoke this invitation?',
+        noPendingInvites: 'No pending invitations.',
+        pendingInvitesDesc: 'View and manage invitations you have sent to users.',
     },
     notifications: {
         title: 'Notifications',

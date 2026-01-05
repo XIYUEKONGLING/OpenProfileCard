@@ -515,6 +515,12 @@ export const zh = {
         descriptionPlaceholder: '简要描述您的组织...',
         createFailed: '创建组织失败',
         changeMyVisibility: '修改我的可见性',
+        outgoingInvitations: '发出的邀请',
+        invitee: '受邀人',
+        revoke: '撤销',
+        revokeConfirm: '确定要撤销此邀请吗？',
+        noPendingInvites: '暂无待处理的邀请。',
+        pendingInvitesDesc: '查看并管理您发送给用户的邀请。',
     },
     notifications: {
         title: '通知中心',
