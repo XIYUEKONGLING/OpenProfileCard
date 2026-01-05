@@ -147,8 +147,8 @@ const hasBackground = computed(() =>
     profile.value?.Background && profile.value.Background.Type !== AssetType.Empty
 );
 
-const isFollowersHidden = computed(() => !isMe.value && privacy.value?.ShowFollowers === false);
-const isFollowingHidden = computed(() => !isMe.value && privacy.value?.ShowFollowing === false);
+const isFollowersHidden = computed(() => privacy.value?.ShowFollowers === false); // !isMe.value && 
+const isFollowingHidden = computed(() => privacy.value?.ShowFollowing === false); // !isMe.value && 
 
 const profileStatus = computed(() => Number(profile.value?.Status ?? AccountStatus.Active));
 const isRestricted = computed(() => profileStatus.value !== AccountStatus.Active);
