@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useI18n } from '@/i18n';
-import { httpClient } from '@/api/client.ts';
-import { useUIStore } from '@/stores/ui.ts';
+import { httpClient } from '@/api/client';
+import { useUIStore } from '@/stores/ui';
 import {
   type OrganizationMemberDto,
   MemberRole,
+  Visibility,
   type InviteMemberRequestDto,
   type UpdateMemberRequestDto
 } from '@/api/types';
@@ -20,7 +21,10 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-  DropdownMenuSeparator
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent
 } from '@/components/ui/dropdown-menu';
 import {
   Dialog,
@@ -46,7 +50,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Loader2, MoreHorizontal, UserPlus, UserX, Crown, LogOut } from 'lucide-vue-next';
+import { Loader2, MoreHorizontal, UserPlus, UserX, Crown, LogOut, Eye, EyeOff } from 'lucide-vue-next';
 
 const props = defineProps<{
   accountName: string;
@@ -99,9 +103,7 @@ const sendInvite = async () => {
     });
     ui.notify(t('common.success'), 'success');
     showInviteDialog.value = false;
-    inviteForm.value.Identity = ''; // Reset
-    // Note: Invites are pending, so they won't appear in members list immediately usually, but spec says POST .../members Force Add for admin system. 
-    // Standard invites go to invitations.
+    inviteForm.value.Identity = '';
   } catch (e: any) {
     ui.notify(e.message, 'error');
   } finally {
@@ -118,6 +120,23 @@ const updateRole = async (member: OrganizationMemberDto, newRole: MemberRole) =>
       body: JSON.stringify(payload)
     });
     member.Role = newRole;
+    ui.notify(t('common.success'), 'success');
+  } catch (e: any) {
+    ui.notify(e.message, 'error');
+  } finally {
+    actionLoading.value = null;
+  }
+};
+
+const updateVisibility = async (member: OrganizationMemberDto, newVisibility: Visibility) => {
+  actionLoading.value = member.AccountId;
+  try {
+    const payload: UpdateMemberRequestDto = { Visibility: newVisibility };
+    await httpClient(`/orgs/${props.accountName}/members/${member.AccountId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload)
+    });
+    member.Visibility = newVisibility;
     ui.notify(t('common.success'), 'success');
   } catch (e: any) {
     ui.notify(e.message, 'error');
@@ -164,12 +183,10 @@ const openLeaveModal = () => {
   showLeaveModal.value = true;
 };
 
-// Helper to determine if I can manage target user
 const canManage = (target: OrganizationMemberDto) => {
   if (!isAdmin.value) return false;
-  if (target.AccountId == props.accountId) return false; // Cannot touch self
-  // if (target.Role === MemberRole.Owner) return false;
-  if (props.myRole === MemberRole.Admin && target.Role === MemberRole.Admin) return false; // Admin cannot touch Admin
+  if (target.AccountId == props.accountId) return false;
+  if (props.myRole === MemberRole.Admin && target.Role === MemberRole.Admin) return false;
   return true;
 };
 
@@ -179,6 +196,16 @@ const getRoleLabel = (r: MemberRole) => {
     case MemberRole.Admin: return t('organization.roleAdmin');
     case MemberRole.Member: return t('organization.roleMember');
     case MemberRole.Guest: return t('organization.roleGuest');
+    default: return 'Unknown';
+  }
+};
+
+const getVisibilityLabel = (v: Visibility) => {
+  switch(v) {
+    case Visibility.Public: return t('common.public');
+    case Visibility.Private: return t('common.private');
+    case Visibility.Protected: return t('common.protected');
+    case Visibility.MembersOnly: return t('common.membersOnly');
     default: return 'Unknown';
   }
 };
@@ -223,6 +250,12 @@ onMounted(fetchMembers);
           </div>
 
           <div class="flex items-center gap-2">
+            <Badge variant="outline" class="text-[10px]">
+              <Eye v-if="member.Visibility === Visibility.Public" class="size-3 mr-1" />
+              <EyeOff v-else class="size-3 mr-1" />
+              {{ getVisibilityLabel(member.Visibility) }}
+            </Badge>
+
             <Badge variant="outline">{{ getRoleLabel(member.Role) }}</Badge>
 
             <DropdownMenu v-if="canManage(member)">
@@ -234,11 +267,35 @@ onMounted(fetchMembers);
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <template v-if="isOwner">
+                  <DropdownMenuLabel class="text-xs opacity-50">{{ t('organization.role') }}</DropdownMenuLabel>
                   <DropdownMenuItem @click="updateRole(member, MemberRole.Owner)"> {{ t('organization.setAsOwner') }} </DropdownMenuItem>
                   <DropdownMenuItem @click="updateRole(member, MemberRole.Admin)"> {{ t('organization.setAsAdmin') }} </DropdownMenuItem>
                   <DropdownMenuItem @click="updateRole(member, MemberRole.Member)"> {{ t('organization.setAsMember') }} </DropdownMenuItem>
                   <DropdownMenuSeparator />
+
+                  <DropdownMenuLabel class="text-xs opacity-50">{{ t('common.visibility') }}</DropdownMenuLabel>
+                  <DropdownMenuSub>
+                    <DropdownMenuSubTrigger>
+                      <Eye class="size-4 mr-2" /> {{ getVisibilityLabel(member.Visibility) }}
+                    </DropdownMenuSubTrigger>
+                    <DropdownMenuSubContent>
+                      <DropdownMenuItem @click="updateVisibility(member, Visibility.Public)">
+                        {{ t('common.public') }}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem @click="updateVisibility(member, Visibility.Private)">
+                        {{ t('common.private') }}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem @click="updateVisibility(member, Visibility.Protected)">
+                        {{ t('common.protected') }}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem @click="updateVisibility(member, Visibility.MembersOnly)">
+                        {{ t('common.membersOnly') }}
+                      </DropdownMenuItem>
+                    </DropdownMenuSubContent>
+                  </DropdownMenuSub>
+                  <DropdownMenuSeparator />
                 </template>
+
                 <DropdownMenuItem class="text-destructive" @click="openKickModal(member)">
                   <UserX class="size-4 mr-2" /> {{ t('organization.kick') }}
                 </DropdownMenuItem>

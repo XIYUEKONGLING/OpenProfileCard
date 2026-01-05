@@ -288,6 +288,7 @@ export const zh = {
         deleteModalTitle: '确定要删除账户吗？',
         deleteModalDesc: '此操作将禁用您的账户并将其置于等待删除状态。如果您在宽限期内未恢复账户，所有数据将被永久删除。',
         deleteConfirmLabel: '请输入 {name} 以确认：',
+        defaultVisibility: '默认可见性',
     },
     social: {
         blocking: '拉黑中...',

@@ -292,6 +292,7 @@ export const en = {
         deleteModalTitle: 'Delete Account?',
         deleteModalDesc: 'This action will deactivate your account and schedule it for deletion. All data will be permanently removed if not restored within the grace period.',
         deleteConfirmLabel: 'Type {name} to confirm:',
+        defaultVisibility: 'Default Visibility',
     },
     social: {
         blocking: 'Blocking...',

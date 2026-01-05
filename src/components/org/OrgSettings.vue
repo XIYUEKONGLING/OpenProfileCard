@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useI18n } from '@/i18n';
-import { httpClient } from '@/api/client.ts';
-import { useUIStore } from '@/stores/ui.ts';
+import { httpClient } from '@/api/client';
+import { useUIStore } from '@/stores/ui';
 import {
   type OrganizationSettingsDto,
-  MemberRole
+  MemberRole,
+  Visibility 
 } from '@/api/types';
 
 import { Button } from '@/components/ui/button';
@@ -18,7 +19,16 @@ import {
   CardTitle,
   CardFooter
 } from '@/components/ui/card';
-import { Loader2, Save } from 'lucide-vue-next';
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
+import { Loader2, Save, ShieldCheck } from 'lucide-vue-next';
 
 const props = defineProps<{
   accountName: string;
@@ -26,7 +36,6 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits(['deleted']);
-
 const { t } = useI18n();
 const ui = useUIStore();
 
@@ -66,20 +75,97 @@ onMounted(fetchSettings);
     <!-- General Settings -->
     <Card v-if="settings">
       <CardHeader>
-        <CardTitle>{{ t('organization.settings') }}</CardTitle>
+        <CardTitle class="flex items-center gap-2">
+          <ShieldCheck class="size-5" />
+          {{ t('organization.settings') }}
+        </CardTitle>
       </CardHeader>
       <CardContent class="space-y-6">
 
-        <div class="flex items-center justify-between">
-          <div class="space-y-0.5">
-            <Label class="text-base">{{ t('settings.allowFollowers') }}</Label>
-            <p class="text-sm text-muted-foreground">{{ t('settings.allowFollowersDesc') }}</p>
+        <!-- 1. Privacy Settings (Switches) -->
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <div class="space-y-0.5">
+              <Label class="text-base">{{ t('settings.allowFollowers') }}</Label>
+              <p class="text-sm text-muted-foreground">{{ t('settings.allowFollowersDesc') }}</p>
+            </div>
+            <input type="checkbox" v-model="settings.AllowFollowers" class="size-5 accent-brand-blue" />
           </div>
-          <input type="checkbox" v-model="settings.AllowFollowers" class="size-5 accent-brand-blue" />
+
+          <Separator />
+
+          <div class="flex items-center justify-between">
+            <div class="space-y-0.5">
+              <Label class="text-base">{{ t('settings.showFollowers') }}</Label>
+              <p class="text-sm text-muted-foreground">{{ t('settings.showFollowersDesc') }}</p>
+            </div>
+            <input type="checkbox" v-model="settings.ShowFollowersList" class="size-5 accent-brand-blue" />
+          </div>
+
+          <Separator />
+
+          <div class="flex items-center justify-between">
+            <div class="space-y-0.5">
+              <Label class="text-base">{{ t('settings.showFollowing') }}</Label>
+              <p class="text-sm text-muted-foreground">{{ t('settings.showFollowingDesc') }}</p>
+            </div>
+            <input type="checkbox" v-model="settings.ShowFollowingList" class="size-5 accent-brand-blue" />
+          </div>
         </div>
 
         <Separator />
 
+        <!-- 2. Visibility Settings (Selects) -->
+        <div class="space-y-4">
+          <div class="space-y-2">
+            <Label>{{ t('common.visibility') }}</Label>
+            <Select v-model.number="settings.Visibility">
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem :value="Visibility.Public">{{ t('common.public') }}</SelectItem>
+                <SelectItem :value="Visibility.Private">{{ t('common.private') }}</SelectItem>
+                <SelectItem :value="Visibility.Protected">{{ t('common.protected') }}</SelectItem>
+                <SelectItem :value="Visibility.MembersOnly">{{ t('common.membersOnly') }}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div class="space-y-2">
+            <Label>{{ t('settings.defaultVisibility') }}</Label>
+            <Select v-model.number="settings.DefaultVisibility">
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem :value="Visibility.Public">{{ t('common.public') }}</SelectItem>
+                <SelectItem :value="Visibility.Private">{{ t('common.private') }}</SelectItem>
+                <SelectItem :value="Visibility.Protected">{{ t('common.protected') }}</SelectItem>
+                <SelectItem :value="Visibility.MembersOnly">{{ t('common.membersOnly') }}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div class="space-y-2">
+            <Label>{{ t('organization.defaultMemberVisibility') }}</Label>
+            <Select v-model.number="settings.DefaultMemberVisibility">
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem :value="Visibility.Public">{{ t('common.public') }}</SelectItem>
+                <SelectItem :value="Visibility.Private">{{ t('common.private') }}</SelectItem>
+                <SelectItem :value="Visibility.Protected">{{ t('common.protected') }}</SelectItem>
+                <SelectItem :value="Visibility.MembersOnly">{{ t('common.membersOnly') }}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <Separator />
+
+        <!-- 3. Invite Settings -->
         <div class="flex items-center justify-between">
           <div class="space-y-0.5">
             <Label class="text-base">{{ t('organization.allowMemberInvite') }}</Label>
