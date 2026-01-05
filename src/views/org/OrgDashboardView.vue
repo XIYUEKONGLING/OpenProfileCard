@@ -193,7 +193,7 @@ const refreshStats = () => {
 const restoreOrg = async () => {
   if (!org.value) return;
   try {
-    await httpClient(`/orgs/${org.value.Id}/restore`, { method: 'POST' });
+    await httpClient(`/orgs/@${org.value.Id}/restore`, { method: 'POST' });
     ui.notify(t('settings.accountRestored'), 'success');
     fetchOrgData();
   } catch (e: any) {
