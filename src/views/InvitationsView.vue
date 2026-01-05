@@ -53,9 +53,9 @@ const toRoleString = (role: MemberRole) => {
     case MemberRole.Admin:
       return t('organization.roleAdmin');
     case MemberRole.Member:
-      return t('organization.member');
+      return t('organization.roleMember');
     case MemberRole.Guest:
-      return t('organization.guest');
+      return t('organization.roleGuest');
     default: return t('organization.roleUnknown');
   }
 };
