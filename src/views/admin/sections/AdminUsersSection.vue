@@ -12,7 +12,7 @@ import {
   type AccountEmailDto,
   type AddEmailRequestDto,
   type AdminUpdateEmailRequestDto,
-  type AdminResetPasswordRequestDto, AccountRole
+  type AdminResetPasswordRequestDto, AccountRole, NotificationType, type CreateNotificationRequestDto
 } from '@/api/types';
 
 // UI Components
@@ -60,13 +60,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 // Icons
 import {
   Loader2, Search, Shield, Ban, Trash2, CheckCircle,
   AlertTriangle, MoreHorizontal, Filter, ChevronDown, Mail, Key,
   ChevronLeft, ChevronsLeft, ChevronRight, RotateCcw, UserCircle,
-  Plus, X
+  Plus, X, Bell,
 } from 'lucide-vue-next';
 
 const { t } = useI18n();
@@ -109,6 +117,17 @@ const resetPasswordData = ref({
   confirmPassword: ''
 });
 const isResettingPassword = ref(false);
+
+// Notification State
+const showNotificationModal = ref(false);
+const notificationForm = ref<CreateNotificationRequestDto>({
+  Title: '',
+  Body: '',
+  Type: NotificationType.Administrator, // Default to Admin
+  Url: ''
+});
+const isSendingNotification = ref(false);
+
 
 // --- Mappings ---
 const getStatusLabel = (s: number): string => {
@@ -289,6 +308,55 @@ const handleResetPassword = async (): Promise<void> => {
     isResettingPassword.value = false;
   }
 };
+
+// --- API Logic: Send Notification ---
+const openNotificationModal = (user: UserAdminDto): void => {
+  selectedUser.value = user;
+  // Reset form
+  notificationForm.value = {
+    Title: '',
+    Body: '',
+    Type: NotificationType.Administrator,
+    Url: ''
+  };
+  showNotificationModal.value = true;
+};
+
+const handleSendNotification = async (): Promise<void> => {
+  if (!selectedUser.value) return;
+
+  // Basic Validation
+  if (!notificationForm.value.Title || !notificationForm.value.Body) {
+    ui.notify(t('common.requiredFields'), 'error');
+    return;
+  }
+
+  isSendingNotification.value = true;
+  try {
+    await httpClient(`/admin/users/${selectedUser.value.Id}/notifications`, {
+      method: 'POST',
+      body: JSON.stringify(notificationForm.value)
+    });
+    ui.notify(t('admin.notificationSent'), 'success');
+    showNotificationModal.value = false;
+  } catch (e: any) {
+    ui.notify(e.message, 'error');
+  } finally {
+    isSendingNotification.value = false;
+  }
+};
+
+// Helper for Select options
+const getNotificationTypeLabel = (type: NotificationType): string => {
+  switch (type) {
+    case NotificationType.System: return t('admin.notificationTypeSystem');
+    case NotificationType.Administrator: return t('admin.notificationTypeAdmin');
+    case NotificationType.Security: return t('admin.notificationTypeSecurity');
+    case NotificationType.Interaction: return t('admin.notificationTypeInteraction');
+    default: return String(type);
+  }
+};
+
 
 const toggleFilter = (target: 'status' | 'role' | 'type', val: number): void => {
   currentPage.value = 1;
@@ -588,6 +656,10 @@ onMounted(fetchUsers);
                       <Key class="mr-2 size-4" /> {{ t('admin.resetPassword') }}
                     </DropdownMenuItem>
 
+                    <DropdownMenuItem @click="openNotificationModal(user)">
+                      <Bell class="mr-2 size-4" /> {{ t('admin.sendNotification') }}
+                    </DropdownMenuItem>
+
                     <DropdownMenuSeparator />
 
                     <DropdownMenuItem
@@ -768,6 +840,94 @@ onMounted(fetchUsers);
           >
             <Loader2 v-if="isResettingPassword" class="size-4 animate-spin mr-2" />
             {{ t('admin.resetPassword') }}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <!-- Modal: Send Notification -->
+    <Dialog v-model:open="showNotificationModal">
+      <DialogContent class="sm:max-w-lg rounded-2xl">
+        <DialogHeader>
+          <DialogTitle class="text-xl font-black flex items-center gap-2">
+            <Bell class="size-5 text-brand-blue" />
+            {{ t('admin.sendNotification') }}
+          </DialogTitle>
+        </DialogHeader>
+
+        <div class="space-y-4 py-4">
+          <div class="p-3 bg-muted/50 rounded-xl border text-sm font-medium">
+            {{ t('common.account') }}: <span class="font-black">{{ selectedUser?.AccountName }}</span>
+          </div>
+
+          <div class="space-y-3">
+            <!-- Title -->
+            <div class="space-y-1.5">
+              <Label class="text-xs font-bold uppercase tracking-wider opacity-60">{{ t('admin.notificationTitle') }}</Label>
+              <Input
+                  v-model="notificationForm.Title"
+                  :placeholder="t('admin.notificationTitle')"
+                  class="h-10"
+              />
+            </div>
+
+            <!-- Type -->
+            <div class="space-y-1.5">
+              <Label class="text-xs font-bold uppercase tracking-wider opacity-60">{{ t('admin.notificationType') }}</Label>
+              <Select v-model="notificationForm.Type">
+                <SelectTrigger class="h-10">
+                  <SelectValue :placeholder="t('admin.notificationType')" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem :value="NotificationType.System">
+                    {{ getNotificationTypeLabel(NotificationType.System) }}
+                  </SelectItem>
+                  <SelectItem :value="NotificationType.Administrator">
+                    {{ getNotificationTypeLabel(NotificationType.Administrator) }}
+                  </SelectItem>
+                  <SelectItem :value="NotificationType.Security">
+                    {{ getNotificationTypeLabel(NotificationType.Security) }}
+                  </SelectItem>
+                  <SelectItem :value="NotificationType.Interaction">
+                    {{ getNotificationTypeLabel(NotificationType.Interaction) }}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <!-- URL -->
+            <div class="space-y-1.5">
+              <Label class="text-xs font-bold uppercase tracking-wider opacity-60">{{ t('admin.notificationUrl') }}</Label>
+              <Input
+                  v-model="notificationForm.Url"
+                  :placeholder="'https://...'"
+                  class="h-10"
+              />
+            </div>
+
+            <!-- Body -->
+            <div class="space-y-1.5">
+              <Label class="text-xs font-bold uppercase tracking-wider opacity-60">{{ t('admin.notificationBody') }}</Label>
+              <Textarea
+                  v-model="notificationForm.Body"
+                  :placeholder="t('admin.notificationBody')"
+                  class="min-h-25 resize-none"
+              />
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" @click="showNotificationModal = false" class="font-bold rounded-xl">
+            {{ t('common.cancel') }}
+          </Button>
+          <Button
+              :disabled="isSendingNotification"
+              @click="handleSendNotification"
+              class="font-bold rounded-xl bg-brand-blue hover:bg-brand-blue/90"
+          >
+            <Loader2 v-if="isSendingNotification" class="size-4 animate-spin mr-2" />
+            {{ t('common.send') }} <!-- Assuming 'send' exists in common, otherwise use 'save' or add key -->
           </Button>
         </DialogFooter>
       </DialogContent>

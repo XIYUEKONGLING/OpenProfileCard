@@ -85,6 +85,7 @@ export const en = {
         statusBanned: 'Banned',
         statusSuspended: 'Suspended',
         statusDeactivated: 'Deactivated',
+        send: 'Send',
     },
     auth: {
         loginTitle: 'Open Profile Card',
@@ -440,6 +441,18 @@ export const en = {
         emailAdded: 'Email added successfully',
         emailUpdated: 'Email status updated',
         emailDeleted: 'Email removed successfully',
+
+        sendNotification: 'Send Notification',
+        notificationTitle: 'Notification Title',
+        notificationBody: 'Message Content',
+        notificationType: 'Type',
+        notificationUrl: 'Link URL (Optional)',
+        notificationSent: 'Notification sent successfully',
+        notificationTypeSystem: 'System',
+        notificationTypeAdmin: 'Administrator',
+        notificationTypeSecurity: 'Security',
+        notificationTypeInteraction: 'Interaction',
+
     },
     organization: {
         manage: 'Manage Organization',

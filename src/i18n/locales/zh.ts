@@ -84,6 +84,7 @@ export const zh = {
         statusBanned: '已封禁',
         statusSuspended: '已暂停',
         statusDeactivated: '已停用',
+        send: '发送',
     },
     auth: {
         loginTitle: 'Open Profile Card',
@@ -436,6 +437,18 @@ export const zh = {
         emailAdded: '邮箱已添加',
         emailUpdated: '邮箱状态已更新',
         emailDeleted: '邮箱已移除',
+
+        sendNotification: '发送通知',
+        notificationTitle: '通知标题',
+        notificationBody: '消息内容',
+        notificationType: '类型',
+        notificationUrl: '链接地址 (可选)',
+        notificationSent: '通知发送成功',
+        notificationTypeSystem: '系统',
+        notificationTypeAdmin: '管理员',
+        notificationTypeSecurity: '安全',
+        notificationTypeInteraction: '互动',
+
     },
     organization: {
         manage: '管理组织',
