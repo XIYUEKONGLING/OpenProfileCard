@@ -80,7 +80,7 @@ const markAsRead = async (id: string) => {
 };
 
 const deleteNotification = async (id: string) => {
-  if (!confirm(t('common.deleteConfirm'))) return;
+  // if (!confirm(t('common.deleteConfirm'))) return;
 
   actionLoadingId.value = id;
   try {
