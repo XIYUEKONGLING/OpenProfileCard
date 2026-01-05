@@ -22,8 +22,8 @@ export interface UserFilterDto {
 
 export interface CreateUserRequestDto {
     AccountName: string;
-    Email: string;
-    Password: string;
+    Email?: string;
+    Password?: string;
     Type: AccountType;
     Role: AccountRole;
     DisplayName?: string;

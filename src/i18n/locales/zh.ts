@@ -452,6 +452,15 @@ export const zh = {
         notificationTypeSecurity: '安全',
         notificationTypeInteraction: '互动',
 
+        createUser: '创建用户',
+        createUserTitle: '创建新账户',
+        createUserSuccess: '账户创建成功',
+        createUserDesc: '手动创建新的个人或组织账户。',
+        accountNameLabel: '账户名称',
+        displayNameLabel: '显示名称',
+        typeLabel: '账户类型',
+        roleLabel: '初始角色',
+
     },
     organization: {
         manage: '管理组织',

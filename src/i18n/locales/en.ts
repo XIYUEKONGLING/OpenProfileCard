@@ -456,6 +456,15 @@ export const en = {
         notificationTypeSecurity: 'Security',
         notificationTypeInteraction: 'Interaction',
 
+        createUser: 'Create User',
+        createUserTitle: 'Create New Account',
+        createUserSuccess: 'Account created successfully',
+        createUserDesc: 'Manually create a new user or organization account.',
+        accountNameLabel: 'Account Name',
+        displayNameLabel: 'Display Name',
+        typeLabel: 'Account Type',
+        roleLabel: 'Initial Role',
+
     },
     organization: {
         manage: 'Manage Organization',

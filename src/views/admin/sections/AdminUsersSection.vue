@@ -12,7 +12,8 @@ import {
   type AccountEmailDto,
   type AddEmailRequestDto,
   type AdminUpdateEmailRequestDto,
-  type AdminResetPasswordRequestDto, AccountRole, NotificationType, type CreateNotificationRequestDto
+  type AdminResetPasswordRequestDto, AccountRole, NotificationType, type CreateNotificationRequestDto,
+  type CreateUserRequestDto
 } from '@/api/types';
 
 // UI Components
@@ -74,7 +75,7 @@ import {
   Loader2, Search, Shield, Ban, Trash2, CheckCircle,
   AlertTriangle, MoreHorizontal, Filter, ChevronDown, Mail, Key,
   ChevronLeft, ChevronsLeft, ChevronRight, RotateCcw, UserCircle,
-  Plus, X, Bell,
+  Plus, X, Bell, UserPlus,
 } from 'lucide-vue-next';
 
 const { t } = useI18n();
@@ -128,6 +129,18 @@ const notificationForm = ref<CreateNotificationRequestDto>({
 });
 const isSendingNotification = ref(false);
 
+// Create User State
+const showCreateUserModal = ref(false);
+const isCreatingUser = ref(false);
+
+const createUserForm = ref<CreateUserRequestDto>({
+  AccountName: '',
+  Email: '',
+  Password: '',
+  Type: AccountType.Personal,
+  Role: AccountRole.User,
+  DisplayName: ''
+});
 
 // --- Mappings ---
 const getStatusLabel = (s: number): string => {
@@ -346,6 +359,47 @@ const handleSendNotification = async (): Promise<void> => {
   }
 };
 
+// --- API Logic: Create User ---
+
+const openCreateUserModal = (): void => {
+  // Reset form to defaults
+  createUserForm.value = {
+    AccountName: '',
+    Email: '',
+    Password: '',
+    Type: AccountType.Personal,
+    Role: AccountRole.User,
+    DisplayName: ''
+  };
+  showCreateUserModal.value = true;
+};
+
+const handleCreateUser = async (): Promise<void> => {
+  // Basic Validation
+  if (!createUserForm.value.AccountName || !createUserForm.value.Email || !createUserForm.value.Password) {
+    ui.notify(t('common.requiredFields'), 'error');
+    return;
+  }
+
+  isCreatingUser.value = true;
+  try {
+    await httpClient<UserAdminDto>('/admin/users', {
+      method: 'POST',
+      body: JSON.stringify(createUserForm.value)
+    });
+
+    ui.notify(t('admin.createUserSuccess'), 'success');
+    showCreateUserModal.value = false;
+    fetchUsers(); // Refresh list
+  } catch (e: any) {
+    ui.notify(e.message, 'error');
+  } finally {
+    isCreatingUser.value = false;
+  }
+};
+
+
+
 // Helper for Select options
 const getNotificationTypeLabel = (type: NotificationType): string => {
   switch (type) {
@@ -482,6 +536,12 @@ onMounted(fetchUsers);
             {{ t('admin.resetFilters') }}
           </Button>
         </transition>
+
+        <!-- CREATE USER BUTTON -->
+        <Button variant="default" size="sm" class="h-9" @click="openCreateUserModal">
+          <UserPlus class="size-4 mr-2" />
+          {{ t('admin.createUser') }}
+        </Button>
 
         <!-- Filters (Status, Role, Type) -->
         <Popover>
@@ -932,6 +992,119 @@ onMounted(fetchUsers);
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    <!-- Modal: Create User -->
+    <Dialog v-model:open="showCreateUserModal">
+      <DialogContent class="sm:max-w-md rounded-2xl">
+        <DialogHeader>
+          <DialogTitle class="text-xl font-black flex items-center gap-2">
+            <UserPlus class="size-5 text-brand-blue" />
+            {{ t('admin.createUserTitle') }}
+          </DialogTitle>
+          <p class="text-sm text-muted-foreground font-medium">
+            {{ t('admin.createUserDesc') }}
+          </p>
+        </DialogHeader>
+
+        <div class="grid gap-4 py-4">
+          <!-- Account Name -->
+          <div class="space-y-1.5">
+            <Label class="text-xs font-bold uppercase tracking-wider opacity-60">{{ t('admin.accountNameLabel') }}</Label>
+            <Input
+                v-model="createUserForm.AccountName"
+                placeholder="username"
+                class="h-10"
+            />
+          </div>
+
+          <!-- Display Name -->
+          <div class="space-y-1.5">
+            <Label class="text-xs font-bold uppercase tracking-wider opacity-60">{{ t('admin.displayNameLabel') }}</Label>
+            <Input
+                v-model="createUserForm.DisplayName"
+                :placeholder="t('profile.displayName')"
+                class="h-10"
+            />
+          </div>
+
+          <!-- Email -->
+          <div class="space-y-1.5">
+            <Label class="text-xs font-bold uppercase tracking-wider opacity-60">{{ t('common.email') }}</Label>
+            <Input
+                v-model="createUserForm.Email"
+                type="email"
+                placeholder="user@example.com"
+                class="h-10"
+            />
+          </div>
+
+          <!-- Password -->
+          <div class="space-y-1.5">
+            <Label class="text-xs font-bold uppercase tracking-wider opacity-60">{{ t('common.password') }}</Label>
+            <Input
+                v-model="createUserForm.Password"
+                type="password"
+                placeholder="••••••••"
+                class="h-10"
+            />
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <!-- Type -->
+            <div class="space-y-1.5">
+              <Label class="text-xs font-bold uppercase tracking-wider opacity-60">{{ t('admin.typeLabel') }}</Label>
+              <Select v-model="createUserForm.Type">
+                <SelectTrigger class="h-10">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem :value="AccountType.Personal">
+                    {{ t('admin.typePersonal') }}
+                  </SelectItem>
+                  <SelectItem :value="AccountType.Organization">
+                    {{ t('admin.typeOrganization') }}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <!-- Role -->
+            <div class="space-y-1.5">
+              <Label class="text-xs font-bold uppercase tracking-wider opacity-60">{{ t('admin.roleLabel') }}</Label>
+              <Select v-model="createUserForm.Role">
+                <SelectTrigger class="h-10">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem :value="AccountRole.User">
+                    {{ t('admin.roleUser') }}
+                  </SelectItem>
+                  <!-- Only allow creating Admins if current user is Root (Optional Logic, keeping simple for now) -->
+                  <SelectItem :value="AccountRole.Admin">
+                    {{ t('admin.roleAdmin') }}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" @click="showCreateUserModal = false" class="font-bold rounded-xl">
+            {{ t('common.cancel') }}
+          </Button>
+          <Button
+              :disabled="isCreatingUser"
+              @click="handleCreateUser"
+              class="font-bold rounded-xl bg-brand-blue hover:bg-brand-blue/90"
+          >
+            <Loader2 v-if="isCreatingUser" class="size-4 animate-spin mr-2" />
+            {{ t('common.create') }}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
 
     <!-- Physical Delete Confirmation -->
     <AlertDialog v-model:open="showDeleteDialog">
