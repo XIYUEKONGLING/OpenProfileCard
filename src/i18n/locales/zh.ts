@@ -78,6 +78,12 @@ export const zh = {
         decline: '拒绝',
         unread: '未读',
         read: '已读',
+
+        statusActive: '活跃',
+        statusPendingDeletion: '等待删除',
+        statusBanned: '已封禁',
+        statusSuspended: '已暂停',
+        statusDeactivated: '已停用',
     },
     auth: {
         loginTitle: 'Open Profile Card',
@@ -289,6 +295,13 @@ export const zh = {
         deleteModalDesc: '此操作将禁用您的账户并将其置于等待删除状态。如果您在宽限期内未恢复账户，所有数据将被永久删除。',
         deleteConfirmLabel: '请输入 {name} 以确认：',
         defaultVisibility: '默认可见性',
+
+        accountInfo: '账户信息',
+        accountId: '账户 ID',
+        accountName: '账户名称',
+        accountType: '账户类型',
+        accountStatus: '账户状态',
+        createdAt: '创建时间',
     },
     social: {
         blocking: '拉黑中...',

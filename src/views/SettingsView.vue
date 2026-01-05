@@ -7,6 +7,7 @@ import { useUIStore } from '@/stores/ui';
 import { httpClient } from '@/api/client';
 import {
   AccountStatus,
+  AccountType,
   type PersonalSettingsDto,
   type UpdatePersonalSettingsRequestDto,
   type AccountEmailDto,
@@ -39,10 +40,15 @@ import {
   Shield,
   Star,
   AlertTriangle,
-  RotateCcw
+  RotateCcw,
+  Fingerprint,
+  User,
+  UserCircle,
+  Activity,
+  Calendar
 } from 'lucide-vue-next';
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const auth = useAuthStore();
 const server = useServerStore();
 const ui = useUIStore();
@@ -74,17 +80,59 @@ const showDeleteModal = ref(false);
 const deleteConfirmationInput = ref('');
 
 // --- Computed ---
-const isPersonal = computed(() => auth.user?.Type === 'Personal');
+const isPersonal = computed(() => auth.user?.Type === AccountType.Personal);
 const isEmailServiceEnabled = computed(() => server.features?.Email === true);
 const requiresVerification = computed(() => server.features?.EmailVerification === true);
 const isPendingDeletion = computed(() => auth.user?.Status === AccountStatus.PendingDeletion);
 
 const canDeleteAccount = computed(() => {
-  const isSystemType = auth.user?.Type === 'System';
+  const isSystemType = auth.user?.Type === AccountType.System;
   const isRootRole = auth.user?.Role === -1;
 
   return !isSystemType && !isRootRole;
 });
+
+// --- Helpers for Account Info ---
+
+const getAccountTypeLabel = (type: AccountType) => {
+  switch (type) {
+    case AccountType.Personal: return t('common.accountTypePersonal');
+    case AccountType.Organization: return t('common.accountTypeOrganization');
+    case AccountType.Application: return t('common.accountTypeApplication');
+    case AccountType.System: return t('common.accountTypeSystem');
+    case AccountType.Service: return t('common.accountTypeService');
+    default: return 'Unknown';
+  }
+};
+
+const getStatusInfo = (status: AccountStatus) => {
+  switch (status) {
+    case AccountStatus.Active:
+      return { label: t('common.statusActive'), color: 'text-green-600 bg-green-100 border-green-200' };
+    case AccountStatus.PendingDeletion:
+      return { label: t('common.statusPendingDeletion'), color: 'text-orange-500 bg-orange-50 border-orange-200' };
+    case AccountStatus.Banned:
+      return { label: t('common.statusBanned'), color: 'text-destructive bg-destructive/10 border-destructive/20' };
+    case AccountStatus.Suspended:
+      return { label: t('common.statusSuspended'), color: 'text-orange-500 bg-orange-50 border-orange-200' };
+    case AccountStatus.Deactivated:
+      return { label: t('common.statusDeactivated'), color: 'text-muted-foreground bg-muted border-border' };
+    default:
+      return { label: 'Unknown', color: 'text-muted-foreground' };
+  }
+};
+
+const formatDate = (dateString?: string) => {
+  if (!dateString) return '-';
+  const date = new Date(dateString);
+  return date.toLocaleDateString(locale.value === 'zh' ? 'zh-CN' : 'en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+};
 
 // --- API Actions ---
 
@@ -277,6 +325,63 @@ onMounted(() => {
 
       <!-- TAB: ACCOUNT -->
       <TabsContent value="account" class="space-y-6 mt-6 animate-in fade-in slide-in-from-bottom-2">
+
+        <!-- Account Info Card (NEW) -->
+        <Card v-if="auth.user">
+          <CardHeader>
+            <CardTitle class="text-base">{{ t('settings.accountInfo') }}</CardTitle>
+          </CardHeader>
+          <CardContent class="space-y-4">
+            <!-- ID -->
+            <div class="flex items-center justify-between py-2 border-b border-border/40 last:border-0">
+              <div class="flex items-center gap-3 text-sm text-muted-foreground">
+                <Fingerprint class="size-4" />
+                <span>{{ t('settings.accountId') }}</span>
+              </div>
+              <div class="flex items-center gap-2 font-mono text-xs bg-muted/50 px-2 py-1 rounded">
+                {{ auth.user.Id }}
+              </div>
+            </div>
+
+            <!-- Name -->
+            <div class="flex items-center justify-between py-2 border-b border-border/40 last:border-0">
+              <div class="flex items-center gap-3 text-sm text-muted-foreground">
+                <User class="size-4" />
+                <span>{{ t('settings.accountName') }}</span>
+              </div>
+              <div class="font-medium text-sm">{{ auth.user.AccountName }}</div>
+            </div>
+
+            <!-- Type -->
+            <div class="flex items-center justify-between py-2 border-b border-border/40 last:border-0">
+              <div class="flex items-center gap-3 text-sm text-muted-foreground">
+                <UserCircle class="size-4" />
+                <span>{{ t('settings.accountType') }}</span>
+              </div>
+              <Badge variant="outline" class="text-[10px]">{{ getAccountTypeLabel(auth.user.Type) }}</Badge>
+            </div>
+
+            <!-- Status -->
+            <div class="flex items-center justify-between py-2 border-b border-border/40 last:border-0">
+              <div class="flex items-center gap-3 text-sm text-muted-foreground">
+                <Activity class="size-4" />
+                <span>{{ t('settings.accountStatus') }}</span>
+              </div>
+              <Badge :class="['text-[10px]', getStatusInfo(auth.user.Status).color]">
+                {{ getStatusInfo(auth.user.Status).label }}
+              </Badge>
+            </div>
+
+            <!-- Created At -->
+            <div class="flex items-center justify-between py-2 border-b border-border/40 last:border-0">
+              <div class="flex items-center gap-3 text-sm text-muted-foreground">
+                <Calendar class="size-4" />
+                <span>{{ t('settings.createdAt') }}</span>
+              </div>
+              <div class="text-sm font-medium">{{ formatDate(auth.user.CreatedAt) }}</div>
+            </div>
+          </CardContent>
+        </Card>
 
         <!-- Emails -->
         <Card>

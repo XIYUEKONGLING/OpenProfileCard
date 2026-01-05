@@ -79,6 +79,12 @@ export const en = {
         decline: 'Decline',
         unread: 'Unread',
         read: 'Read',
+
+        statusActive: 'Active',
+        statusPendingDeletion: 'Pending Deletion',
+        statusBanned: 'Banned',
+        statusSuspended: 'Suspended',
+        statusDeactivated: 'Deactivated',
     },
     auth: {
         loginTitle: 'Open Profile Card',
@@ -293,6 +299,13 @@ export const en = {
         deleteModalDesc: 'This action will deactivate your account and schedule it for deletion. All data will be permanently removed if not restored within the grace period.',
         deleteConfirmLabel: 'Type {name} to confirm:',
         defaultVisibility: 'Default Visibility',
+
+        accountInfo: 'Account Information',
+        accountId: 'Account ID',
+        accountName: 'Account Name',
+        accountType: 'Account Type',
+        accountStatus: 'Account Status',
+        createdAt: 'Created At',
     },
     social: {
         blocking: 'Blocking...',
