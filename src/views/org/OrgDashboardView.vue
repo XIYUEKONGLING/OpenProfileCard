@@ -34,8 +34,19 @@ import {
   FolderGit2, Image as ImageIcon, Settings, BookOpen,
   Heart, ExternalLink, LogOut, ShieldAlert,
   Crown, Mail, Phone, MessageSquare, MapPin as MapIcon, Link as LinkIcon2,
-  AlertTriangle, Ban, Trash2, Shield, Key, Copy, Check, Clock, Landmark,
+  AlertTriangle, Ban, Trash2, Shield, Key, Copy, Check, Landmark,
 } from 'lucide-vue-next';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
 
 // Lazy Load
 const OrgMembers = defineAsyncComponent(() => import('@/components/org/OrgMembers.vue'));
@@ -62,6 +73,8 @@ const certificates = ref<CertificateDto[]>([]);
 const showUserList = ref(false);
 const userListType = ref<'followers' | 'following'>('followers');
 const copiedId = ref<string | null>(null);
+
+const showLeaveModal = ref(false);
 
 // --- Computed Permissions ---
 const isOwner = computed(() => org.value?.MyRole === MemberRole.Owner);
@@ -201,11 +214,11 @@ const goToManage = (resource: string) => {
 };
 
 const leaveOrg = async () => {
-  if (!confirm(t('organization.leaveConfirm'))) return;
   try {
     await httpClient(`/orgs/${props.accountName}/members/me`, { method: 'DELETE' });
-    router.push('/dashboard');
     ui.notify(t('common.success'), 'success');
+    showLeaveModal.value = false;
+    router.push('/dashboard');
   } catch (e: any) {
     ui.notify(e.message, 'error');
   }
@@ -370,7 +383,7 @@ watch(() => props.accountName, fetchOrgData, { immediate: true });
                   <Settings class="size-4 mr-2" /> {{ t('organization.settings') }}
                 </Button>
 
-                <Button v-if="!isOwner" variant="outline" class="w-full text-destructive hover:bg-destructive/10 rounded-xl" @click="leaveOrg">
+                <Button v-if="!isOwner" variant="outline" class="w-full text-destructive hover:bg-destructive/10 rounded-xl" @click="showLeaveModal = true">
                   <LogOut class="size-4 mr-2" /> {{ t('organization.leave') }}
                 </Button>
               </div>
@@ -613,6 +626,23 @@ watch(() => props.accountName, fetchOrgData, { immediate: true });
         </div>
       </div>
     </div>
+    
+    <AlertDialog v-model:open="showLeaveModal">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{{ t('organization.leave') }}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {{ t('organization.leaveConfirm') }}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>{{ t('common.cancel') }}</AlertDialogCancel>
+          <AlertDialogAction @click="leaveOrg" class="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            {{ t('organization.leave') }}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   </div>
 </template>
 
