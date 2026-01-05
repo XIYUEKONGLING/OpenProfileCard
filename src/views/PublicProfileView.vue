@@ -21,6 +21,7 @@ import {
   type ContactMethodDto,
   type SocialLinkDto,
   type FollowerDto,
+  type PublicOrganizationMembershipDto,
   AccountType,
   AssetType, type ProfilePrivacyDto, AccountStatus
 } from '@/api/types';
@@ -82,6 +83,7 @@ const followingCount = ref(0);
 // Sub-resources
 const projects = ref<ProjectDto[]>([]);
 const members = ref<OrganizationMemberDto[]>([]);
+const memberships = ref<PublicOrganizationMembershipDto[]>([]);
 const work = ref<WorkExperienceDto[]>([]);
 const education = ref<EducationExperienceDto[]>([]);
 const gallery = ref<GalleryItemDto[]>([]);
@@ -276,6 +278,7 @@ const fetchPublicData = async () => {
       safeFetch<FollowerDto[]>(`/profiles/${id}/followers`, []).then(res => followersCount.value = res.length),
       safeFetch<FollowerDto[]>(`/profiles/${id}/following`, []).then(res => followingCount.value = res.length),
       safeFetch<ProfilePrivacyDto>(`/profiles/${id}/privacy`, { ShowFollowers: true, ShowFollowing: true } as ProfilePrivacyDto).then(res => privacy.value = res),
+      safeFetch<PublicOrganizationMembershipDto[]>(`/profiles/${id}/memberships`, []).then(res => memberships.value = res),
     ];
 
     if (profileData.Type === AccountType.Organization) {
@@ -548,12 +551,12 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
                   </div>
 
                   <div v-if="isPersonal && profile.Birthday" class="flex items-center gap-3">
-                    <Cake class="size-4 shrink-0" />
+                    <Cake class="size-4 shrink-0 opacity-70" />
                     <span>{{ formatDate(profile.Birthday) }}</span>
                   </div>
 
                   <div v-if="isOrg && profile.FoundedDate" class="flex items-center gap-3">
-                    <Landmark class="size-4 shrink-0" />
+                    <Landmark class="size-4 shrink-0 opacity-70" />
                     <span>{{ t('publicProfile.founded', { date: profile.FoundedDate }) }}</span>
                   </div>
 
@@ -839,7 +842,7 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
                 <!-- Certificates (Optimized Info Display) -->
                 <div v-if="certificates.length > 0">
                   <h3 class="font-bold text-lg mb-4 flex items-center gap-2"><Key class="size-5" /> {{ t('publicProfile.certificates') }}</h3>
-                  <div class="flex flex-col gap-4">
+                  <div class="flex flex-col gap-3">
                     <Card v-for="cert in certificates" :key="cert.Id" class="border-border/60">
                       <CardContent class="p-5 space-y-6">
                         <div class="flex flex-col md:flex-row justify-between gap-4">
