@@ -312,6 +312,7 @@ export const zh = {
         block: '拉黑',
         unblock: '解除拉黑',
         blockConfirm: '确定要拉黑 {name} 吗？',
+        unblockConfirm: '确定要解除拉黑 {name} 吗？',
         blockDesc: '拉黑后，对方将无法关注您或查看您的动态。如果你们互相关注，关系将被解除。',
         unfollowConfirm: '确定不再关注 {name} 吗？',
         remove: '移除',

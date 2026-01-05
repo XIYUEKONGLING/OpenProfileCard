@@ -33,6 +33,16 @@ import {
   CardFooter
 } from '@/components/ui/card';
 import AssetView from '@/components/ui/AssetView.vue';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 
 // Icons
 import {
@@ -85,6 +95,8 @@ const deleteConfirmationInput = ref('');
 // Blocked Users State
 const blockedUsers = ref<BlockDto[]>([]);
 const isLoadingBlocked = ref(false);
+const showUnblockModal = ref(false);
+const userToUnblock = ref<BlockDto | null>(null);
 
 // --- Computed ---
 const isPersonal = computed(() => auth.user?.Type === AccountType.Personal);
@@ -322,15 +334,22 @@ const fetchBlockedUsers = async () => {
   }
 };
 
-const unblockUser = async (accountName: string) => {
-  if (!confirm(t('social.unblockConfirm', { name: accountName }))) return;
+const unblockUser = async () => {
+  if (!userToUnblock.value) return;
   try {
-    await httpClient(`/profiles/${accountName}/block`, { method: 'DELETE' });
+    await httpClient(`/profiles/${userToUnblock.value.AccountName}/block`, { method: 'DELETE' });
     ui.notify(t('common.success'), 'success');
-    blockedUsers.value = blockedUsers.value.filter(u => u.AccountName !== accountName);
+    blockedUsers.value = blockedUsers.value.filter(u => u.AccountName !== userToUnblock.value!.AccountName);
+    showUnblockModal.value = false;
+    userToUnblock.value = null;
   } catch (e: any) {
     ui.notify(e.message, 'error');
   }
+};
+
+const confirmUnblock = (user: BlockDto) => {
+  userToUnblock.value = user;
+  showUnblockModal.value = true;
 };
 
 onMounted(() => {
@@ -349,7 +368,8 @@ onMounted(() => {
     </div>
 
     <Tabs default-value="account" class="w-full">
-      <TabsList class="grid w-full grid-cols-2 lg:w-96">
+      <!-- Fixed Layout: grid-cols-3 for 3 tabs -->
+      <TabsList class="grid w-full grid-cols-3 lg:w-[500px]">
         <TabsTrigger value="account">{{ t('settings.account') }}</TabsTrigger>
         <TabsTrigger value="preferences">{{ t('settings.preferences') }}</TabsTrigger>
         <TabsTrigger value="blocked">{{ t('settings.blockedUsers') }}</TabsTrigger>
@@ -679,7 +699,7 @@ onMounted(() => {
                     </div>
                   </div>
                 </div>
-                <Button variant="outline" size="sm" @click="unblockUser(user.AccountName)">
+                <Button variant="outline" size="sm" @click="confirmUnblock(user)">
                   {{ t('social.unblock') }}
                 </Button>
               </div>
@@ -727,5 +747,23 @@ onMounted(() => {
         </div>
       </Transition>
     </Teleport>
+
+    <!-- Unblock Confirmation Modal -->
+    <AlertDialog v-model:open="showUnblockModal">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{{ t('social.unblock') }}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {{ t('social.unblockConfirm', { name: userToUnblock?.DisplayName || '' }) }}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>{{ t('common.cancel') }}</AlertDialogCancel>
+          <AlertDialogAction @click="unblockUser" class="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            {{ t('social.unblock') }}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   </div>
 </template>

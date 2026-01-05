@@ -312,6 +312,7 @@ export const en = {
         block: 'Block',
         unblock: 'Unblock',
         blockConfirm: 'Are you sure you want to block {name}?',
+        unblockConfirm: 'Are you sure you want to unblock {name}?',
         blockDesc: 'Blocking will prevent this user from following you or viewing your profile. Existing relationships will be severed.',
         unfollowConfirm: 'Unfollow {name}?',
         remove: 'Remove',

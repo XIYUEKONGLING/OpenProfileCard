@@ -89,6 +89,7 @@ const fetchMembers = async () => {
   try {
     members.value = await httpClient<OrganizationMemberDto[]>(`/orgs/${props.accountName}/members`);
     // Find current user's data
+    // Note: props.accountId is the current user's ID passed from parent
     myMemberData.value = members.value.find(m => m.AccountId === props.accountId) || null;
   } catch (e: any) {
     ui.notify(e.message, 'error');
@@ -132,15 +133,21 @@ const updateRole = async (member: OrganizationMemberDto, newRole: MemberRole) =>
 };
 
 const updateVisibility = async (member: OrganizationMemberDto, newVisibility: Visibility) => {
+  // Determine endpoint: /me for self, /id for others
+  const isMe = member.AccountId === props.accountId;
+  const endpoint = isMe
+      ? `/orgs/${props.accountName}/members/me`
+      : `/orgs/${props.accountName}/members/${member.AccountId}`;
+
   actionLoading.value = member.AccountId;
   try {
     const payload: UpdateMemberRequestDto = { Visibility: newVisibility };
-    await httpClient(`/orgs/${props.accountName}/members/${member.AccountId}`, {
+    await httpClient(endpoint, {
       method: 'PATCH',
       body: JSON.stringify(payload)
     });
     member.Visibility = newVisibility;
-    if (member.AccountId === props.accountId) {
+    if (isMe) {
       myMemberData.value = member;
     }
     ui.notify(t('common.success'), 'success');
