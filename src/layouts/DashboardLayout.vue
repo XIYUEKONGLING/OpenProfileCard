@@ -213,12 +213,12 @@ const themeOptions = [
           </div>
 
           <!-- Create Organization Button (Always visible here) -->
-          <div class="mt-2">
+          <div class="mt-2 flex justify-center">
             <Button
                 variant="ghost"
                 size="sm"
-                class="w-full border border-dashed border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 justify-start gap-2"
-                :class="isCollapsed ? 'justify-center px-0' : 'px-4'"
+                class="border border-dashed border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 justify-start gap-2"
+                :class="isCollapsed ? 'w-10 h-10 rounded-xl justify-center p-0 mx-auto' : 'w-full justify-start px-4'"
                 @click="router.push('/dashboard/create-org')"
             >
               <Plus class="size-4" />
