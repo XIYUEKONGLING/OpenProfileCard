@@ -69,6 +69,7 @@ export const en = {
 
         timeZone: 'Time Zone',
         requiredFields: 'Please fill in all required fields.',
+        to: 'to',
     },
     auth: {
         loginTitle: 'Open Profile Card',
