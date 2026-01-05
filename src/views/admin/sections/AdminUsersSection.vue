@@ -9,11 +9,10 @@ import {
   type PagedResponse,
   AccountStatus,
   AccountType,
-  AccountRoleNames,
   type AccountEmailDto,
   type AddEmailRequestDto,
   type AdminUpdateEmailRequestDto,
-  type AdminResetPasswordRequestDto
+  type AdminResetPasswordRequestDto, AccountRole
 } from '@/api/types';
 
 // UI Components
@@ -124,8 +123,8 @@ const getStatusLabel = (s: number): string => {
 };
 
 const getRoleLabel = (r: number): string => {
-  if (r === AccountRoleNames.Root) return t('admin.roleRoot');
-  if (r === AccountRoleNames.Admin) return t('admin.roleAdmin');
+  if (r === AccountRole.Root) return t('admin.roleRoot');
+  if (r === AccountRole.Admin) return t('admin.roleAdmin');
   return t('admin.roleUser');
 };
 
