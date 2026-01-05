@@ -406,9 +406,9 @@ const handleCreateUser = async (): Promise<void> => {
     AccountName: payload.AccountName,
     Type: payload.Type,
     Role: payload.Role,
-    Email: payload.Email || undefined,
-    Password: payload.Password || undefined,
-    DisplayName: payload.DisplayName || undefined,
+    Email: payload.Email?.trim() || undefined,
+    Password: payload.Password?.trim() || undefined,
+    DisplayName: payload.DisplayName?.trim() || undefined,
   };
   
   isCreatingUser.value = true;
