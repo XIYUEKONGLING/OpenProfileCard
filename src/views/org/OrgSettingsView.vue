@@ -87,11 +87,34 @@ onMounted(checkPermission);
 
         <!-- TAB 1: General Settings -->
         <TabsContent value="general" class="mt-6">
-          <OrgSettings
-              :account-name="accountName"
-              :my-role="myRole"
-              @deleted="router.push('/dashboard')"
-          />
+          <div class="space-y-12">
+            <OrgSettings
+                :account-name="accountName"
+                :my-role="myRole"
+                @deleted="router.push('/dashboard')"
+            />
+
+            <!-- Danger Zone  -->
+            <Card v-if="myRole === MemberRole.Owner" class="border-destructive/30 overflow-hidden">
+              <CardHeader class="bg-destructive/10 py-6">
+                <CardTitle class="flex items-center gap-2 text-destructive">
+                  <AlertTriangle class="size-5" />
+                  {{ t('settings.dangerZone') }}
+                </CardTitle>
+              </CardHeader>
+              <CardContent class="pt-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div>
+                    <h4 class="font-bold text-destructive mb-1">{{ t('organization.dissolve') }}</h4>
+                    <p class="text-sm text-muted-foreground">{{ t('organization.dissolveDesc') }}</p>
+                  </div>
+                  <Button variant="destructive" @click="showDeleteModal = true">
+                    {{ t('organization.dissolve') }}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         <!-- TAB 2: Outgoing Invitations -->
@@ -99,27 +122,6 @@ onMounted(checkPermission);
           <OrgOutgoingInvitations :account-name="accountName" />
         </TabsContent>
       </Tabs>
-
-      <!-- Danger Zone (Outside Tabs) -->
-      <Card v-if="myRole === MemberRole.Owner" class="border-destructive/30 overflow-hidden">
-        <CardHeader class="bg-destructive/10 py-6">
-          <CardTitle class="flex items-center gap-2 text-destructive">
-            <AlertTriangle class="size-5" />
-            {{ t('settings.dangerZone') }}
-          </CardTitle>
-        </CardHeader>
-        <CardContent class="pt-6">
-          <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h4 class="font-bold text-destructive mb-1">{{ t('organization.dissolve') }}</h4>
-              <p class="text-sm text-muted-foreground">{{ t('organization.dissolveDesc') }}</p>
-            </div>
-            <Button variant="destructive" @click="showDeleteModal = true">
-              {{ t('organization.dissolve') }}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
     </div>
 
     <!-- Teleport Modal for Deletion -->

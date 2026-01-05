@@ -125,8 +125,7 @@ onMounted(fetchInvitations);
 
             <!-- Actions -->
             <Button
-                variant="ghost"
-                size="sm"
+                variant="outline"
                 class="text-destructive hover:text-destructive hover:bg-destructive/10"
                 @click="confirmRevoke(inv)"
                 :disabled="actionLoadingId === inv.Id"
@@ -148,7 +147,7 @@ onMounted(fetchInvitations);
           <AlertDialogDescription>
             {{ t('organization.revokeConfirm') }}
             <div class="mt-2 font-bold text-foreground">
-              {{ inviteToRevoke?.InviteeName }}
+              {{ t('common.account') }}: @{{ inviteToRevoke?.InviteeName }}
             </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
