@@ -14,7 +14,8 @@ import {
   type AddEmailRequestDto,
   type VerifyEmailRequestDto,
   type ChangePasswordRequestDto,
-  type BlockDto, VerificationType
+  type BlockDto, VerificationType,
+  Visibility
 } from '@/api/types';
 
 // Components
@@ -43,6 +44,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 // Icons
 import {
@@ -369,7 +378,7 @@ onMounted(() => {
 
     <Tabs default-value="account" class="w-full">
       <!-- Fixed Layout: grid-cols-3 for 3 tabs -->
-      <TabsList class="grid w-full grid-cols-3 lg:w-[500px]">
+      <TabsList class="grid w-full grid-cols-3 lg:w-125">
         <TabsTrigger value="account">{{ t('settings.account') }}</TabsTrigger>
         <TabsTrigger value="preferences">{{ t('settings.preferences') }}</TabsTrigger>
         <TabsTrigger value="blocked">{{ t('settings.blockedUsers') }}</TabsTrigger>
@@ -642,6 +651,41 @@ onMounted(() => {
                 <p class="text-sm text-muted-foreground">{{ t('settings.showFollowingDesc') }}</p>
               </div>
               <input type="checkbox" v-model="settingsForm.ShowFollowingList" class="size-5 accent-brand-blue" />
+            </div>
+
+            <Separator />
+
+            <!-- Visibility Settings (Selects) -->
+            <div class="space-y-4">
+              <div class="space-y-2">
+                <Label>{{ t('common.visibility') }}</Label>
+                <Select v-model.number="settingsForm.Visibility">
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem :value="Visibility.Public">{{ t('common.public') }}</SelectItem>
+                    <SelectItem :value="Visibility.Private">{{ t('common.private') }}</SelectItem>
+                    <SelectItem :value="Visibility.Protected">{{ t('common.protected') }}</SelectItem>
+                    <SelectItem :value="Visibility.MembersOnly">{{ t('common.membersOnly') }}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div class="space-y-2">
+                <Label>{{ t('settings.defaultVisibility') }}</Label>
+                <Select v-model.number="settingsForm.DefaultVisibility">
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem :value="Visibility.Public">{{ t('common.public') }}</SelectItem>
+                    <SelectItem :value="Visibility.Private">{{ t('common.private') }}</SelectItem>
+                    <SelectItem :value="Visibility.Protected">{{ t('common.protected') }}</SelectItem>
+                    <SelectItem :value="Visibility.MembersOnly">{{ t('common.membersOnly') }}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <template v-if="isPersonal">
