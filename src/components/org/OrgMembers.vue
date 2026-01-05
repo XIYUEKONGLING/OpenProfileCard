@@ -50,6 +50,7 @@ import { Loader2, MoreHorizontal, UserPlus, UserX, Crown, LogOut } from 'lucide-
 
 const props = defineProps<{
   accountName: string;
+  accountId?: string;
   myRole: MemberRole;
 }>();
 
@@ -112,7 +113,7 @@ const updateRole = async (member: OrganizationMemberDto, newRole: MemberRole) =>
   actionLoading.value = member.AccountId;
   try {
     const payload: UpdateMemberRequestDto = { Role: newRole };
-    await httpClient(`/orgs/${props.accountName}/members/${member.AccountName}`, {
+    await httpClient(`/orgs/${props.accountName}/members/${member.AccountId}`, {
       method: 'PATCH',
       body: JSON.stringify(payload)
     });
@@ -166,7 +167,8 @@ const openLeaveModal = () => {
 // Helper to determine if I can manage target user
 const canManage = (target: OrganizationMemberDto) => {
   if (!isAdmin.value) return false;
-  if (target.Role === MemberRole.Owner) return false; // Cannot touch owner
+  if (target.AccountId == props.accountId) return false; // Cannot touch self
+  // if (target.Role === MemberRole.Owner) return false;
   if (props.myRole === MemberRole.Admin && target.Role === MemberRole.Admin) return false; // Admin cannot touch Admin
   return true;
 };
@@ -232,8 +234,9 @@ onMounted(fetchMembers);
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <template v-if="isOwner">
-                  <DropdownMenuItem @click="updateRole(member, MemberRole.Admin)">Set as Admin</DropdownMenuItem>
-                  <DropdownMenuItem @click="updateRole(member, MemberRole.Member)">Set as Member</DropdownMenuItem>
+                  <DropdownMenuItem @click="updateRole(member, MemberRole.Owner)"> {{ t('organization.setAsOwner') }} </DropdownMenuItem>
+                  <DropdownMenuItem @click="updateRole(member, MemberRole.Admin)"> {{ t('organization.setAsAdmin') }} </DropdownMenuItem>
+                  <DropdownMenuItem @click="updateRole(member, MemberRole.Member)"> {{ t('organization.setAsMember') }} </DropdownMenuItem>
                   <DropdownMenuSeparator />
                 </template>
                 <DropdownMenuItem class="text-destructive" @click="openKickModal(member)">

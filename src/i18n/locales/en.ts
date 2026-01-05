@@ -446,5 +446,10 @@ export const en = {
         dissolveConfirm: 'Type {name} to confirm dissolution:',
         saveSuccess: 'Profile updated successfully',
         noEditPermission: 'You do not have permission to edit this organization\'s profile.',
+
+        setAsOwner: 'Set as Owner',
+        setAsAdmin: 'Set as Admin',
+        setAsMember: 'Set as Member',
+        setAsGuest: 'Set as Guest',
     }
 };

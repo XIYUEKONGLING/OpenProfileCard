@@ -442,6 +442,11 @@ export const zh = {
         dissolveConfirm: '请输入 {name} 以确认解散：',
         saveSuccess: '组织资料已更新',
         noEditPermission: '您没有编辑本组织资料的权限。',
+        
+        setAsOwner: '设为所有者',
+        setAsAdmin: '设为管理员',
+        setAsMember: '设为成员',
+        setAsGuest: '设为访客',
     }
 
 };
