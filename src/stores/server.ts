@@ -39,13 +39,23 @@ export const useServerStore = defineStore('server', () => {
             info.value = data.ServerInfo;
             features.value = data.Features;
 
+            // 1. Update Document Title
             if (meta.value?.SiteName) {
                 document.title = meta.value.SiteName;
             }
 
+            // 2. Update Meta Description
             if (meta.value?.SiteDescription) {
                 const metaDesc = document.querySelector('meta[name="description"]');
                 if (metaDesc) metaDesc.setAttribute('content', meta.value.SiteDescription);
+            }
+
+            // 3. Update Favicon
+            if (meta.value?.Favicon && meta.value.Favicon.Value) {
+                const faviconLink = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+                if (faviconLink) {
+                    faviconLink.href = meta.value.Favicon.Value;
+                }
             }
         } catch (e) {
             console.error('CRITICAL: Server metadata fetch failed even with static fallback.', e);
