@@ -24,7 +24,8 @@ import {
   ChevronUp,
   PanelLeftClose,
   PanelLeftOpen,
-  Cog
+  Cog,
+  Plus,
 } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import AssetView from '@/components/ui/AssetView.vue';
@@ -225,6 +226,17 @@ const themeOptions = [
 
       <!-- Bottom Controls -->
       <div class="mt-auto space-y-4 pt-6 border-t border-border/40 w-full shrink-0">
+
+        <Button
+            variant="ghost"
+            size="sm"
+            class="w-full border border-dashed border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 justify-start gap-2"
+            :class="isCollapsed ? 'justify-center px-0' : 'px-4'"
+            @click="router.push('/dashboard/create-org')"
+        >
+          <Plus class="size-4" />
+          <span v-if="!isCollapsed" class="font-bold">{{ t('organization.createOrg') }}</span>
+        </Button>
 
         <div class="flex items-center gap-4" :class="[isCollapsed ? 'flex-col' : 'justify-between px-2']">
           <DropdownMenu>

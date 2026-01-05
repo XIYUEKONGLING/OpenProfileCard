@@ -67,6 +67,7 @@ export const zh = {
         accountTypeService: '服务',
         
         timeZone: '时区',
+        requiredFields: '请填写所有必填项。',
     },
     auth: {
         loginTitle: 'Open Profile Card',
@@ -447,6 +448,16 @@ export const zh = {
         setAsAdmin: '设为管理员',
         setAsMember: '设为成员',
         setAsGuest: '设为访客',
+
+        createOrg: '创建组织',
+        accountName: '组织名称',
+        displayName: '显示名称',
+        description: '简介',
+        createSuccess: '组织创建成功',
+        accountNamePlaceholder: '支持字母、数字或下划线',
+        displayNamePlaceholder: '例如：Acme Inc.',
+        descriptionPlaceholder: '简要描述您的组织...',
+        createFailed: '创建组织失败',
     }
 
 };

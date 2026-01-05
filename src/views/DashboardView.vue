@@ -101,6 +101,10 @@ const goToManage = (resource: string) => {
   router.push(`/dashboard/manage/${resource}`);
 };
 
+const goToCreateOrg = () => {
+  router.push({ path: '/dashboard/create-org' });
+}
+
 // --- Blocking Logic ---
 const isAccountBlocked = computed(() => {
   if (!auth.user) return false;
@@ -442,7 +446,7 @@ const copyToClipboard = async (text: string, id: string) => {
                 <div v-else class="text-xs text-muted-foreground italic bg-muted/30 p-3 rounded-lg border border-border/50 border-dashed">
                   {{ t('dashboard.noOrgs') }}
                 </div>
-                <Button variant="ghost" size="sm" class="w-full border border-dashed border-border text-muted-foreground hover:text-foreground">
+                <Button variant="ghost" size="sm" class="w-full border border-dashed border-border text-muted-foreground hover:text-foreground" @click="goToCreateOrg">
                   <Plus class="size-3 mr-2" /> {{ t('dashboard.createOrg') }}
                 </Button>
               </div>

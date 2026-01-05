@@ -68,6 +68,7 @@ export const en = {
         accountTypeService: 'Service',
 
         timeZone: 'Time Zone',
+        requiredFields: 'Please fill in all required fields.',
     },
     auth: {
         loginTitle: 'Open Profile Card',
@@ -451,5 +452,15 @@ export const en = {
         setAsAdmin: 'Set as Admin',
         setAsMember: 'Set as Member',
         setAsGuest: 'Set as Guest',
+
+        createOrg: 'Create Organization',
+        accountName: 'Account Name',
+        displayName: 'Display Name',
+        description: 'Description',
+        createSuccess: 'Organization created successfully',
+        accountNamePlaceholder: 'Alphanumeric or underscore',
+        displayNamePlaceholder: 'e.g. Acme Inc.',
+        descriptionPlaceholder: 'Brief description of your organization...',
+        createFailed: 'Failed to create organization',
     }
 };

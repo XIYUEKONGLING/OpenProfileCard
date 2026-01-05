@@ -6,6 +6,7 @@ import DashboardView from "@/views/DashboardView.vue";
 import SettingsView from "@/views/SettingsView.vue";
 import PublicLayout from "@/layouts/PublicLayout.vue";
 import PublicProfileView from "@/views/PublicProfileView.vue";
+import CreateOrganizationView from "@/views/CreateOrganizationView.vue";
 
 const router = createRouter({
     history: createWebHistory(),
@@ -26,6 +27,12 @@ const router = createRouter({
                 { path: 'profile/edit', name: 'profile-edit', component: () => import('@/views/ProfileEditView.vue') },
                 { path: 'manage/:resource', name: 'resource-manager', component: () => import('@/views/ResourceManager.vue'), props: true },
 
+                {
+                    path: 'create-org',
+                    name: 'create-org',
+                    component: CreateOrganizationView
+                },
+                
                 // Organization Routes
                 {
                     path: 'orgs/:accountName',
