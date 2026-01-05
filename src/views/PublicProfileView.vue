@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import {ref, computed, watch, onUnmounted} from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useI18n } from '@/i18n';
 import { httpClient } from '@/api/client';
@@ -300,6 +300,25 @@ const handleMemberBlock = async (member: OrganizationMemberDto) => {
     memberActionLoading.value[name] = false;
   }
 };
+
+// --- Lifecycle: Dynamic Title ---
+watch(profile, (newProfile) => {
+  if (newProfile && newProfile.DisplayName) {
+    const siteName = server.meta?.SiteName || 'OpenProfile';
+    document.title = `${newProfile.DisplayName} - ${siteName}`;
+  }
+}, { immediate: true });
+
+// Reset title when leaving the profile view
+const originalTitle = ref(document.title);
+onUnmounted(() => {
+  if (server.meta?.SiteName) {
+    document.title = server.meta.SiteName;
+  } else {
+    document.title = originalTitle.value;
+  }
+});
+
 
 // --- Actions ---
 
