@@ -302,6 +302,10 @@ export const zh = {
         accountType: '账户类型',
         accountStatus: '账户状态',
         createdAt: '创建时间',
+        blockedUsers: '黑名单',
+        blockedUsersDesc: '管理您已拉黑的用户。',
+        noBlockedUsers: '您还没有拉黑任何人。',
+        blockedAt: '拉黑于',
     },
     social: {
         blocking: '拉黑中...',
@@ -484,6 +488,7 @@ export const zh = {
         displayNamePlaceholder: '例如：Acme Inc.',
         descriptionPlaceholder: '简要描述您的组织...',
         createFailed: '创建组织失败',
+        changeMyVisibility: '修改我的可见性',
     },
     notifications: {
         title: '通知中心',

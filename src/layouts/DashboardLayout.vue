@@ -230,19 +230,19 @@ const themeOptions = [
             </Button>
           </div>
         </div>
-
-        <!-- Admin -->
-        <router-link v-if="auth.isAdmin" to="/dashboard/admin" v-slot="{ isExactActive }">
-          <div :class="[
-            'flex items-center rounded-xl font-bold transition-all mt-4 border border-dashed border-border/60 relative group',
-            isCollapsed ? 'justify-center size-10 mx-auto' : 'gap-3 px-4 py-3',
-            isExactActive ? 'bg-brand-blue text-white shadow-lg' : 'text-brand-blue hover:bg-brand-blue/5'
-          ]" :title="t('dashboard.adminPanel')">
-            <ShieldCheck class="size-5 shrink-0" />
-            <span v-if="!isCollapsed">{{ t('dashboard.adminPanel') }}</span>
-          </div>
-        </router-link>
       </nav>
+
+      <!-- Admin (Moved above separator) -->
+      <router-link v-if="auth.isAdmin" to="/dashboard/admin" v-slot="{ isExactActive }">
+        <div :class="[
+          'flex items-center rounded-xl font-bold transition-all border border-dashed border-border/60 relative group mb-4',
+          isCollapsed ? 'justify-center size-10 mx-auto' : 'gap-3 px-4 py-3',
+          isExactActive ? 'bg-brand-blue text-white shadow-lg' : 'text-brand-blue hover:bg-brand-blue/5'
+        ]" :title="t('dashboard.adminPanel')">
+          <ShieldCheck class="size-5 shrink-0" />
+          <span v-if="!isCollapsed">{{ t('dashboard.adminPanel') }}</span>
+        </div>
+      </router-link>
 
       <!-- Bottom Controls -->
       <div class="mt-auto space-y-4 pt-6 border-t border-border/40 w-full shrink-0">

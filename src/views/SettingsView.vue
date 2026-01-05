@@ -13,7 +13,8 @@ import {
   type AccountEmailDto,
   type AddEmailRequestDto,
   type VerifyEmailRequestDto,
-  type ChangePasswordRequestDto
+  type ChangePasswordRequestDto,
+  type BlockDto
 } from '@/api/types';
 
 // Components
@@ -31,6 +32,7 @@ import {
   CardTitle,
   CardFooter
 } from '@/components/ui/card';
+import AssetView from '@/components/ui/AssetView.vue';
 
 // Icons
 import {
@@ -45,7 +47,8 @@ import {
   User,
   UserCircle,
   Activity,
-  Calendar
+  Calendar,
+  Ban
 } from 'lucide-vue-next';
 
 const { t, locale } = useI18n();
@@ -78,6 +81,10 @@ const confirmPassword = ref('');
 // Modal State
 const showDeleteModal = ref(false);
 const deleteConfirmationInput = ref('');
+
+// Blocked Users State
+const blockedUsers = ref<BlockDto[]>([]);
+const isLoadingBlocked = ref(false);
 
 // --- Computed ---
 const isPersonal = computed(() => auth.user?.Type === AccountType.Personal);
@@ -303,9 +310,33 @@ const restoreAccount = async () => {
   }
 };
 
+// 5. Blocked Users Management
+const fetchBlockedUsers = async () => {
+  isLoadingBlocked.value = true;
+  try {
+    blockedUsers.value = await httpClient<BlockDto[]>('/me/blocks');
+  } catch (e: any) {
+    ui.notify(e.message, 'error');
+  } finally {
+    isLoadingBlocked.value = false;
+  }
+};
+
+const unblockUser = async (accountName: string) => {
+  if (!confirm(t('social.unblockConfirm', { name: accountName }))) return;
+  try {
+    await httpClient(`/profiles/${accountName}/block`, { method: 'DELETE' });
+    ui.notify(t('common.success'), 'success');
+    blockedUsers.value = blockedUsers.value.filter(u => u.AccountName !== accountName);
+  } catch (e: any) {
+    ui.notify(e.message, 'error');
+  }
+};
+
 onMounted(() => {
   if (auth.isAuthenticated) {
     fetchData();
+    fetchBlockedUsers();
   }
 });
 </script>
@@ -318,9 +349,10 @@ onMounted(() => {
     </div>
 
     <Tabs default-value="account" class="w-full">
-      <TabsList class="grid w-full grid-cols-2 lg:w-80">
+      <TabsList class="grid w-full grid-cols-2 lg:w-96">
         <TabsTrigger value="account">{{ t('settings.account') }}</TabsTrigger>
         <TabsTrigger value="preferences">{{ t('settings.preferences') }}</TabsTrigger>
+        <TabsTrigger value="blocked">{{ t('settings.blockedUsers') }}</TabsTrigger>
       </TabsList>
 
       <!-- TAB: ACCOUNT -->
@@ -612,6 +644,50 @@ onMounted(() => {
           </CardFooter>
         </Card>
       </TabsContent>
+
+      <!-- TAB: BLOCKED USERS -->
+      <TabsContent value="blocked" class="space-y-6 mt-6 animate-in fade-in slide-in-from-bottom-2">
+        <Card>
+          <CardHeader>
+            <CardTitle class="flex items-center gap-2">
+              <Ban class="size-5 text-destructive" />
+              {{ t('settings.blockedUsers') }}
+            </CardTitle>
+            <CardDescription>{{ t('settings.blockedUsersDesc') }}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div v-if="isLoadingBlocked" class="flex justify-center py-8">
+              <Loader2 class="size-6 animate-spin text-muted-foreground" />
+            </div>
+
+            <div v-else-if="blockedUsers.length === 0" class="text-center py-12 text-muted-foreground border-2 border-dashed rounded-xl">
+              <Ban class="size-8 mx-auto mb-2 opacity-20" />
+              <p>{{ t('settings.noBlockedUsers') }}</p>
+            </div>
+
+            <div v-else class="space-y-4">
+              <div v-for="user in blockedUsers" :key="user.AccountId" class="flex items-center justify-between p-4 border rounded-lg bg-card hover:bg-muted/50 transition-colors">
+                <div class="flex items-center gap-4">
+                  <div class="size-10 rounded-full bg-muted border overflow-hidden shrink-0">
+                    <AssetView :asset="user.Avatar" :fallback-name="user.DisplayName" class-name="w-full h-full" />
+                  </div>
+                  <div>
+                    <div class="font-bold">{{ user.DisplayName }}</div>
+                    <div class="text-xs text-muted-foreground">@{{ user.AccountName }}</div>
+                    <div class="text-[10px] text-muted-foreground mt-1">
+                      {{ t('settings.blockedAt') }}: {{ formatDate(user.BlockedAt) }}
+                    </div>
+                  </div>
+                </div>
+                <Button variant="outline" size="sm" @click="unblockUser(user.AccountName)">
+                  {{ t('social.unblock') }}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </TabsContent>
+
     </Tabs>
 
     <!-- Custom Modal Implementation (Teleport to Body) -->

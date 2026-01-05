@@ -321,6 +321,10 @@ export const en = {
         emptyFollowingOther: 'This user is not following anyone yet.',
         privateList: 'List is private',
         privateListDesc: 'This list is hidden due to privacy settings.',
+        blockedUsers: 'Blocked Users',
+        blockedUsersDesc: 'Manage users you have blocked.',
+        noBlockedUsers: 'You have not blocked anyone.',
+        blockedAt: 'Blocked at',
     },
     publicProfile: {
         followers: 'Followers',
@@ -488,6 +492,7 @@ export const en = {
         displayNamePlaceholder: 'e.g. Acme Inc.',
         descriptionPlaceholder: 'Brief description of your organization...',
         createFailed: 'Failed to create organization',
+        changeMyVisibility: 'Change My Visibility',
     },
     notifications: {
         title: 'Notifications',

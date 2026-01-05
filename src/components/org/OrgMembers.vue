@@ -62,6 +62,7 @@ const { t } = useI18n();
 const ui = useUIStore();
 
 const members = ref<OrganizationMemberDto[]>([]);
+const myMemberData = ref<OrganizationMemberDto | null>(null);
 const isLoading = ref(true);
 const actionLoading = ref<string | null>(null);
 
@@ -87,6 +88,8 @@ const fetchMembers = async () => {
   isLoading.value = true;
   try {
     members.value = await httpClient<OrganizationMemberDto[]>(`/orgs/${props.accountName}/members`);
+    // Find current user's data
+    myMemberData.value = members.value.find(m => m.AccountId === props.accountId) || null;
   } catch (e: any) {
     ui.notify(e.message, 'error');
   } finally {
@@ -137,6 +140,9 @@ const updateVisibility = async (member: OrganizationMemberDto, newVisibility: Vi
       body: JSON.stringify(payload)
     });
     member.Visibility = newVisibility;
+    if (member.AccountId === props.accountId) {
+      myMemberData.value = member;
+    }
     ui.notify(t('common.success'), 'success');
   } catch (e: any) {
     ui.notify(e.message, 'error');
@@ -222,6 +228,33 @@ onMounted(fetchMembers);
         <Button v-if="!isOwner" variant="outline" class="text-destructive border-destructive/30 hover:bg-destructive/10" @click="openLeaveModal">
           <LogOut class="size-4 mr-2" /> {{ t('organization.leave') }}
         </Button>
+
+        <!-- My Visibility Dropdown (Next to Leave Org) -->
+        <DropdownMenu v-if="myMemberData">
+          <DropdownMenuTrigger as-child>
+            <Button variant="outline" size="sm" :disabled="actionLoading === myMemberData.AccountId">
+              <Loader2 v-if="actionLoading === myMemberData.AccountId" class="size-4 animate-spin mr-2" />
+              <Eye v-else class="size-4 mr-2" />
+              {{ getVisibilityLabel(myMemberData.Visibility) }}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuLabel class="text-xs opacity-50">{{ t('organization.changeMyVisibility') }}</DropdownMenuLabel>
+            <DropdownMenuItem @click="updateVisibility(myMemberData, Visibility.Public)">
+              {{ t('common.public') }}
+            </DropdownMenuItem>
+            <DropdownMenuItem @click="updateVisibility(myMemberData, Visibility.Private)">
+              {{ t('common.private') }}
+            </DropdownMenuItem>
+            <DropdownMenuItem @click="updateVisibility(myMemberData, Visibility.Protected)">
+              {{ t('common.protected') }}
+            </DropdownMenuItem>
+            <DropdownMenuItem @click="updateVisibility(myMemberData, Visibility.MembersOnly)">
+              {{ t('common.membersOnly') }}
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+
         <Button v-if="isAdmin" @click="showInviteDialog = true">
           <UserPlus class="size-4 mr-2" /> {{ t('organization.inviteMember') }}
         </Button>
