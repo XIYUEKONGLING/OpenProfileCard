@@ -447,6 +447,7 @@ export const zh = {
         roleAdmin: '管理员',
         roleMember: '成员',
         roleGuest: '访客',
+        roleUnknown: '未知',
 
         // Danger
         dissolve: '解散组织',

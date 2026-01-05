@@ -451,6 +451,7 @@ export const en = {
         roleAdmin: 'Admin',
         roleMember: 'Member',
         roleGuest: 'Guest',
+        roleUnknown: 'Unknown',
 
         // Danger
         dissolve: 'Dissolve Organization',

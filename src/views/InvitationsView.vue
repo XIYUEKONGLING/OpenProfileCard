@@ -3,14 +3,16 @@ import { ref, onMounted } from 'vue';
 import { useI18n } from '@/i18n';
 import { httpClient } from '@/api/client';
 import { useUIStore } from '@/stores/ui';
+import { MemberRole } from '@/api/types';
 import type { OrganizationInvitationDto } from '@/api/types';
+
 
 // UI Components
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import AssetView from '@/components/ui/AssetView.vue';
-import { Loader2, Check, X, Building2, Mail } from 'lucide-vue-next';
+import { Loader2, Check, X, Mail } from 'lucide-vue-next';
 
 const { t } = useI18n();
 const ui = useUIStore();
@@ -43,6 +45,20 @@ const handleAction = async (id: string, action: 'accept' | 'decline') => {
     ui.notify(e.message, 'error');
   } finally {
     actionLoadingId.value = null;
+  }
+};
+
+const toRoleString = (role: MemberRole) => {
+  switch (role) {
+    case MemberRole.Owner:
+      return t('organization.roleOwner');
+    case MemberRole.Admin:
+      return t('organization.roleAdmin');
+    case MemberRole.Member:
+      return t('organization.member');
+    case MemberRole.Guest:
+      return t('organization.guest');
+    default: t('organization.roleUnknown');
   }
 };
 
@@ -83,10 +99,10 @@ onMounted(fetchInvitations);
                     <Badge variant="secondary" class="text-[10px]">{{ inv.Status }}</Badge>
                   </div>
                   <p class="text-sm text-muted-foreground">
-                    <span class="font-medium">{{ t('invitations.invitedBy') }}:</span> {{ inv.InviterName }}
+                    <span class="font-medium">{{ t('invitations.invitedBy') }}:</span> @{{ inv.InviterName }}
                   </p>
                   <p class="text-xs text-muted-foreground mt-1">
-                    {{ t('organization.role') }}: {{ inv.Role }} • {{ new Date(inv.CreatedAt).toLocaleDateString() }}
+                    {{ t('organization.role') }}: {{ toRoleString(inv.Role) }} • {{ new Date(inv.CreatedAt).toLocaleDateString() }}
                   </p>
                 </div>
               </div>
