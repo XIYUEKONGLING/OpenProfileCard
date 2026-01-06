@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { renderMarkdown } from '@/lib/markdown';
+import 'highlight.js/styles/github-dark.css';
 
 interface Props {
   content?: string;
