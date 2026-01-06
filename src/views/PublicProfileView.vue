@@ -78,6 +78,9 @@ const createdDate = ref<AccountCreatedDateDto | null>(null);
 
 const privacy = ref<ProfilePrivacyDto | null>(null);
 
+// Sub-resource loading states for progressive loading
+const subResourcesLoading = ref(true);
+
 // Counts (Calculated from lists)
 const followersCount = ref(0);
 const followingCount = ref(0);
@@ -294,11 +297,17 @@ const fetchPublicData = async () => {
 
   isLoading.value = true;
   notFound.value = false;
+  subResourcesLoading.value = true;
 
   try {
+    // Step 1: Fetch core profile data first
     const profileData = await httpClient<ProfileDto>(`/profiles/${id}`);
     profile.value = profileData;
 
+    // Mark main loading as complete
+    isLoading.value = false;
+
+    // Helper function for safe optional fetches
     const safeFetch = async <T>(url: string, fallback: T): Promise<T> => {
       try {
         return await httpClient<T>(url);
@@ -308,6 +317,7 @@ const fetchPublicData = async () => {
       }
     };
 
+    // Step 2: Start loading sub-resources in parallel (don't wait for them)
     const promises: Promise<any>[] = [
       safeFetch<ProjectDto[]>(`/profiles/${id}/projects`, []).then(res => projects.value = res),
       safeFetch<GalleryItemDto[]>(`/profiles/${id}/gallery`, []).then(res => gallery.value = res),
@@ -347,12 +357,14 @@ const fetchPublicData = async () => {
       );
     }
 
-    await Promise.all(promises);
+    // Load all sub-resources but don't block on them
+    Promise.all(promises).finally(() => {
+      subResourcesLoading.value = false;
+    });
 
   } catch (e) {
     console.error("Main profile fetch failed:", e);
     notFound.value = true;
-  } finally {
     isLoading.value = false;
   }
 };
@@ -718,6 +730,12 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
                     </a>
                   </div>
                 </div>
+                <div v-else-if="subResourcesLoading" class="space-y-4">
+                  <div class="h-8 w-32 bg-muted rounded animate-pulse"></div>
+                  <div class="flex flex-wrap gap-3">
+                    <div v-for="i in 4" :key="i" class="h-10 w-48 rounded-xl bg-muted animate-pulse"></div>
+                  </div>
+                </div>
 
                 <!-- Contacts -->
                 <div v-if="contacts.length > 0">
@@ -736,6 +754,12 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
                         <AssetView :asset="c.Image" class-name="w-full h-full object-contain rounded-md" />
                       </div>
                     </div>
+                  </div>
+                </div>
+                <div v-else-if="subResourcesLoading" class="space-y-4">
+                  <div class="h-8 w-32 bg-muted rounded animate-pulse"></div>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div v-for="i in 4" :key="i" class="h-16 bg-muted rounded-xl animate-pulse"></div>
                   </div>
                 </div>
 
@@ -757,6 +781,12 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
                     </Card>
                   </div>
                 </div>
+                <div v-else-if="subResourcesLoading" class="space-y-4">
+                  <div class="h-8 w-40 bg-muted rounded animate-pulse"></div>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div v-for="i in 2" :key="i" class="h-20 bg-muted rounded-lg animate-pulse"></div>
+                  </div>
+                </div>
               </TabsContent>
 
               <!-- TAB: Projects -->
@@ -769,6 +799,18 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
                         <FolderGit2 v-else class="size-6 text-muted-foreground/40" />
                       </div>
                       <div class="flex-1 min-w-0"><h3 class="font-bold text-lg group-hover:text-brand-blue transition-colors truncate mb-1">{{ proj.Name }}</h3><p class="text-sm text-muted-foreground line-clamp-2">{{ proj.Summary }}</p></div>
+                    </CardContent>
+                  </Card>
+                </div>
+                <div v-else-if="subResourcesLoading" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Card v-for="i in 4" :key="i" class="animate-pulse">
+                    <CardContent class="p-6 flex gap-4 items-start">
+                      <div class="size-12 rounded-lg bg-muted shrink-0"></div>
+                      <div class="flex-1 space-y-3">
+                        <div class="h-5 bg-muted rounded w-3/4"></div>
+                        <div class="h-4 bg-muted rounded w-full"></div>
+                        <div class="h-4 bg-muted rounded w-5/6"></div>
+                      </div>
                     </CardContent>
                   </Card>
                 </div>
@@ -912,6 +954,12 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
                     </div>
                   </div>
                 </div>
+                <div v-else-if="subResourcesLoading" class="space-y-4">
+                  <div class="h-8 w-32 bg-muted rounded animate-pulse"></div>
+                  <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <div v-for="i in 6" :key="i" class="aspect-video rounded-xl bg-muted animate-pulse"></div>
+                  </div>
+                </div>
 
                 <!-- Certificates (Optimized Info Display) -->
                 <div v-if="certificates.length > 0">
@@ -956,8 +1004,16 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
                     </Card>
                   </div>
                 </div>
+                <div v-else-if="subResourcesLoading" class="space-y-4">
+                  <div class="h-8 w-32 bg-muted rounded animate-pulse"></div>
+                  <div v-for="i in 3" :key="i" class="space-y-3 p-5 border rounded-lg bg-muted/30 animate-pulse">
+                    <div class="h-6 w-48 bg-muted rounded"></div>
+                    <div class="h-4 w-96 bg-muted rounded"></div>
+                    <div class="h-4 w-80 bg-muted rounded"></div>
+                  </div>
+                </div>
 
-                <div v-if="gallery.length === 0 && certificates.length === 0" class="text-center py-12 text-muted-foreground border-2 border-dashed rounded-xl">{{ t('dashboard.noAssets') }}</div>
+                <div v-if="gallery.length === 0 && certificates.length === 0 && !subResourcesLoading" class="text-center py-12 text-muted-foreground border-2 border-dashed rounded-xl">{{ t('dashboard.noAssets') }}</div>
               </TabsContent>
             </Tabs>
           </div>
