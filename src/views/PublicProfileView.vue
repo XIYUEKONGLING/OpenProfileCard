@@ -317,6 +317,16 @@ const fetchPublicData = async () => {
       safeFetch<AccountCreatedDateDto>(`/profiles/${id}/created-at`, null as unknown as AccountCreatedDateDto).then(res => createdDate.value = res),
     ];
 
+    // Fetch current user's following list to populate followingIds for member follow buttons
+    if (auth.isAuthenticated && !isStatic.value) {
+      promises.push(
+        safeFetch<FollowerDto[]>(`/me/following`, [])
+          .then(res => {
+            followingIds.value = new Set(res.map(f => f.AccountId));
+          })
+      );
+    }
+
     if (profileData.Type === AccountType.Organization) {
       promises.push(safeFetch<OrganizationMemberDto[]>(`/profiles/${id}/members`, []).then(res => members.value = res));
     } else if (profileData.Type === AccountType.Personal) {
