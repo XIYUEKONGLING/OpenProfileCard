@@ -22,6 +22,7 @@ import {
   type SocialLinkDto,
   type FollowerDto,
   type PublicOrganizationMembershipDto,
+  type AccountCreatedDateDto,
   AccountType,
   AssetType, type ProfilePrivacyDto, AccountStatus, Visibility
 } from '@/api/types';
@@ -73,6 +74,7 @@ const notFound = ref(false);
 const profile = ref<ProfileDto | null>(null);
 const followStatus = ref<FollowStatusDto | null>(null);
 const actionLoading = ref(false);
+const createdDate = ref<AccountCreatedDateDto | null>(null);
 
 const privacy = ref<ProfilePrivacyDto | null>(null);
 
@@ -111,15 +113,8 @@ const renderedContent = computed(() => renderMarkdown(profile.value?.Content));
 // Check if the profile is private (Visibility != Public)
 const isPrivate = computed(() => profile.value?.Visibility !== Visibility.Public);
 
-// const joinDate = computed(() => {
-//   const dateStr = profile.value?.FoundedDate || (profile.value as any)?.CreatedAt;
-//   if (!dateStr) return '';
-//   const date = new Date(dateStr);
-//   return date.toLocaleDateString(locale.value === 'zh' ? 'zh-CN' : 'en-US', { year: 'numeric', month: 'long' });
-// });
-
 const joinDate = computed(() => {
-  const dateStr = (profile.value as any)?.CreatedAt;
+  const dateStr = createdDate.value?.CreatedDate;
   if (!dateStr) return '';
   const date = new Date(dateStr);
   return date.toLocaleDateString(locale.value === 'zh' ? 'zh-CN' : 'en-US', { year: 'numeric', month: 'long' });
@@ -353,6 +348,7 @@ const fetchPublicData = async () => {
       safeFetch<FollowerDto[]>(`/profiles/${id}/following`, []).then(res => followingCount.value = res.length),
       safeFetch<ProfilePrivacyDto>(`/profiles/${id}/privacy`, { ShowFollowers: true, ShowFollowing: true } as ProfilePrivacyDto).then(res => privacy.value = res),
       safeFetch<PublicOrganizationMembershipDto[]>(`/profiles/${id}/memberships`, []).then(res => memberships.value = res),
+      safeFetch<AccountCreatedDateDto>(`/profiles/${id}/created-at`, null as unknown as AccountCreatedDateDto).then(res => createdDate.value = res),
     ];
 
     if (profileData.Type === AccountType.Organization) {
