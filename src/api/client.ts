@@ -43,16 +43,19 @@ export async function httpClient<T>(endpoint: string, options: RequestOptions = 
 
     const url = `${BASE_URL}${endpoint}`;
     let response: Response;
+    let usedJsonFallback = false;
 
     try {
         response = await fetch(url, config);
 
-        // Fallback logic: If GET returns 404, try the .json version
-        if (response.status === 404 && method.toUpperCase() === 'GET') {
+        // Fallback logic: If GET doesn't return 200 OK, try the .json version
+        // This handles 404, 3xx redirects, and other non-200 responses from static hosting
+        if (!response.ok && method.toUpperCase() === 'GET') {
             const fallbackUrl = getStaticUrl(url);
             const fallbackResponse = await fetch(fallbackUrl, config);
             if (fallbackResponse.ok) {
                 response = fallbackResponse;
+                usedJsonFallback = true;
             }
         }
     } catch (error) {
@@ -60,6 +63,7 @@ export async function httpClient<T>(endpoint: string, options: RequestOptions = 
         if (method.toUpperCase() === 'GET') {
             const fallbackUrl = getStaticUrl(url);
             response = await fetch(fallbackUrl, config);
+            usedJsonFallback = true;
         } else {
             throw error;
         }
@@ -90,7 +94,21 @@ export async function httpClient<T>(endpoint: string, options: RequestOptions = 
     try {
         json = text ? JSON.parse(text) : {};
     } catch (e) {
-        throw new Error(`Invalid JSON response: ${response.status}`);
+        // If JSON parsing fails and this is a GET request, try the .json version
+        // This handles cases where static hosting returns 200 with HTML content
+        if (method.toUpperCase() === 'GET' && !usedJsonFallback && !url.endsWith('.json')) {
+            const fallbackUrl = getStaticUrl(url);
+            try {
+                const fallbackResponse = await fetch(fallbackUrl, config);
+                const fallbackText = await fallbackResponse.text();
+                json = fallbackText ? JSON.parse(fallbackText) : {};
+                response = fallbackResponse;
+            } catch (fallbackError) {
+                throw new Error(`Invalid JSON response from ${url} and ${fallbackUrl}`);
+            }
+        } else {
+            throw new Error(`Invalid JSON response: ${response.status}`);
+        }
     }
 
     if (!response.ok) {
