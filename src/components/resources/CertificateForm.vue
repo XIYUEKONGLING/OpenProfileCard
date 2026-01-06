@@ -12,7 +12,22 @@ const props = defineProps<{ modelValue: any; isSaving: boolean }>();
 const emit = defineEmits(['save']);
 const { t } = useI18n();
 
-const form = reactive({ Type: 'PGP', Visibility: 0, ...props.modelValue });
+// Helper to extract date part from ISO string or return as-is
+const formatDateForInput = (value: string | null | undefined): string | null | undefined => {
+  if (!value) return value;
+  if (value.includes('T')) {
+    return value.split('T')[0];
+  }
+  return value;
+};
+
+const form = reactive({
+  Type: 'PGP',
+  Visibility: 0,
+  ...props.modelValue,
+  CreatedAt: formatDateForInput(props.modelValue?.CreatedAt),
+  ExpiresAt: formatDateForInput(props.modelValue?.ExpiresAt)
+});
 </script>
 
 <template>
