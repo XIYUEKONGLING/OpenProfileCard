@@ -803,7 +803,7 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
                     <Card v-for="edu in education" :key="edu.Id" class="border-border/60">
                       <CardContent class="p-5 flex gap-4">
                         <div class="size-12 rounded-xl bg-white dark:bg-zinc-900 border flex items-center justify-center shrink-0 shadow-sm overflow-hidden p-1">
-                          <AssetView v-if="edu.Logo && edu.Logo.Type !== AssetType.Empty" :asset="edu.Logo" :fallback-name="edu.SchoolName" class-name="w-full h-full object-contain" />
+                          <AssetView v-if="edu.Logo && edu.Logo.Type !== AssetType.Empty" :asset="edu.Logo" :fallback-name="edu.SchoolName" class-name="w-full h-full object-contain rounded-md" />
                           <GraduationCap v-else class="size-6 text-muted-foreground/40" />
                         </div>
                         <div class="min-w-0 flex-1"><h4 class="font-bold truncate">{{ edu.SchoolName }}</h4><p class="text-sm font-medium text-foreground/70">{{ edu.Degree }}</p><p v-if="edu.Major" class="text-xs font-medium text-muted-foreground italic">{{ edu.Major }}</p><p class="text-xs text-muted-foreground mt-1">{{ formatDate(edu.StartDate) }} - {{ formatDate(edu.EndDate) }}</p></div>

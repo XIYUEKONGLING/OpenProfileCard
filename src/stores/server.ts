@@ -56,7 +56,20 @@ export const useServerStore = defineStore('server', () => {
             if (meta.value?.Favicon) {
                 const fav = meta.value.Favicon;
                 if ((fav.Type === AssetType.Image || fav.Type === AssetType.Remote) && fav.Value) {
-                    const faviconLink = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+                    // Try multiple selectors to find the favicon link
+                    let faviconLink = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
+                    if (!faviconLink) {
+                        faviconLink = document.querySelector("link[rel='icon']") as HTMLLinkElement;
+                    }
+                    if (!faviconLink) {
+                        faviconLink = document.querySelector("link[rel='shortcut icon']") as HTMLLinkElement;
+                    }
+                    if (!faviconLink) {
+                        // Create favicon link if it doesn't exist
+                        faviconLink = document.createElement('link') as HTMLLinkElement;
+                        faviconLink.rel = 'icon';
+                        document.head.appendChild(faviconLink);
+                    }
                     if (faviconLink) {
                         faviconLink.href = fav.Value;
                     }
