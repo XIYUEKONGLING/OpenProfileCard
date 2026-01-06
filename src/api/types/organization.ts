@@ -38,6 +38,13 @@ export interface UpdateOrganizationSettingsRequestDto {
     AllowMemberInvite?: boolean;
 }
 
+// --- Permissions ---
+
+export interface OrganizationPermissionsDto {
+    CanInvite: boolean;
+    Role: MemberRole;
+}
+
 // --- Members ---
 
 export interface OrganizationMemberDto {

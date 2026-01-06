@@ -5,6 +5,7 @@ import { httpClient } from '@/api/client';
 import { useUIStore } from '@/stores/ui';
 import {
   type OrganizationMemberDto,
+  type OrganizationPermissionsDto,
   MemberRole,
   Visibility,
   type InviteMemberRequestDto,
@@ -63,6 +64,7 @@ const ui = useUIStore();
 
 const members = ref<OrganizationMemberDto[]>([]);
 const myMemberData = ref<OrganizationMemberDto | null>(null);
+const permissions = ref<OrganizationPermissionsDto | null>(null);
 const isLoading = ref(true);
 const actionLoading = ref<string | null>(null);
 
@@ -77,12 +79,21 @@ const isInviting = ref(false);
 
 const isOwner = computed(() => props.myRole === MemberRole.Owner);
 const isAdmin = computed(() => props.myRole === MemberRole.Admin || isOwner.value);
+const canInvite = computed(() => permissions.value?.CanInvite ?? false);
 
 const showKickModal = ref(false);
 const memberToKick = ref<OrganizationMemberDto | null>(null);
 const showLeaveModal = ref(false);
 
 // --- Actions ---
+
+const fetchPermissions = async () => {
+  try {
+    permissions.value = await httpClient<OrganizationPermissionsDto>(`/orgs/${props.accountName}/permissions`);
+  } catch (e: any) {
+    ui.notify(e.message, 'error');
+  }
+};
 
 const fetchMembers = async () => {
   isLoading.value = true;
@@ -223,7 +234,10 @@ const getVisibilityLabel = (v: Visibility) => {
   }
 };
 
-onMounted(fetchMembers);
+onMounted(() => {
+  fetchMembers();
+  fetchPermissions();
+});
 </script>
 
 <template>
@@ -262,7 +276,7 @@ onMounted(fetchMembers);
           <LogOut class="size-4 mr-2" /> {{ t('organization.leave') }}
         </Button>
 
-        <Button v-if="isAdmin" @click="showInviteDialog = true">
+        <Button v-if="canInvite" @click="showInviteDialog = true">
           <UserPlus class="size-4 mr-2" /> {{ t('organization.inviteMember') }}
         </Button>
       </div>
