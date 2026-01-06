@@ -725,15 +725,15 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div v-for="c in contacts" :key="c.Id" class="flex items-center gap-3 p-3 rounded-xl border bg-card">
                       <div class="size-9 flex items-center justify-center rounded-lg bg-muted border border-border/40 shrink-0 overflow-hidden">
-                        <AssetView v-if="c.Icon && c.Icon.Type !== AssetType.Empty" :asset="c.Icon" class-name="w-full h-full" />
+                        <AssetView v-if="c.Icon && c.Icon.Type !== AssetType.Empty" :asset="c.Icon" class-name="w-full h-full rounded-md" />
                         <component v-else :is="getContactIcon(c.Type)" class="size-4.5 text-muted-foreground" />
                       </div>
                       <div class="min-w-0 flex-1">
                         <div class="text-xs font-bold uppercase text-muted-foreground">{{ c.Label }}</div>
                         <div class="font-medium truncate select-all">{{ c.Value }}</div>
                       </div>
-                      <div v-if="c.Image && c.Image.Type !== AssetType.Empty" class="size-10 bg-white p-0.5 rounded border shrink-0 cursor-pointer hover:scale-105 transition-transform" @click.stop="openImage(c.Image)">
-                        <AssetView :asset="c.Image" class-name="w-full h-full object-contain" />
+                      <div v-if="c.Image && c.Image.Type !== AssetType.Empty" class="size-10 bg-white p-0.5 border shrink-0 cursor-pointer hover:scale-105 transition-transform rounded-md" @click.stop="openImage(c.Image)">
+                        <AssetView :asset="c.Image" class-name="w-full h-full object-contain rounded-md" />
                       </div>
                     </div>
                   </div>
@@ -751,7 +751,7 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
                           <div class="text-xs text-muted-foreground truncate">{{ spon.Url }}</div>
                         </div>
                         <div v-if="spon.QrCode && spon.QrCode.Type !== AssetType.Empty" class="size-10 bg-white p-0.5 rounded shrink-0" @click.stop="openImage(spon.QrCode)">
-                          <AssetView :asset="spon.QrCode" class-name="w-full h-full" />
+                          <AssetView :asset="spon.QrCode" class-name="w-full h-full rounded-md" />
                         </div>
                       </CardContent>
                     </Card>
