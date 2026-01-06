@@ -548,4 +548,13 @@ export const en = {
         acceptSuccess: 'Invitation accepted',
         declineSuccess: 'Invitation declined',
     },
+    query: {
+        usernameOrGuid: 'Username or GUID',
+        queryPlaceholder: 'Enter username or @guid',
+        queryHint: 'Prefix with @ to search by GUID',
+        queryButton: 'Query Profile',
+        profileNotFound: 'Profile not found',
+        invalidFormat: 'Invalid format',
+        queryFailed: 'Query failed, please try again',
+    },
 };

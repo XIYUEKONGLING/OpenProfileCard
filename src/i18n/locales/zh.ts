@@ -544,4 +544,13 @@ export const zh = {
         acceptSuccess: '已接受邀请',
         declineSuccess: '已拒绝邀请',
     },
+    query: {
+        usernameOrGuid: '用户名或GUID',
+        queryPlaceholder: '输入用户名或@guid',
+        queryHint: '使用 @ 前缀按 GUID 查询',
+        queryButton: '查询资料',
+        profileNotFound: '未找到该资料',
+        invalidFormat: '格式不正确',
+        queryFailed: '查询失败，请重试',
+    },
 };
