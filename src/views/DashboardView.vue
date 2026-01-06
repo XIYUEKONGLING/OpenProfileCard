@@ -5,7 +5,7 @@ import { useI18n } from '@/i18n';
 import { httpClient } from '@/api/client';
 import { useAuthStore } from '@/stores/auth';
 import { useUIStore } from '@/stores/ui';
-import { renderMarkdown } from '@/lib/markdown';
+import MarkdownRenderer from '@/components/ui/MarkdownRenderer.vue';
 import {
   type ProfileDto,
   type ProjectDto,
@@ -68,8 +68,6 @@ const sponsorships = ref<SponsorshipItemDto[]>([]);
 const copiedId = ref<string | null>(null);
 
 // --- Computed ---
-const renderedContent = computed(() => renderMarkdown(profile.value?.Content));
-
 const isPersonal = computed(() => {
   const type = profile.value?.Type ?? auth.user?.Type;
   return type === AccountType.Personal;
@@ -596,10 +594,7 @@ const copyToClipboard = async (text: string, id: string) => {
 
                   <Card class="border-border/60 shadow-sm overflow-hidden">
                     <CardContent class="p-6 sm:p-8">
-                      <div v-if="renderedContent" class="prose dark:prose-invert prose-sm sm:prose-base max-w-none wrap-break-word">
-                        <div v-html="renderedContent"></div>
-                      </div>
-
+                      <MarkdownRenderer v-if="profile?.Content" :content="profile.Content" size="sm" />
                       <!-- Empty State -->
                       <div v-else class="flex flex-col items-center justify-center py-10 text-center gap-4">
                         <div class="size-16 rounded-2xl bg-muted/50 flex items-center justify-center">

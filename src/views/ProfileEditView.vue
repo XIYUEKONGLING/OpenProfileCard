@@ -5,7 +5,7 @@ import { useI18n } from '@/i18n';
 import { useAuthStore } from '@/stores/auth';
 import { useUIStore } from '@/stores/ui';
 import { httpClient } from '@/api/client';
-import { renderMarkdown } from '@/lib/markdown';
+import MarkdownRenderer from '@/components/ui/MarkdownRenderer.vue';
 import {
   type ProfileDto,
   type UpdateProfileRequestDto,
@@ -54,7 +54,6 @@ const form = reactive<UpdateProfileRequestDto>({
 });
 
 // --- Computed ---
-const renderedContent = computed(() => renderMarkdown(form.Content || ''));
 const isOrg = computed(() => currentAccountType.value === AccountType.Organization);
 const isPersonal = computed(() => currentAccountType.value === AccountType.Personal);
 
@@ -239,7 +238,7 @@ onMounted(() => fetchData());
                   <Textarea v-model="form.Content" class="min-h-100 rounded-none border-0 focus-visible:ring-0 resize-none p-6 font-mono text-sm leading-relaxed" :placeholder="t('profile.markdownPlaceholder')" />
                 </TabsContent>
                 <TabsContent value="preview" class="min-h-100 p-6 bg-muted/10">
-                  <div v-if="form.Content" class="prose dark:prose-invert max-w-none prose-sm" v-html="renderedContent"></div>
+                  <MarkdownRenderer v-if="form.Content" :content="form.Content" size="sm" />
                   <div v-else class="text-muted-foreground text-sm italic text-center pt-20">{{ t('profile.nothingToPreview') }}</div>
                 </TabsContent>
               </CardContent>

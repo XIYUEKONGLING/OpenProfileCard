@@ -5,7 +5,7 @@ import { useI18n } from '@/i18n';
 import { httpClient } from '@/api/client';
 import { useUIStore } from '@/stores/ui';
 import { useAuthStore } from '@/stores/auth';
-import { renderMarkdown } from '@/lib/markdown';
+import MarkdownRenderer from '@/components/ui/MarkdownRenderer.vue';
 import {
   type OrganizationDto,
   type ProfileDto,
@@ -83,7 +83,6 @@ const isOwner = computed(() => org.value?.MyRole === MemberRole.Owner);
 const isAdmin = computed(() => org.value?.MyRole === MemberRole.Admin || isOwner.value);
 const canEdit = computed(() => isAdmin.value);
 
-const renderedContent = computed(() => renderMarkdown(profile.value?.Content));
 const description = computed(() => profile.value?.Description);
 
 const timeZoneDisplay = computed(() => {
@@ -501,9 +500,7 @@ watch(() => props.accountName, fetchOrgData, { immediate: true });
                 <!-- Markdown Content -->
                 <Card class="border-border/60 shadow-sm overflow-hidden">
                   <CardContent class="p-6 sm:p-8">
-                    <div v-if="renderedContent" class="prose dark:prose-invert prose-sm sm:prose-base max-w-none wrap-break-word">
-                      <div v-html="renderedContent"></div>
-                    </div>
+                    <MarkdownRenderer v-if="profile?.Content" :content="profile.Content" size="sm" />
                     <div v-else class="flex flex-col items-center justify-center py-10 text-center gap-4">
                       <div class="size-16 rounded-2xl bg-muted/50 flex items-center justify-center">
                         <BookOpen class="size-8 text-muted-foreground/40" />

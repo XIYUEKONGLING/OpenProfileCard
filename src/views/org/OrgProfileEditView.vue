@@ -6,7 +6,7 @@ import { httpClient } from '@/api/client';
 import { useUIStore } from '@/stores/ui';
 import type { ProfileDto, UpdateProfileRequestDto, OrganizationDto } from '@/api/types';
 import { MemberRole } from '@/api/types';
-import { renderMarkdown } from '@/lib/markdown';
+import MarkdownRenderer from '@/components/ui/MarkdownRenderer.vue';
 
 // Components
 import { Button } from '@/components/ui/button';
@@ -46,8 +46,6 @@ const form = reactive<UpdateProfileRequestDto>({
 });
 
 // --- Computed ---
-const renderedContent = computed(() => renderMarkdown(form.Content || ''));
-
 // Permission Check: Only Owner (2) and Admin (1) can edit
 const canEdit = computed(() => {
   const role = myRole.value;
@@ -222,7 +220,7 @@ onMounted(loadData);
                   <Textarea v-model="form.Content" class="min-h-100 rounded-none border-0 focus-visible:ring-0 resize-none p-6 font-mono text-sm leading-relaxed" :placeholder="t('profile.markdownPlaceholder')" />
                 </TabsContent>
                 <TabsContent value="preview" class="min-h-100 p-6 bg-muted/10">
-                  <div v-if="form.Content" class="prose dark:prose-invert max-w-none prose-sm" v-html="renderedContent"></div>
+                  <MarkdownRenderer v-if="form.Content" :content="form.Content" size="sm" />
                   <div v-else class="text-muted-foreground text-sm italic text-center pt-20">{{ t('profile.nothingToPreview') }}</div>
                 </TabsContent>
               </CardContent>

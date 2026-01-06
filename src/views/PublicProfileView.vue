@@ -6,7 +6,7 @@ import { httpClient } from '@/api/client';
 import { useAuthStore } from '@/stores/auth';
 import { useServerStore } from '@/stores/server';
 import { useUIStore } from '@/stores/ui';
-import { renderMarkdown } from '@/lib/markdown';
+import MarkdownRenderer from '@/components/ui/MarkdownRenderer.vue';
 import {
   type ProfileDto,
   type ProjectDto,
@@ -108,7 +108,6 @@ const isPersonal = computed(() => profile.value?.Type === AccountType.Personal);
 const isSystem = computed(() => profile.value?.Type === AccountType.System);
 const isMe = computed(() => (auth.user && profile.value && auth.user.AccountName === profile.value.AccountName));
 const isStatic = computed(() => server.info?.Static === true);
-const renderedContent = computed(() => renderMarkdown(profile.value?.Content));
 
 // Check if the profile is private (Visibility != Public)
 const isPrivate = computed(() => profile.value?.Visibility !== Visibility.Public);
@@ -696,7 +695,7 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
               <TabsContent value="overview" class="animate-in fade-in slide-in-from-bottom-2 space-y-10">
                 <Card class="border-none shadow-none bg-transparent">
                   <CardContent class="p-0">
-                    <div v-if="renderedContent" class="prose dark:prose-invert max-w-none prose-neutral prose-img:rounded-xl" v-html="renderedContent"></div>
+                    <MarkdownRenderer v-if="profile?.Content" :content="profile.Content" />
                     <div v-else class="text-muted-foreground italic py-10 border-2 border-dashed rounded-xl flex flex-col items-center justify-center"><BookOpen class="size-8 mb-2 opacity-20" /> {{ t('publicProfile.noDescription') }}</div>
                   </CardContent>
                 </Card>
