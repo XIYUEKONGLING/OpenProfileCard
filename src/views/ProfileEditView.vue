@@ -80,23 +80,6 @@ const fetchData = async () => {
   }
 };
 
-// HELPER: Convert empty strings to null for backend compatibility
-const sanitizeForm = (data: UpdateProfileRequestDto) => {
-  const clean = { ...data };
-  if (clean.Birthday === '') clean.Birthday = undefined; // or null, but undefined usually omits in JSON.stringify if configured, but here we want explicit null if clearing.
-  // Actually, for JSON, undefined removes the key. We want to send null if we want to clear it.
-  // However, if the backend treats missing key as "no change" (PATCH), we need to send null.
-  // If it's POST (Full Update), we need to send null.
-
-  // Let's explicitly set empty strings to null for nullable fields
-  if (!clean.Birthday) clean.Birthday = undefined;
-  if (!clean.FoundedDate) clean.FoundedDate = undefined;
-
-  // Note: If using POST (Full Update), missing fields might be reset. 
-  // If the backend DTO is nullable, JSON `null` is valid. `""` is invalid for DateOnly.
-  return clean;
-};
-
 const saveProfile = async () => {
   isSaving.value = true;
   try {

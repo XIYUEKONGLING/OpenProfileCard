@@ -54,7 +54,7 @@ const OrgMembers = defineAsyncComponent(() => import('@/components/org/OrgMember
 
 const props = defineProps<{ accountName: string }>();
 
-const { t, locale } = useI18n();
+const { t } = useI18n();
 const ui = useUIStore();
 const auth = useAuthStore();
 const router = useRouter();

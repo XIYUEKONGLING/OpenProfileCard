@@ -20,7 +20,7 @@ import { Sun, Moon, Monitor, Languages, LogIn, LayoutDashboard } from 'lucide-vu
 const server = useServerStore();
 const auth = useAuthStore();
 const themeStore = useThemeStore();
-const { t, setLocale, locale } = useI18n();
+const { t, setLocale } = useI18n();
 const router = useRouter();
 
 const isStatic = computed(() => server.info?.Static === true);

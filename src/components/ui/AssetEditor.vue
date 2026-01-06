@@ -86,8 +86,9 @@ const update = () => {
 };
 
 // Handle Type Switch
-const onTypeChange = (val: AssetType) => {
-  currentType.value = val;
+const onTypeChange = (val: unknown) => {
+  if (val === null || typeof val !== 'number') return;
+  currentType.value = val as AssetType;
   currentValue.value = '';
   currentTag.value = undefined;
   update();

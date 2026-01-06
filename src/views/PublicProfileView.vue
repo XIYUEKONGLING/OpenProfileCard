@@ -58,7 +58,7 @@ import {
   MoreHorizontal, UserPlus, UserMinus, Ban, Cake,
   Briefcase, FolderGit2, Users, BookOpen, Heart, Lock, ChevronLeft, ChevronRight, Landmark,
   Image as ImageIcon, GraduationCap, Key, Mail, Download, Copy, Check, User, Clock, ShieldCheck, Shield, AlertTriangle,
-  Trash2, Plus
+  Trash2
 } from 'lucide-vue-next';
 
 const route = useRoute();
@@ -145,10 +145,9 @@ const hasBackground = computed(() =>
     profile.value?.Background && profile.value.Background.Type !== AssetType.Empty
 );
 
-const isFollowersHidden = computed(() => privacy.value?.ShowFollowers === false); // !isMe.value && 
-const isFollowingHidden = computed(() => privacy.value?.ShowFollowing === false); // !isMe.value && 
+const isFollowersHidden = computed(() => privacy.value?.ShowFollowers === false); // !isMe.value &&
+const isFollowingHidden = computed(() => privacy.value?.ShowFollowing === false); // !isMe.value &&
 
-const profileStatus = computed(() => Number(profile.value?.Status ?? AccountStatus.Active));
 // Check if the account is restricted by system status (Banned, Suspended, etc.)
 const isRestricted = computed(() => {
   const status = Number(profile.value?.Status ?? AccountStatus.Active);
@@ -156,39 +155,6 @@ const isRestricted = computed(() => {
 });
 
 const isContentMasked = computed(() => isRestricted.value || isPrivate.value);
-
-const statusNotice = computed(() => {
-  if (!profile.value) return null;
-
-  switch (profileStatus.value) {
-    case AccountStatus.Banned:
-      return {
-        title: t('publicProfile.accountBanned'),
-        desc: t('publicProfile.accountBannedDesc'),
-        icon: Ban,
-        color: 'text-destructive',
-        blur: 'blur-md'
-      };
-    case AccountStatus.Suspended:
-      return {
-        title: t('publicProfile.accountSuspended'),
-        desc: t('publicProfile.accountSuspendedDesc'),
-        icon: AlertTriangle,
-        color: 'text-orange-500',
-        blur: 'blur-sm'
-      };
-    case AccountStatus.PendingDeletion:
-      return {
-        title: t('publicProfile.accountPendingDeletion'),
-        desc: t('publicProfile.accountPendingDeletionDesc'),
-        icon: Trash2,
-        color: 'text-muted-foreground',
-        blur: 'blur-md'
-      };
-    default:
-      return null;
-  }
-});
 
 // Unified mask configuration
 const maskNotice = computed(() => {
