@@ -38,7 +38,7 @@ import UserListDialog from '@/components/dashboard/UserListDialog.vue';
 
 // Icons
 import {
-  MapPin, Link as LinkIcon, Building2, Clock,
+  MapPin, Link as LinkIcon, Building2, Clock, Calendar,
   Edit2, Plus, Briefcase,
   FolderGit2, Image as ImageIcon,
   Settings, Shield, BookOpen, Key, Cake, GraduationCap,
@@ -448,7 +448,7 @@ const copyToClipboard = async (text: string, id: string) => {
                 </div>
 
                 <div class="flex items-center gap-3">
-                  <Clock class="size-4 shrink-0 opacity-70" />
+                  <Calendar class="size-4 shrink-0 opacity-70" />
                   <span>{{ t('dashboard.joined', { date: joinDate }) }}</span>
                 </div>
               </div>
