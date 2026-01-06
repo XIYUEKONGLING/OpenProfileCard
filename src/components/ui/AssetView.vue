@@ -18,10 +18,24 @@ const isType = (type: AssetType) => {
   return props.asset?.Type === type;
 };
 
+// Check if asset is effectively empty (no value to display)
+const isEffectivelyEmpty = computed(() => {
+  if (!props.asset) return true;
+  if (props.asset.Type === AssetType.Empty) return true;
+  // Check if Value is empty for types that require a value
+  if (!props.asset.Value || props.asset.Value.trim() === '') {
+    return props.asset.Type === AssetType.Text ||
+           props.asset.Type === AssetType.Image ||
+           props.asset.Type === AssetType.Remote ||
+           props.asset.Type === AssetType.Style;
+  }
+  return false;
+});
+
 const textMetrics = computed(() => {
   const text = props.asset?.Value || '';
   const len = text.length;
-  
+
   if (len === 0) return { fontSize: 0 };
 
   let size = 0;
@@ -43,12 +57,12 @@ const fallbackChar = computed(() => {
   <div :class="['relative flex items-center justify-center overflow-hidden shrink-0 select-none box-border', className]">
 
     <!-- Background Pattern -->
-    <div v-if="!isType(AssetType.Empty) && asset?.Value"
+    <div v-if="!isEffectivelyEmpty && asset?.Value"
          class="absolute inset-0 bg-linear-to-br from-foreground/5 to-foreground/10 -z-10">
     </div>
 
     <!-- Case 1: Empty / Fallback -->
-    <template v-if="isType(AssetType.Empty)">
+    <template v-if="isEffectivelyEmpty">
       <template v-if="fallbackName">
         <div class="absolute inset-0 bg-muted/30 -z-10"></div>
         <svg viewBox="0 0 100 100" class="w-[60%] h-[60%]">
@@ -97,7 +111,8 @@ const fallbackChar = computed(() => {
     <!-- Case 4: Icon Style (FontAwesome / Devicon) -->
     <template v-else-if="isType(AssetType.Style)">
       <i
-          :class="[asset?.Value, 'not-italic flex items-center justify-center leading-none']"
+          v-if="asset?.Value"
+          :class="[asset.Value, 'not-italic flex items-center justify-center leading-none']"
           style="font-size: 1.5rem; width: 100%; height: 100%;"
           aria-hidden="true"
       ></i>
