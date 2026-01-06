@@ -7,6 +7,16 @@ import { useUIStore } from '@/stores/ui';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import AssetView from '@/components/ui/AssetView.vue';
 import { ArrowLeft, Plus, Edit2, Trash2 } from 'lucide-vue-next';
 
@@ -38,6 +48,8 @@ const isSaving = ref(false);
 const showDialog = ref(false);
 const editingItem = ref<any>(null);
 const hasWriteAccess = ref(true); // Default to true, will catch 403 on operations
+const showDeleteDialog = ref(false);
+const itemToDelete = ref<string | null>(null);
 
 // --- Config ---
 const config = computed(() => {
@@ -48,7 +60,7 @@ const config = computed(() => {
     work: { title: t('dashboard.workExp') },
     education: { title: t('dashboard.education') },
     projects: { title: t('dashboard.projects') },
-    socials: { title: 'Social Links' },
+    socials: { title: t('dashboard.socials') },
     contacts: { title: t('common.contact') },
     gallery: { title: t('dashboard.galleryItems') },
     certificates: { title: t('dashboard.certificates') },
@@ -125,11 +137,20 @@ const handleSave = async (payload: any) => {
   }
 };
 
-const handleDelete = async (id: string) => {
-  if (!confirm(t('common.deleteConfirm'))) return;
+const confirmDelete = (id: string) => {
+  itemToDelete.value = id;
+  showDeleteDialog.value = true;
+};
+
+const handleDelete = async () => {
+  const id = itemToDelete.value;
+  if (!id) return;
+
   try {
     await httpClient(`${config.value.api}/${id}`, { method: 'DELETE' });
     ui.notify(t('common.success'), 'success');
+    showDeleteDialog.value = false;
+    itemToDelete.value = null;
     fetchItems();
   } catch (e: any) {
     ui.notify(e.message, 'error');
@@ -187,7 +208,7 @@ watch(() => [props.resource, props.apiPrefix], fetchItems, { immediate: true });
             <Button variant="ghost" size="icon" @click="openEdit(item)">
               <Edit2 class="size-4" />
             </Button>
-            <Button variant="ghost" size="icon" class="text-destructive hover:bg-destructive/10" @click="handleDelete(item.Id)">
+            <Button variant="ghost" size="icon" class="text-destructive hover:bg-destructive/10" @click="confirmDelete(item.Id)">
               <Trash2 class="size-4" />
             </Button>
           </div>
@@ -211,5 +232,23 @@ watch(() => [props.resource, props.apiPrefix], fetchItems, { immediate: true });
         />
       </DialogContent>
     </Dialog>
+
+    <!-- Delete Confirmation Dialog -->
+    <AlertDialog v-model:open="showDeleteDialog">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{{ t('common.delete') }}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {{ t('common.deleteConfirm') }}
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>{{ t('common.cancel') }}</AlertDialogCancel>
+          <AlertDialogAction @click="handleDelete" class="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+            {{ t('common.delete') }}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   </div>
 </template>

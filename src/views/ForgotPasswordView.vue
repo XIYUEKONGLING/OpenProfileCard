@@ -68,8 +68,11 @@ async function handleSendCode() {
     countdown.value = 60;
     timer = window.setInterval(() => {
       countdown.value--;
-      if (countdown.value <= 0 && timer) {
-        clearInterval(timer);
+      if (countdown.value <= 0) {
+        if (timer) {
+          clearInterval(timer);
+          timer = null;
+        }
       }
     }, 1000);
   } catch (e: any) {
