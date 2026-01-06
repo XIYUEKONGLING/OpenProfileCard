@@ -85,6 +85,12 @@ const showKickModal = ref(false);
 const memberToKick = ref<OrganizationMemberDto | null>(null);
 const showLeaveModal = ref(false);
 
+// Edit Title State
+const showTitleDialog = ref(false);
+const editingMember = ref<OrganizationMemberDto | null>(null);
+const newTitle = ref('');
+const isUpdatingTitle = ref(false);
+
 // --- Actions ---
 
 const fetchPermissions = async () => {
@@ -167,6 +173,39 @@ const updateVisibility = async (member: OrganizationMemberDto, newVisibility: Vi
   } finally {
     actionLoading.value = null;
   }
+};
+
+const updateTitle = async () => {
+  if (!editingMember.value) return;
+
+  isUpdatingTitle.value = true;
+  try {
+    const payload: UpdateMemberRequestDto = { Title: newTitle.value || undefined };
+    const endpoint = editingMember.value.AccountId === props.accountId
+        ? `/orgs/${props.accountName}/members/me`
+        : `/orgs/${props.accountName}/members/${editingMember.value.AccountId}`;
+
+    await httpClient(endpoint, {
+      method: 'PATCH',
+      body: JSON.stringify(payload)
+    });
+    editingMember.value.Title = newTitle.value || undefined;
+    if (editingMember.value.AccountId === props.accountId) {
+      myMemberData.value = editingMember.value;
+    }
+    ui.notify(t('common.success'), 'success');
+    showTitleDialog.value = false;
+  } catch (e: any) {
+    ui.notify(e.message, 'error');
+  } finally {
+    isUpdatingTitle.value = false;
+  }
+};
+
+const openTitleDialog = (member: OrganizationMemberDto) => {
+  editingMember.value = member;
+  newTitle.value = member.Title || '';
+  showTitleDialog.value = true;
 };
 
 const kickMember = async () => {
@@ -298,6 +337,7 @@ onMounted(() => {
               <div class="font-bold flex items-center gap-2">
                 {{ member.DisplayName }}
                 <Crown v-if="member.Role === MemberRole.Owner" class="size-3 text-yellow-500 fill-yellow-500" />
+                <Badge v-if="member.Title" variant="secondary" class="text-[10px] px-1.5 py-0 h-4 font-medium">{{ member.Title }}</Badge>
               </div>
               <div class="text-xs text-muted-foreground">@{{ member.AccountName }} • {{ getRoleLabel(member.Role) }}</div>
             </div>
@@ -320,6 +360,12 @@ onMounted(() => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                <!-- Edit Title (Admin+) -->
+                <DropdownMenuItem @click="openTitleDialog(member)">
+                  {{ t('organization.editTitle') }}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+
                 <template v-if="isOwner">
                   <DropdownMenuLabel class="text-xs opacity-50">{{ t('organization.role') }}</DropdownMenuLabel>
                   <DropdownMenuItem @click="updateRole(member, MemberRole.Owner)"> {{ t('organization.setAsOwner') }} </DropdownMenuItem>
@@ -389,6 +435,31 @@ onMounted(() => {
           <Button @click="sendInvite" :disabled="isInviting || !inviteForm.Identity">
             <Loader2 v-if="isInviting" class="size-4 animate-spin mr-2" />
             {{ t('organization.inviteMember') }}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <!-- Edit Title Dialog -->
+    <Dialog v-model:open="showTitleDialog">
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{{ t('organization.editTitle') }}</DialogTitle>
+        </DialogHeader>
+        <div class="space-y-4 py-4">
+          <p class="text-sm text-muted-foreground">
+            {{ t('organization.editTitleFor', { name: editingMember?.DisplayName || '' }) }}
+          </p>
+          <div class="space-y-2">
+            <Label>{{ t('organization.title') }}</Label>
+            <Input v-model="newTitle" :placeholder="t('organization.titlePlaceholder')" />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" @click="showTitleDialog = false">{{ t('common.cancel') }}</Button>
+          <Button @click="updateTitle" :disabled="isUpdatingTitle">
+            <Loader2 v-if="isUpdatingTitle" class="size-4 animate-spin mr-2" />
+            {{ t('common.save') }}
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -58,7 +58,7 @@ import {
   MoreHorizontal, UserPlus, UserMinus, Ban, Cake,
   Briefcase, FolderGit2, Users, BookOpen, Heart, Lock, ChevronLeft, ChevronRight, Landmark,
   Image as ImageIcon, GraduationCap, Key, Mail, Download, Copy, Check, User, Clock, ShieldCheck, Shield, AlertTriangle,
-  Trash2
+  Trash2, Phone, MessageSquare, MapPin as MapIcon
 } from 'lucide-vue-next';
 
 const route = useRoute();
@@ -132,6 +132,19 @@ const timeZoneDisplay = computed(() => {
   });
   return `${timeString} (${tz})`;
 });
+
+// Helper for Contact Icons
+const getContactIcon = (type: any) => {
+  const t = Number(type);
+  switch (t) {
+    case 0: return Mail;
+    case 1: return Phone;
+    case 2: return MessageSquare;
+    case 3: return MapIcon;
+    case 4: return LinkIcon;
+    default: return LinkIcon;
+  }
+};
 
 const hasBackground = computed(() =>
     profile.value?.Background && profile.value.Background.Type !== AssetType.Empty
@@ -698,7 +711,9 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
                   <h3 class="font-bold text-lg mb-4 flex items-center gap-2"><LinkIcon class="size-5" /> {{ t('dashboard.socials') }}</h3>
                   <div class="flex flex-wrap gap-3">
                     <a v-for="social in socials" :key="social.Id" :href="social.Url" target="_blank" class="flex items-center gap-3 px-4 py-2 rounded-xl border bg-card hover:bg-muted transition-colors group">
-                      <AssetView :asset="social.Icon" class-name="size-5" />
+                      <div class="size-9 flex items-center justify-center rounded-lg bg-muted border border-border/40 group-hover:scale-105 transition-transform overflow-hidden">
+                        <AssetView :asset="social.Icon" class-name="w-full h-full" />
+                      </div>
                       <span class="font-bold text-sm">{{ social.Platform }}</span>
                     </a>
                   </div>
@@ -709,9 +724,9 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
                   <h3 class="font-bold text-lg mb-4 flex items-center gap-2"><Mail class="size-5" /> {{ t('publicProfile.contact') }}</h3>
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div v-for="c in contacts" :key="c.Id" class="flex items-center gap-3 p-3 rounded-xl border bg-card">
-                      <div class="size-10 flex items-center justify-center rounded-lg bg-muted shrink-0">
-                        <AssetView v-if="c.Icon && c.Icon.Type !== AssetType.Empty" :asset="c.Icon" class-name="size-5" />
-                        <Mail v-else class="size-5" />
+                      <div class="size-9 flex items-center justify-center rounded-lg bg-muted border border-border/40 shrink-0 overflow-hidden">
+                        <AssetView v-if="c.Icon && c.Icon.Type !== AssetType.Empty" :asset="c.Icon" class-name="w-full h-full" />
+                        <component v-else :is="getContactIcon(c.Type)" class="size-4.5 text-muted-foreground" />
                       </div>
                       <div class="min-w-0 flex-1">
                         <div class="text-xs font-bold uppercase text-muted-foreground">{{ c.Label }}</div>

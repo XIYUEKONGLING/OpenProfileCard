@@ -476,6 +476,10 @@ export const zh = {
 
         // Members
         role: '角色',
+        title: '头衔',
+        titlePlaceholder: '例如：技术总监、产品经理等',
+        editTitle: '编辑头衔',
+        editTitleFor: '为 {name} 设置组织内的头衔',
         joinedAt: '加入时间',
         inviteMember: '邀请成员',
         inviteDesc: '通过电子邮件或用户名向用户发送邀请。',

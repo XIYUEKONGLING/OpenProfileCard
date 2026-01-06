@@ -480,6 +480,10 @@ export const en = {
 
         // Members
         role: 'Role',
+        title: 'Title',
+        titlePlaceholder: 'e.g. CTO, Product Manager, etc.',
+        editTitle: 'Edit Title',
+        editTitleFor: 'Set {name}\'s title within the organization',
         joinedAt: 'Joined',
         inviteMember: 'Invite Member',
         inviteDesc: 'Send an invitation to a user via email or username.',
