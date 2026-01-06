@@ -124,11 +124,16 @@ const colorVariant = computed(() => {
   @apply px-1.5 py-0.5 rounded-md text-sm font-mono bg-muted/50 border border-border/50 text-foreground;
 }
 
-.markdown-renderer :deep(pre) {
-  @apply my-6 p-4 rounded-xl overflow-x-auto bg-muted/30 border border-border/50;
+/* Code blocks with custom container from markdown.ts */
+.markdown-renderer :deep(div[class*="group"]) {
+  @apply my-6;
 }
 
-.markdown-renderer :deep(pre code) {
+.markdown-renderer :deep(div[class*="group"] pre) {
+  @apply my-0 p-4 overflow-x-auto;
+}
+
+.markdown-renderer :deep(div[class*="group"] pre code) {
   @apply bg-transparent border-0 p-0 text-sm leading-relaxed;
 }
 
@@ -211,8 +216,12 @@ const colorVariant = computed(() => {
   @apply bg-muted/70 border-border/30;
 }
 
-.dark .markdown-renderer :deep(pre) {
-  @apply bg-muted/20 border-border/30;
+.dark .markdown-renderer :deep(div[class*="group"]) {
+  @apply border-border/30;
+}
+
+.dark .markdown-renderer :deep(div[class*="group"] > div:first-child) {
+  @apply bg-muted/20;
 }
 
 .dark .markdown-renderer :deep(table thead) {
@@ -234,7 +243,7 @@ const colorVariant = computed(() => {
     @apply px-3 py-2;
   }
 
-  .markdown-renderer :deep(pre) {
+  .markdown-renderer :deep(div[class*="group"] pre) {
     @apply p-3 text-xs;
   }
 }
@@ -250,7 +259,7 @@ const colorVariant = computed(() => {
     @apply text-xs text-muted-foreground;
   }
 
-  .markdown-renderer :deep(pre),
+  .markdown-renderer :deep(div[class*="group"]),
   .markdown-renderer :deep(blockquote) {
     @apply border-border;
   }
