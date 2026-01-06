@@ -90,21 +90,14 @@ const timeZoneDisplay = computed(() => {
   const tz = profile.value?.TimeZone;
   if (!tz) return null;
 
-  const systemTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const isSame = systemTz === tz;
-
-  if (isSame) {
-    const now = new Date();
-    const timeString = now.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false,
-      timeZone: tz
-    });
-    return `${timeString} (${tz})`;
-  }
-
-  return tz;
+  const now = new Date();
+  const timeString = now.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+    timeZone: tz
+  });
+  return `${timeString} (${tz})`;
 });
 
 // Check ProfileDto for background
