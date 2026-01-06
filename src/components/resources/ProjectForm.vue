@@ -17,19 +17,19 @@ const form = reactive({ Visibility: 0, ...props.modelValue });
 </script>
 
 <template>
-  <div class="space-y-4 py-4">
+  <div class="space-y-4 py-4 overflow-x-hidden">
     <AssetEditor v-model="form.Logo" :label="t('resources.logo')" />
     <div class="space-y-2">
       <Label>{{ t('resources.projectName') }}</Label>
-      <Input v-model="form.Name" required />
+      <Input v-model="form.Name" required class="min-w-0" />
     </div>
     <div class="space-y-2">
       <Label>{{ t('resources.summary') }}</Label>
-      <Input v-model="form.Summary" />
+      <Input v-model="form.Summary" class="min-w-0" />
     </div>
     <div class="space-y-2">
       <Label>{{ t('resources.url') }}</Label>
-      <Input v-model="form.Url" placeholder="https://" />
+      <Input v-model="form.Url" placeholder="https://" class="min-w-0 break-all" />
     </div>
     <div class="space-y-2">
       <Label>{{ t('common.visibility') }}</Label>

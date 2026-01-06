@@ -24,9 +24,9 @@ const form = reactive({
 </script>
 
 <template>
-  <div class="space-y-5 py-4">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div class="space-y-2">
+  <div class="space-y-5 py-4 overflow-x-hidden">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div class="space-y-2 min-w-0">
         <Label>{{ t('resources.contactType') }}</Label>
         <Select v-model.number="form.Type">
           <SelectTrigger><SelectValue /></SelectTrigger>
@@ -40,15 +40,15 @@ const form = reactive({
           </SelectContent>
         </Select>
       </div>
-      <div class="space-y-2">
+      <div class="space-y-2 min-w-0">
         <Label>{{ t('resources.contactPlatform') }}</Label>
-        <Input v-model="form.Label" :placeholder="t('resources.contactPlatformPlaceholder')" required />
+        <Input v-model="form.Label" :placeholder="t('resources.contactPlatformPlaceholder')" required class="min-w-0" />
       </div>
     </div>
 
     <div class="space-y-2">
       <Label>{{ t('resources.contactValue') }}</Label>
-      <Input v-model="form.Value" :placeholder="t('resources.contactValuePlaceholder')" required />
+      <Input v-model="form.Value" :placeholder="t('resources.contactValuePlaceholder')" required class="min-w-0 break-all" />
     </div>
 
     <div class="space-y-6">

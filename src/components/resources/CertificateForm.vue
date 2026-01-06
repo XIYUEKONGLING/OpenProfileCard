@@ -16,36 +16,36 @@ const form = reactive({ Type: 'PGP', Visibility: 0, ...props.modelValue });
 </script>
 
 <template>
-  <div class="space-y-4 py-4">
-    <div class="grid grid-cols-2 gap-4">
-      <div class="space-y-2">
+  <div class="space-y-4 py-4 overflow-x-hidden">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div class="space-y-2 min-w-0">
         <Label>{{ t('resources.certName') }}</Label>
-        <Input v-model="form.Name" placeholder="My PGP Key" required />
+        <Input v-model="form.Name" placeholder="My PGP Key" required class="min-w-0" />
       </div>
-      <div class="space-y-2">
+      <div class="space-y-2 min-w-0">
         <Label>{{ t('resources.certType') }}</Label>
-        <Input v-model="form.Type" placeholder="PGP, SSH, x509" />
+        <Input v-model="form.Type" placeholder="PGP, SSH, x509" class="min-w-0" />
       </div>
     </div>
 
     <div class="space-y-2">
       <Label>{{ t('resources.fingerprint') }}</Label>
-      <Input v-model="form.Fingerprint" class="font-mono" required />
+      <Input v-model="form.Fingerprint" class="font-mono min-w-0 break-all" required />
     </div>
 
     <div class="space-y-2">
       <Label>{{ t('resources.email') }}</Label>
-      <Input v-model="form.Email" placeholder="associated@email.com" />
+      <Input v-model="form.Email" placeholder="associated@email.com" class="min-w-0" />
     </div>
 
-    <div class="grid grid-cols-2 gap-4">
-      <div class="space-y-2">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div class="space-y-2 min-w-0">
         <Label>{{ t('resources.createdAt') }}</Label>
-        <Input type="date" v-model="form.CreatedAt" />
+        <Input type="date" v-model="form.CreatedAt" class="min-w-0" />
       </div>
-      <div class="space-y-2">
+      <div class="space-y-2 min-w-0">
         <Label>{{ t('resources.expiresAt') }}</Label>
-        <Input type="date" v-model="form.ExpiresAt" />
+        <Input type="date" v-model="form.ExpiresAt" class="min-w-0" />
       </div>
     </div>
 
@@ -63,7 +63,7 @@ const form = reactive({ Type: 'PGP', Visibility: 0, ...props.modelValue });
 
     <div class="space-y-2">
       <Label>{{ t('resources.content') }}</Label>
-      <Textarea v-model="form.Content" class="font-mono text-xs h-24" placeholder="-----BEGIN PGP PUBLIC KEY BLOCK-----" />
+      <Textarea v-model="form.Content" class="font-mono text-xs min-w-0 break-all resize-none" placeholder="-----BEGIN PGP PUBLIC KEY BLOCK-----" />
     </div>
 
     <Button class="w-full" @click="emit('save', form)" :disabled="isSaving">

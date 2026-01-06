@@ -15,15 +15,15 @@ const form = reactive({ ...props.modelValue });
 </script>
 
 <template>
-  <div class="space-y-4 py-4">
+  <div class="space-y-4 py-4 overflow-x-hidden">
     <AssetEditor v-model="form.Icon" :label="t('resources.icon')" />
     <div class="space-y-2">
       <Label>{{ t('resources.platform') }}</Label>
-      <Input v-model="form.Platform" placeholder="Patreon, GitHub Sponsors" required />
+      <Input v-model="form.Platform" placeholder="Patreon, GitHub Sponsors" required class="min-w-0" />
     </div>
     <div class="space-y-2">
       <Label>{{ t('resources.url') }}</Label>
-      <Input v-model="form.Url" placeholder="https://" />
+      <Input v-model="form.Url" placeholder="https://" class="min-w-0 break-all" />
     </div>
     <AssetEditor v-model="form.QrCode" :label="t('resources.qrCode')" />
     <Button class="w-full" @click="emit('save', form)" :disabled="isSaving">

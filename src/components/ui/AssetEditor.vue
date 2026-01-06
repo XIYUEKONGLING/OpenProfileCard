@@ -175,7 +175,7 @@ const handleFileUpload = (event: Event) => {
 
           <!-- Type Selector -->
           <Select :model-value="currentType" @update:model-value="onTypeChange">
-            <SelectTrigger class="w-full sm:w-48 h-8 text-xs">
+            <SelectTrigger class="w-full max-w-50 h-8 text-xs">
               <SelectValue>
                 {{ availableTypes.find(t => t.value === currentType)?.label || t('common.selectType') }}
               </SelectValue>
@@ -189,7 +189,7 @@ const handleFileUpload = (event: Event) => {
 
           <!-- Input: Remote URL -->
           <div v-if="currentType === AssetType.Remote">
-            <Input v-model="currentValue" @input="update" placeholder="https://example.com/image.png" class="font-mono text-xs" />
+            <Input v-model="currentValue" @input="update" placeholder="https://example.com/image.png" class="font-mono text-xs min-w-0 break-all" />
           </div>
 
           <!-- Input: File Upload (Image) -->
@@ -203,8 +203,8 @@ const handleFileUpload = (event: Event) => {
                 <input type="file" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" @change="handleFileUpload" />
               </div>
             </div>
-            <div v-else class="flex items-center gap-2">
-              <div class="text-[10px] text-green-600 font-bold bg-green-50 px-2 py-1 rounded border border-green-200">
+            <div v-else class="flex items-center gap-2 flex-wrap">
+              <div class="text-[10px] text-green-600 font-bold bg-green-50 px-2 py-1 rounded border border-green-200 break-all">
                 {{ currentTag ? currentTag : 'Image' }} ({{ Math.round(currentValue.length / 1024) }} KB)
               </div>
               <Button size="sm" variant="ghost" class="h-6 text-xs text-destructive hover:text-destructive" @click="currentValue = ''; currentTag = undefined; update()">
@@ -220,8 +220,8 @@ const handleFileUpload = (event: Event) => {
 
           <!-- Input: Style (Icon Class) -->
           <div v-else-if="currentType === AssetType.Style">
-            <Input v-model="currentValue" @input="update" placeholder="fa-solid fa-user" class="font-mono text-xs" />
-            <p class="text-[10px] text-muted-foreground mt-1">FontAwesome 6 Free or Devicon classes</p>
+            <Input v-model="currentValue" @input="update" placeholder="fa-solid fa-user" class="font-mono text-xs min-w-0 break-all" />
+            <p class="text-[10px] text-muted-foreground mt-1 break-all">FontAwesome 6 Free or Devicon classes</p>
           </div>
 
           <!-- Input: Empty (No controls) -->

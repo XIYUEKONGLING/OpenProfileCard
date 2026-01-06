@@ -15,30 +15,30 @@ const form = reactive({ ...props.modelValue });
 </script>
 
 <template>
-  <div class="space-y-4 py-4">
+  <div class="space-y-4 py-4 overflow-x-hidden">
     <AssetEditor v-model="form.Logo" :label="t('resources.logo')" />
     <div class="space-y-2">
       <Label>{{ t('resources.schoolName') }}</Label>
-      <Input v-model="form.SchoolName" required />
+      <Input v-model="form.SchoolName" required class="min-w-0" />
     </div>
-    <div class="grid grid-cols-2 gap-4">
-      <div class="space-y-2">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div class="space-y-2 min-w-0">
         <Label>{{ t('resources.degree') }}</Label>
-        <Input v-model="form.Degree" />
+        <Input v-model="form.Degree" class="min-w-0" />
       </div>
-      <div class="space-y-2">
+      <div class="space-y-2 min-w-0">
         <Label>{{ t('resources.major') }}</Label>
-        <Input v-model="form.Major" />
+        <Input v-model="form.Major" class="min-w-0" />
       </div>
     </div>
-    <div class="grid grid-cols-2 gap-4">
-      <div class="space-y-2">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div class="space-y-2 min-w-0">
         <Label>{{ t('resources.startDate') }}</Label>
-        <Input type="date" v-model="form.StartDate" />
+        <Input type="date" v-model="form.StartDate" class="min-w-0" />
       </div>
-      <div class="space-y-2">
+      <div class="space-y-2 min-w-0">
         <Label>{{ t('resources.endDate') }}</Label>
-        <Input type="date" v-model="form.EndDate" />
+        <Input type="date" v-model="form.EndDate" class="min-w-0" />
       </div>
     </div>
     <Button class="w-full" @click="emit('save', form)" :disabled="isSaving">
