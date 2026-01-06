@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, onMounted, computed, watch } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 import { useI18n } from '@/i18n';
 import { httpClient } from '@/api/client';
 import { useAuthStore } from '@/stores/auth';
@@ -50,6 +50,7 @@ const { t, locale } = useI18n();
 const auth = useAuthStore();
 const ui = useUIStore();
 const router = useRouter();
+const route = useRoute();
 
 // --- State ---
 const isLoading = ref(true);
@@ -231,6 +232,17 @@ const fetchData = async () => {
 onMounted(() => {
   fetchData();
 });
+
+// Watch for route changes to refresh data when returning from edit pages
+watch(
+  () => route.path,
+  (newPath, oldPath) => {
+    // When navigating back to dashboard from edit page, refresh data
+    if (newPath === '/dashboard' && oldPath?.includes('/edit')) {
+      fetchData();
+    }
+  }
+);
 
 // --- Helpers ---
 

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, watch, defineAsyncComponent } from 'vue';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useI18n } from '@/i18n';
 import { httpClient } from '@/api/client';
 import { useUIStore } from '@/stores/ui';
@@ -58,6 +58,7 @@ const { t } = useI18n();
 const ui = useUIStore();
 const auth = useAuthStore();
 const router = useRouter();
+const route = useRoute();
 
 // --- State ---
 const isLoading = ref(true);
@@ -285,6 +286,17 @@ const copyToClipboard = async (text: string, id: string) => {
 };
 
 watch(() => props.accountName, fetchOrgData, { immediate: true });
+
+// Watch for route changes to refresh data when returning from edit pages
+watch(
+  () => route.path,
+  (newPath, oldPath) => {
+    // When navigating back to org dashboard from edit page, refresh data
+    if (newPath.includes(`/orgs/${props.accountName}`) && oldPath?.includes('/edit')) {
+      fetchOrgData();
+    }
+  }
+);
 </script>
 
 <template>
