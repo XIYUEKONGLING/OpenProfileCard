@@ -1405,6 +1405,7 @@ onMounted(fetchUsers);
                         <span class="font-bold text-sm flex items-center gap-2">
                           {{ member.DisplayName }}
                           <Crown v-if="member.Role === MemberRole.Owner" class="size-3 text-yellow-500 fill-yellow-500" />
+                          <Badge v-if="member.Title" variant="secondary" class="text-[10px] px-1.5 py-0 h-4 font-medium">{{ member.Title }}</Badge>
                         </span>
                         <span class="text-xs text-muted-foreground">@{{ member.AccountName }}</span>
                       </div>
