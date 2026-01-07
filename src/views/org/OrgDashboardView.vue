@@ -5,6 +5,7 @@ import { useI18n } from '@/i18n';
 import { httpClient } from '@/api/client';
 import { useUIStore } from '@/stores/ui';
 import { useAuthStore } from '@/stores/auth';
+import { useServerStore } from '@/stores/server';
 import MarkdownRenderer from '@/components/ui/MarkdownRenderer.vue';
 import {
   type OrganizationDto,
@@ -16,6 +17,7 @@ import {
   type SponsorshipItemDto,
   type CertificateDto,
   type FollowCountsDto,
+  type DeletionCountdownDto,
   MemberRole,
   AccountStatus,
   AssetType
@@ -57,6 +59,7 @@ const props = defineProps<{ accountName: string }>();
 const { t } = useI18n();
 const ui = useUIStore();
 const auth = useAuthStore();
+const server = useServerStore();
 const router = useRouter();
 const route = useRoute();
 
@@ -65,6 +68,7 @@ const isLoading = ref(true);
 const org = ref<OrganizationDto | null>(null); // Roles, Status
 const profile = ref<ProfileDto | null>(null); // Visuals (Background, Content)
 const followStats = ref<FollowCountsDto | null>(null);
+const deletionCountdown = ref<DeletionCountdownDto | null>(null);
 
 const projects = ref<ProjectDto[]>([]);
 const gallery = ref<GalleryItemDto[]>([]);
@@ -85,6 +89,26 @@ const isAdmin = computed(() => org.value?.MyRole === MemberRole.Admin || isOwner
 const canEdit = computed(() => isAdmin.value);
 
 const description = computed(() => profile.value?.Description);
+
+const supportEmail = computed(() => server.meta?.ContactEmail);
+const contactSupportUrl = computed(() => {
+  if (!supportEmail.value) return null;
+  const subject = encodeURIComponent(t('dashboard.contactSupportSubject'));
+  const body = encodeURIComponent(t('dashboard.contactSupportOrgBody', { org: org.value?.DisplayName || props.accountName }));
+  return `mailto:${supportEmail.value}?subject=${subject}&body=${body}`;
+});
+
+const countdownDisplay = computed(() => {
+  if (!deletionCountdown.value) return null;
+  const { Days, Hours, Minutes, Seconds } = deletionCountdown.value;
+  if (Days > 0) {
+    return t('dashboard.countdownDays', { days: Days, hours: Hours });
+  } else if (Hours > 0) {
+    return t('dashboard.countdownHours', { hours: Hours, minutes: Minutes });
+  } else {
+    return t('dashboard.countdownMinutes', { minutes: Minutes, seconds: Seconds });
+  }
+});
 
 const timeZoneDisplay = computed(() => {
   const tz = profile.value?.TimeZone;
@@ -149,6 +173,16 @@ const blockReason = computed(() => {
 
 
 // --- Actions ---
+const fetchDeletionCountdown = async () => {
+  if (org.value?.Status !== AccountStatus.PendingDeletion) return;
+  try {
+    const data = await httpClient<DeletionCountdownDto>(`/orgs/${props.accountName}/deletion-countdown`);
+    deletionCountdown.value = data;
+  } catch (error) {
+    console.error('Failed to fetch deletion countdown', error);
+  }
+};
+
 const fetchOrgData = async () => {
   isLoading.value = true;
   try {
@@ -186,6 +220,9 @@ const fetchOrgData = async () => {
     contacts.value = contactsData || [];
     sponsorships.value = sponsorshipsData || [];
     certificates.value = certificatesData || [];
+
+    // Fetch deletion countdown if org is in PendingDeletion status
+    await fetchDeletionCountdown();
 
   } catch (e: any) {
     ui.notify(e.message || 'Failed to load organization', 'error');
@@ -311,16 +348,25 @@ watch(
           <component :is="blockReason.icon" class="size-10" :class="blockReason.color" />
         </div>
         <h2 class="text-2xl font-black tracking-tight mb-2">{{ blockReason.title }}</h2>
-        <p class="text-muted-foreground font-medium mb-8 leading-relaxed">
+        <p class="text-muted-foreground font-medium mb-4 leading-relaxed">
           {{ blockReason.desc }}
         </p>
+
+        <!-- Countdown for Pending Deletion -->
+        <div v-if="org?.Status === AccountStatus.PendingDeletion && countdownDisplay" class="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-2xl">
+          <p class="text-sm font-semibold text-destructive mb-1">{{ t('dashboard.accountWillBeDeleted') }}</p>
+          <p class="text-2xl font-black text-destructive">{{ countdownDisplay }}</p>
+        </div>
 
         <div class="flex flex-col gap-3 w-full">
           <!-- Allow Owners to restore pending deletion orgs -->
           <Button v-if="org?.Status === AccountStatus.PendingDeletion && isOwner" class="w-full font-bold" variant="default" @click="restoreOrg">
             {{ t('dashboard.restoreAccount') }}
           </Button>
-          <Button variant="outline" class="w-full font-bold">
+          <Button v-if="contactSupportUrl" variant="outline" class="w-full font-bold" as="a" :href="contactSupportUrl">
+            {{ t('dashboard.contactSupport') }}
+          </Button>
+          <Button v-else variant="outline" class="w-full font-bold" disabled>
             {{ t('dashboard.contactSupport') }}
           </Button>
         </div>

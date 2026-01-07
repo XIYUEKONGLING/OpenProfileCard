@@ -5,6 +5,7 @@ import { useI18n } from '@/i18n';
 import { httpClient } from '@/api/client';
 import { useAuthStore } from '@/stores/auth';
 import { useUIStore } from '@/stores/ui';
+import { useServerStore } from '@/stores/server';
 import MarkdownRenderer from '@/components/ui/MarkdownRenderer.vue';
 import {
   type ProfileDto,
@@ -18,6 +19,7 @@ import {
   type SponsorshipItemDto,
   type FollowCountsDto,
   type ContactMethodDto,
+  type DeletionCountdownDto,
   AccountStatus,
   AccountType,
   AssetType
@@ -49,6 +51,7 @@ import {
 const { t, locale } = useI18n();
 const auth = useAuthStore();
 const ui = useUIStore();
+const server = useServerStore();
 const router = useRouter();
 const route = useRoute();
 
@@ -67,6 +70,7 @@ const certificates = ref<CertificateDto[]>([]);
 const sponsorships = ref<SponsorshipItemDto[]>([]);
 
 const copiedId = ref<string | null>(null);
+const deletionCountdown = ref<DeletionCountdownDto | null>(null);
 
 // --- Computed ---
 const isPersonal = computed(() => {
@@ -105,6 +109,25 @@ const timeZoneDisplay = computed(() => {
   return `${timeString} (${tz})`;
 });
 
+const supportEmail = computed(() => server.meta?.ContactEmail);
+const contactSupportUrl = computed(() => {
+  if (!supportEmail.value) return null;
+  const subject = encodeURIComponent(t('dashboard.contactSupportSubject'));
+  const body = encodeURIComponent(t('dashboard.contactSupportBody', { account: auth.user?.AccountName || '' }));
+  return `mailto:${supportEmail.value}?subject=${subject}&body=${body}`;
+});
+
+const countdownDisplay = computed(() => {
+  if (!deletionCountdown.value) return null;
+  const { Days, Hours, Minutes, Seconds } = deletionCountdown.value;
+  if (Days > 0) {
+    return t('dashboard.countdownDays', { days: Days, hours: Hours });
+  } else if (Hours > 0) {
+    return t('dashboard.countdownHours', { hours: Hours, minutes: Minutes });
+  } else {
+    return t('dashboard.countdownMinutes', { minutes: Minutes, seconds: Seconds });
+  }
+});
 
 // --- Actions ---
 const goToEditProfile = (tab: string) => {
@@ -174,6 +197,16 @@ const blockReason = computed(() => {
 });
 
 // --- Data Fetching ---
+const fetchDeletionCountdown = async () => {
+  if (auth.user?.Status !== AccountStatus.PendingDeletion) return;
+  try {
+    const data = await httpClient<DeletionCountdownDto>('/me/deletion-countdown');
+    deletionCountdown.value = data;
+  } catch (error) {
+    console.error('Failed to fetch deletion countdown', error);
+  }
+};
+
 const fetchData = async () => {
   isLoading.value = true;
   try {
@@ -214,6 +247,9 @@ const fetchData = async () => {
     contacts.value = contactsData || [];
     certificates.value = certsData || [];
     sponsorships.value = sponsorshipsData || [];
+
+    // Fetch deletion countdown if account is in PendingDeletion status
+    await fetchDeletionCountdown();
 
   } catch (error) {
     console.error('Failed to load dashboard data', error);
@@ -292,15 +328,24 @@ const copyToClipboard = async (text: string, id: string) => {
           <component :is="blockReason.icon" class="size-10" :class="blockReason.color" />
         </div>
         <h2 class="text-2xl font-black tracking-tight mb-2">{{ blockReason.title }}</h2>
-        <p class="text-muted-foreground font-medium mb-8 leading-relaxed">
+        <p class="text-muted-foreground font-medium mb-4 leading-relaxed">
           {{ blockReason.desc }}
         </p>
+
+        <!-- Countdown for Pending Deletion -->
+        <div v-if="auth.user?.Status === AccountStatus.PendingDeletion && countdownDisplay" class="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-2xl">
+          <p class="text-sm font-semibold text-destructive mb-1">{{ t('dashboard.accountWillBeDeleted') }}</p>
+          <p class="text-2xl font-black text-destructive">{{ countdownDisplay }}</p>
+        </div>
 
         <div class="flex flex-col gap-3 w-full">
           <Button v-if="auth.user?.Status === AccountStatus.PendingDeletion" class="w-full font-bold" variant="default">
             {{ t('dashboard.restoreAccount') }}
           </Button>
-          <Button variant="outline" class="w-full font-bold">
+          <Button v-if="contactSupportUrl" variant="outline" class="w-full font-bold" as="a" :href="contactSupportUrl">
+            {{ t('dashboard.contactSupport') }}
+          </Button>
+          <Button v-else variant="outline" class="w-full font-bold" disabled>
             {{ t('dashboard.contactSupport') }}
           </Button>
         </div>
