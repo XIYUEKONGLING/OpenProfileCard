@@ -55,6 +55,7 @@ export const en = {
         close: 'Close',
         search: 'Search',
         back: 'Back',
+        sending: 'Sending...',
 
         total: 'Total',
         expired: 'Expired',
@@ -111,6 +112,7 @@ export const en = {
         sendCode: 'Send Code',
         sendCodeFailed: 'Failed to send code',
         codeSent: 'Code has been sent to your email',
+        codePlaceholder: 'Code',
         alreadyHaveAccount: 'Already have an account?',
         registrationDisabled: 'Registration is currently disabled',
         registerSuccess: 'Welcome! Registration complete.',

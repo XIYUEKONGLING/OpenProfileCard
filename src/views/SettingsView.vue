@@ -90,6 +90,10 @@ const showAddEmail = ref(false);
 const verifyEmailId = ref<string | null>(null);
 const verifyCode = ref('');
 
+// Verification Code Timer State
+const countdown = ref(0);
+const isSendingCode = ref(false);
+
 // Password State
 const passwordForm = ref<ChangePasswordRequestDto>({
   OldPassword: '',
@@ -110,7 +114,7 @@ const userToUnblock = ref<BlockDto | null>(null);
 // --- Computed ---
 const isPersonal = computed(() => auth.user?.Type === AccountType.Personal);
 const isEmailServiceEnabled = computed(() => server.features?.Email === true);
-const requiresVerification = computed(() => server.features?.EmailVerification === true);
+const requiresVerification = computed(() => server.features?.EmailAddVerification === true);
 const isPendingDeletion = computed(() => auth.user?.Status === AccountStatus.PendingDeletion);
 
 const canDeleteAccount = computed(() => {
@@ -202,6 +206,28 @@ const saveSettings = async () => {
 };
 
 // 2. Email Management
+const sendVerificationCode = async (email: string) => {
+  if (countdown.value > 0) return;
+
+  isSendingCode.value = true;
+  try {
+    await auth.sendCode({ Email: email, Type: VerificationType.VerifyEmail });
+    ui.notify(t('auth.codeSent'), 'success');
+    // Start 60 second countdown
+    countdown.value = 60;
+    const timer = setInterval(() => {
+      countdown.value--;
+      if (countdown.value <= 0) {
+        clearInterval(timer);
+      }
+    }, 1000);
+  } catch (e: any) {
+    ui.notify(e.message, 'error');
+  } finally {
+    isSendingCode.value = false;
+  }
+};
+
 const addEmail = async () => {
   if (!newEmail.value) return;
 
@@ -209,8 +235,7 @@ const addEmail = async () => {
     // Logic: Verification Required vs Direct Add
     if (requiresVerification.value) {
       if (!verifyCode.value) {
-        await auth.sendCode({ Email: newEmail.value, Type: VerificationType.VerifyEmail });
-        ui.notify(t('auth.codeSent'), 'success');
+        await sendVerificationCode(newEmail.value);
         return;
       }
     }
@@ -228,6 +253,7 @@ const addEmail = async () => {
     ui.notify(t('common.success'), 'success');
     newEmail.value = '';
     verifyCode.value = '';
+    countdown.value = 0;
     showAddEmail.value = false;
     emails.value = await httpClient<AccountEmailDto[]>('/me/emails');
   } catch (e: any) {
@@ -258,8 +284,7 @@ const setPrimaryEmail = async (email: string) => {
 
 const verifyExistingEmail = async (email: string) => {
   if (requiresVerification.value && !verifyCode.value) {
-    await auth.sendCode({ Email: email, Type: VerificationType.VerifyEmail });
-    ui.notify(t('auth.codeSent'), 'success');
+    await sendVerificationCode(email);
     return;
   }
 
@@ -524,24 +549,39 @@ onMounted(() => {
             <div v-if="showAddEmail" class="p-4 bg-muted/30 rounded-lg border border-dashed flex flex-col gap-3 animate-in fade-in zoom-in-95">
               <div class="space-y-1">
                 <Label>{{ t('settings.addEmailLabel') }}</Label>
-                <div class="flex gap-2">
+                <div class="flex flex-col sm:flex-row gap-2">
                   <Input v-model="newEmail" placeholder="name@example.com" class="flex-1" />
 
                   <!-- Show Code Input only if Verification is Required -->
-                  <Input
-                      v-if="requiresVerification && (verifyCode || newEmail)"
-                      v-model="verifyCode"
-                      placeholder="Code"
-                      class="w-24"
-                  />
+                  <template v-if="requiresVerification">
+                    <Input
+                        v-if="verifyCode || newEmail"
+                        v-model="verifyCode"
+                        :placeholder="t('auth.codePlaceholder')"
+                        class="sm:w-32 lg:w-48"
+                    />
+                    <Button
+                        @click="addEmail"
+                        :disabled="isSendingCode || (countdown > 0 && !verifyCode)"
+                    >
+                      <template v-if="isSendingCode">
+                        <Loader2 class="mr-2 size-4 animate-spin" />
+                        {{ t('common.sending') }}
+                      </template>
+                      <template v-else-if="countdown > 0 && !verifyCode">
+                        {{ countdown }}s
+                      </template>
+                      <template v-else-if="verifyCode">
+                        {{ t('common.save') }}
+                      </template>
+                      <template v-else>
+                        {{ t('auth.sendCode') }}
+                      </template>
+                    </Button>
+                  </template>
 
-                  <Button @click="addEmail">
-                    <template v-if="requiresVerification">
-                      {{ verifyCode ? t('common.save') : t('auth.sendCode') }}
-                    </template>
-                    <template v-else>
-                      {{ t('common.add') }}
-                    </template>
+                  <Button v-else @click="addEmail">
+                    {{ t('common.add') }}
                   </Button>
                 </div>
                 <p v-if="requiresVerification" class="text-[10px] text-muted-foreground">{{ t('settings.addEmailNote') }}</p>

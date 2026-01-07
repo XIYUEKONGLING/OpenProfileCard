@@ -55,6 +55,8 @@ export const zh = {
         close: '关闭',
         search: '搜索',
 
+        sending: '发送中...',
+
         total: '总共',
         expired: '过期',
         notifications: '通知',
@@ -110,6 +112,7 @@ export const zh = {
         sendCode: '获取验证码',
         sendCodeFailed: '发送失败',
         codeSent: '验证码已发送至您的邮箱',
+        codePlaceholder: '验证码',
         alreadyHaveAccount: '已经有账户了？',
         registrationDisabled: '当前系统已关闭注册功能',
         registerSuccess: '注册成功，欢迎加入',
