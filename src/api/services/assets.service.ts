@@ -5,6 +5,7 @@ import type {
     UpdateAccountAssetRequestDto,
     BatchDeleteRequestDto,
     BatchUpdateVisibilityRequestDto,
+    LookupAssetDto,
     PagedResponse,
     MessageResponse
 } from '../types';
@@ -233,4 +234,17 @@ export const publicAssetsApi = {
      */
     getAssetJson: (uuid: string): Promise<AccountAssetDto> =>
         httpClient<AccountAssetDto>(`/assets/${uuid}.json`, { requiresAuth: false })
+};
+
+/**
+ * Asset Lookup (Authenticated)
+ * Cross-library asset lookup for authenticated users
+ */
+export const lookupApi = {
+    /**
+     * Lookup asset by UUID with permission checking
+     * GET /api/lookup/{uuid}
+     */
+    lookupAsset: (uuid: string): Promise<LookupAssetDto> =>
+        httpClient<LookupAssetDto>(`/lookup/${uuid}`)
 };
