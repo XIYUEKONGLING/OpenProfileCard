@@ -58,6 +58,21 @@ npm run dev
 npm run build
 ```
 
+### 5. Deployment
+
+#### Cloudflare Pages
+
+When deploying with the generator's build output on Cloudflare Pages, ensure you include a `_redirects` file in the public directory:
+
+```
+/api/*   /api/:splat   200
+/*       /index.html   200
+```
+
+This configuration ensures:
+- API requests are properly proxied to your backend
+- All routes are handled by `index.html` for client-side routing
+
 ---
 
 ## 🤝 Contributing
