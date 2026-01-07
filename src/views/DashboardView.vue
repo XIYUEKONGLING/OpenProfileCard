@@ -364,6 +364,18 @@ const contactSupport = () => {
     window.location.href = contactSupportUrl.value;
   }
 };
+
+const restoreAccount = async () => {
+  try {
+    await httpClient('/me/restore', { method: 'POST' });
+    ui.notify(t('settings.accountRestored'), 'success');
+    // Refresh auth state and dashboard data
+    await auth.fetchMe();
+    await fetchData();
+  } catch (e: any) {
+    ui.notify(e.message, 'error');
+  }
+};
 </script>
 
 <template>
@@ -394,7 +406,7 @@ const contactSupport = () => {
         </div>
 
         <div class="flex flex-col gap-3 w-full">
-          <Button v-if="auth.user?.Status === AccountStatus.PendingDeletion" class="w-full font-bold" variant="default">
+          <Button v-if="auth.user?.Status === AccountStatus.PendingDeletion" class="w-full font-bold" variant="default" @click="restoreAccount">
             {{ t('dashboard.restoreAccount') }}
           </Button>
           <Button v-if="contactSupportUrl" variant="outline" class="w-full font-bold" @click="contactSupport">
