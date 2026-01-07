@@ -28,6 +28,7 @@ import {
   Plus,
   Bell,
   Mailbox,
+  Image,
 } from 'lucide-vue-next';
 import { Button } from '@/components/ui/button';
 import AssetView from '@/components/ui/AssetView.vue';
@@ -112,6 +113,7 @@ const navigation = [
   { name: t('dashboard.overview'), href: '/dashboard', icon: LayoutDashboard },
   { name: t('common.notifications'), href: '/dashboard/notifications', icon: Bell },
   { name: t('common.invitations'), href: '/dashboard/invitations', icon: Mailbox },
+  { name: t('common.assetLibrary'), href: '/dashboard/assets', icon: Image },
   { name: t('common.settings'), href: '/dashboard/settings', icon: Settings },
 ];
 

@@ -28,6 +28,7 @@ const router = createRouter({
                 { path: 'settings', name: 'settings', component: SettingsView },
                 { path: 'notifications', name: 'notifications', component: NotificationsView },
                 { path: 'invitations', name: 'invitations', component: InvitationsView },
+                { path: 'assets', name: 'asset-library', component: () => import('@/views/AssetLibraryView.vue') },
                 { path: 'profile/edit', name: 'profile-edit', component: () => import('@/views/ProfileEditView.vue') },
                 { path: 'manage/:resource', name: 'resource-manager', component: () => import('@/views/ResourceManager.vue'), props: true },
 
