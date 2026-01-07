@@ -5,9 +5,10 @@ import { useI18n } from '@/i18n';
 import { httpClient } from '@/api/client';
 import { type OrganizationDto, MemberRole } from '@/api/types';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, AlertTriangle, Settings, Mail } from 'lucide-vue-next';
+import { ArrowLeft, AlertTriangle, Settings, Mail, Bell } from 'lucide-vue-next';
 import OrgSettings from '@/components/org/OrgSettings.vue';
 import OrgOutgoingInvitations from '@/components/org/OrgOutgoingInvitations.vue';
+import OrgNotifications from '@/components/org/OrgNotifications.vue';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -58,6 +59,7 @@ const dissolveOrg = async () => {
 onMounted(checkPermission);
 </script>
 
+
 <template>
   <div class="max-w-4xl mx-auto pb-10 space-y-6">
     <div class="flex items-center gap-2">
@@ -74,7 +76,7 @@ onMounted(checkPermission);
 
       <!-- TABS CONTAINER -->
       <Tabs default-value="general" class="w-full">
-        <TabsList class="grid w-full max-w-md grid-cols-2">
+        <TabsList class="grid w-full max-w-md grid-cols-3">
           <TabsTrigger value="general">
             <Settings class="size-4 mr-2" />
             {{ t('common.settings') }}
@@ -82,6 +84,10 @@ onMounted(checkPermission);
           <TabsTrigger value="invitations">
             <Mail class="size-4 mr-2" />
             {{ t('organization.outgoingInvitations') }}
+          </TabsTrigger>
+          <TabsTrigger value="notifications">
+            <Bell class="size-4 mr-2" />
+            {{ t('common.notifications') }}
           </TabsTrigger>
         </TabsList>
 
@@ -120,6 +126,11 @@ onMounted(checkPermission);
         <!-- TAB 2: Outgoing Invitations -->
         <TabsContent value="invitations" class="mt-6">
           <OrgOutgoingInvitations :account-name="accountName" />
+        </TabsContent>
+
+        <!-- TAB 3: Notifications -->
+        <TabsContent value="notifications" class="mt-6">
+          <OrgNotifications :account-name="accountName" />
         </TabsContent>
       </Tabs>
     </div>
@@ -160,4 +171,5 @@ onMounted(checkPermission);
       </Transition>
     </Teleport>
   </div>
+
 </template>
