@@ -166,7 +166,7 @@ const themeOptions = [
             v-slot="{ isExactActive }"
         >
           <div :class="[
-            'flex items-center rounded-xl font-bold transition-all duration-200 relative group',
+            'flex items-center rounded-xl font-bold transition-all duration-200 relative group mt-2',
             isCollapsed ? 'justify-center size-10 mx-auto' : 'gap-3 px-4 py-3',
             isExactActive ? 'bg-foreground text-background shadow-lg shadow-foreground/10' : 'text-muted-foreground hover:bg-muted hover:text-foreground'
           ]" :title="isCollapsed ? item.name : ''">
@@ -220,7 +220,6 @@ const themeOptions = [
           <div class="mt-2 flex justify-center">
             <Button
                 variant="ghost"
-                size="sm"
                 class="border border-dashed border-border text-muted-foreground hover:text-foreground hover:bg-muted/50 justify-start gap-2"
                 :class="isCollapsed ? 'w-10 h-10 rounded-xl justify-center p-0 mx-auto' : 'w-full justify-start px-4'"
                 @click="router.push('/dashboard/create-org')"
