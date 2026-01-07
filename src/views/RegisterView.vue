@@ -52,7 +52,7 @@ let timer: number | null = null;
 // Feature flags
 const canRegister = computed(() => server.features?.Registration === true);
 
-const isEmailServiceEnabled = computed(() => server.features?.Email === true);
+const isEmailServiceEnabled = computed(() => server.features?.Email === true && server.features?.EmailVerification === true);
 const requiresVerification = computed(() => isEmailServiceEnabled.value);
 
 /**
