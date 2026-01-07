@@ -153,14 +153,17 @@ jobs:
         run: |
           TAG_NAME="${{ needs.prepare-release.outputs.tag }}"
           ARCHIVE_NAME="open-profile-card-${TAG_NAME}.zip"
-          
-          mkdir -p ./artifacts
-          
-          cd dist
-          zip -r "../../artifacts/$ARCHIVE_NAME" .
-          
-          echo "Build Complete: $ARCHIVE_NAME"
 
+          mkdir -p ./artifacts
+
+          cd dist
+          zip -r ../artifacts/$ARCHIVE_NAME .
+          cd ..
+
+          echo "Build Complete: $ARCHIVE_NAME"
+          ls -lh ./artifacts/
+      
+      
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
