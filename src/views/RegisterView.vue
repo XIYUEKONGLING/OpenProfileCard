@@ -275,7 +275,7 @@ const languages = [
                   <Input
                       v-model="form.code"
                       class="h-12 pl-11 rounded-xl bg-muted/50 border-none focus:bg-background transition-all shadow-none"
-                      placeholder="000000"
+                      placeholder=""
                       required
                   />
                 </div>
