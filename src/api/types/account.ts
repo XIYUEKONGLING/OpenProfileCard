@@ -80,3 +80,11 @@ export interface NotificationDto {
     IsRead: boolean;
     CreatedAt: string; // DateTime
 }
+
+export interface DeletionCountdownDto {
+    Days: number;
+    Hours: number;
+    Minutes: number;
+    Seconds: number;
+    IsInCooldown: boolean;
+}

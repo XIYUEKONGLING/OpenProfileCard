@@ -1,4 +1,4 @@
-import type { AssetType } from './enums';
+import type { AssetType, Visibility } from './enums';
 
 export interface ServerInfoDto {
     Version: string;
@@ -11,6 +11,27 @@ export interface AssetDto {
     Type: AssetType;
     Value?: string;
     Tag?: string;
+}
+
+export interface SystemAssetDto {
+    Id: string; // Guid
+    Category?: string;
+    Notes?: string;
+    Asset: AssetDto;
+    Visibility: Visibility;
+    CreatedAt: string; // DateTime
+    UpdatedAt: string; // DateTime
+}
+
+export interface AccountAssetDto {
+    Id: string; // Guid
+    AccountId: string; // Guid
+    Category?: string;
+    Notes?: string;
+    Asset: AssetDto;
+    Visibility: Visibility;
+    CreatedAt: string; // DateTime
+    UpdatedAt: string; // DateTime
 }
 
 export interface ApiResponse<T> {

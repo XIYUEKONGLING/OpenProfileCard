@@ -3,7 +3,8 @@ export * from './core';
 export * from './auth';
 export * from './account';
 export * from './profile';
-export * from './social'; // Added
+export * from './social';
 export * from './organization';
 export * from './admin';
 export * from './site';
+export * from './assets';

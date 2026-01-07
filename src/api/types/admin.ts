@@ -1,4 +1,4 @@
-import type {AccountType, AccountRole, AccountStatus, NotificationType} from './enums';
+import type { AccountType, AccountRole, AccountStatus, NotificationType } from './enums';
 
 // --- Users ---
 
@@ -51,7 +51,7 @@ export interface CreateNotificationRequestDto {
     Body: string;
     Type: NotificationType;
     Url?: string;
-    Data?: string; // Optional JSON data payload.
+    Data?: string; // Optional JSON data payload
 }
 
 // --- System Status ---
@@ -61,15 +61,19 @@ export interface SystemStatusDto {
     AccountsByType: Record<AccountType, number>;
     AccountsByRole: Record<AccountRole, number>;
     AccountsByStatus: Record<AccountStatus, number>;
-    
+
     TotalRefreshTokenCount: number;
     ActiveRefreshTokenCount: number;
     ExpiredRefreshTokenCount: number;
-    
+
     TotalOrganizationCount: number;
     TotalPersonalProfileCount: number;
     TotalNotificationCount: number;
-    
+
+    TotalAccountAssetCount: number;
+    AccountAssetsByVisibility: Record<string, number>;
+    TotalSystemAssetCount: number;
+
     ServerTimeUtc: string; // DateTime
 }
 
@@ -79,7 +83,7 @@ export interface SystemSettingDto {
     Key: string;
     Value: string;
     Description?: string;
-    ValueType?: string;
+    ValueType?: string; // Hint for UI: "boolean", "number", "string", "json", "html"
     UpdatedAt: string; // DateTime
 }
 
