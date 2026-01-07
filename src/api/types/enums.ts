@@ -141,7 +141,6 @@ export const AssetType = {
     Library: 7,
     /**
      * Reference to system global asset library (SystemAsset.Id).
-     * System reserved, not available for user use.
      * When set, Asset.Value contains the UUID of the SystemAsset.
      */
     Resource: 8

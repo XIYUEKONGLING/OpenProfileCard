@@ -34,11 +34,13 @@ const currentTag = ref<string | undefined>(undefined);
 
 // Supported types for selection
 const availableTypes = [
-  { value: AssetType.Remote, label: t('common.remote') },
-  { value: AssetType.Image, label: t('common.image') },
+  { value: AssetType.Empty, label: t('common.none') },
   { value: AssetType.Text, label: t('common.text') },
   { value: AssetType.Style, label: t('common.style') },
-  { value: AssetType.Empty, label: t('common.none') },
+  { value: AssetType.Image, label: t('common.image') },
+  { value: AssetType.Remote, label: t('common.remote') },
+  { value: AssetType.Library, label: t('common.library') },
+  { value: AssetType.Resource, label: t('common.resource') },
 ];
 
 // Computed Asset for Preview
@@ -222,6 +224,18 @@ const handleFileUpload = (event: Event) => {
           <div v-else-if="currentType === AssetType.Style">
             <Input v-model="currentValue" @input="update" placeholder="fa-solid fa-user" class="font-mono text-xs min-w-0 break-all" />
             <p class="text-[10px] text-muted-foreground mt-1 break-all">FontAwesome 6 Free or Devicon classes</p>
+          </div>
+
+          <!-- Input: Library (Asset UUID) -->
+          <div v-else-if="currentType === AssetType.Library">
+            <Input v-model="currentValue" @input="update" placeholder="550e8400-e29b-41d4-a716-446655440000" class="font-mono text-xs min-w-0 break-all" />
+            <p class="text-[10px] text-muted-foreground mt-1 break-all">Enter the UUID of an asset from your account library</p>
+          </div>
+
+          <!-- Input: Resource (System Asset UUID) -->
+          <div v-else-if="currentType === AssetType.Resource">
+            <Input v-model="currentValue" @input="update" placeholder="550e8400-e29b-41d4-a716-446655440000" class="font-mono text-xs min-w-0 break-all" />
+            <p class="text-[10px] text-muted-foreground mt-1 break-all">Enter the UUID of a system resource</p>
           </div>
 
           <!-- Input: Empty (No controls) -->

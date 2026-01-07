@@ -27,7 +27,9 @@ const isEffectivelyEmpty = computed(() => {
     return props.asset.Type === AssetType.Text ||
            props.asset.Type === AssetType.Image ||
            props.asset.Type === AssetType.Remote ||
-           props.asset.Type === AssetType.Style;
+           props.asset.Type === AssetType.Style ||
+           props.asset.Type === AssetType.Library ||
+           props.asset.Type === AssetType.Resource;
   }
   return false;
 });
