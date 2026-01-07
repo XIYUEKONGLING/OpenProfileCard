@@ -1,0 +1,203 @@
+name: Release Frontend
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (e.g. v1.0.0)"
+        required: true
+      title:
+        description: "Release title (e.g. Release v1.0.0)"
+        required: false
+        default: ""
+      previous_tag:
+        description: "Previous tag for changelog comparison (leave empty to auto-detect)"
+        required: false
+        default: ""
+      pre_release:
+        description: "Mark as pre-release"
+        required: false
+        default: "false"
+        type: boolean
+      draft:
+        description: "Create as draft"
+        required: false
+        default: "false"
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  prepare-release:
+    name: Prepare Release
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.config.outputs.tag }}
+      title: ${{ steps.config.outputs.title }}
+      previous_tag: ${{ steps.changelog.outputs.previous_tag }}
+      is_pre_release: ${{ steps.config.outputs.is_pre_release }}
+      is_draft: ${{ steps.config.outputs.is_draft }}
+      commit_sha: ${{ steps.config.outputs.commit_sha }}
+      contributors: ${{ steps.changelog.outputs.contributors }}
+      whats_changed: ${{ steps.changelog.outputs.changes }}
+
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure Release Parameters
+        id: config
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ github.event.inputs.tag }}"
+          else
+            TAG="${GITHUB_REF#refs/tags/}"
+          fi
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+          if [ -n "${{ github.event.inputs.title }}" ]; then
+            echo "title=${{ github.event.inputs.title }}" >> $GITHUB_OUTPUT
+          else
+            echo "title=Release $TAG" >> $GITHUB_OUTPUT
+          fi
+
+          if [ "${{ github.event.inputs.pre_release }}" = "true" ]; then
+            echo "is_pre_release=true" >> $GITHUB_OUTPUT
+          elif [[ "$TAG" =~ -(alpha|beta|rc|pre|preview) ]]; then
+            echo "is_pre_release=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_pre_release=false" >> $GITHUB_OUTPUT
+          fi
+
+          echo "is_draft=${{ github.event.inputs.draft }}" >> $GITHUB_OUTPUT
+          echo "commit_sha=$(git rev-parse HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Generate Changelog
+        id: changelog
+        shell: bash
+        run: |
+          CURRENT_TAG="${{ steps.config.outputs.tag }}"
+          INPUT_PREV="${{ github.event.inputs.previous_tag }}"
+          
+          if [ -n "$INPUT_PREV" ]; then
+            PREV_TAG="$INPUT_PREV"
+          else
+            PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+          fi
+
+          echo "Current: $CURRENT_TAG, Previous: $PREV_TAG"
+          echo "previous_tag=$PREV_TAG" >> $GITHUB_OUTPUT
+
+          if [ -z "$PREV_TAG" ]; then
+            echo "No previous tag found. Listing all commits."
+            COMMITS=$(git log --pretty=format:"- %s (@**%an**)" --reverse)
+            CONTRIBUTORS=$(git log --pretty=format:"%an" | sort | uniq -c | sort -nr | awk '{print "- **" $2 "** (" $1 " commits)"}')
+          else
+            echo "Generating changelog from $PREV_TAG to HEAD."
+            COMMITS=$(git log ${PREV_TAG}..HEAD --pretty=format:"- %s (@%an)" --reverse)
+            CONTRIBUTORS=$(git log ${PREV_TAG}..HEAD --pretty=format:"%an" | sort | uniq -c | sort -nr | awk '{print "- " $2 " (" $1 " commits)"}')
+          fi
+
+          if [ -z "$COMMITS" ]; then COMMITS="No visible changes."; fi
+          if [ -z "$CONTRIBUTORS" ]; then CONTRIBUTORS="No new contributors."; fi
+
+          {
+            echo "changes<<EOF"
+            echo "$COMMITS"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+
+          {
+            echo "contributors<<EOF"
+            echo "$CONTRIBUTORS"
+            echo "EOF"
+          } >> $GITHUB_OUTPUT
+
+  build:
+    name: Build Frontend
+    runs-on: ubuntu-latest
+    needs: prepare-release
+    
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Configure Production Environment
+        run: |
+          echo "VITE_API_BASE_URL=/api" > .env.production
+          echo "Created .env.production with VITE_API_BASE_URL=/api"
+
+      - name: Build Project
+        run: npm run build
+
+      - name: Compress Assets
+        shell: bash
+        run: |
+          TAG_NAME="${{ needs.prepare-release.outputs.tag }}"
+          ARCHIVE_NAME="open-profile-card-${TAG_NAME}.zip"
+          
+          mkdir -p ./artifacts
+          
+          cd dist
+          zip -r "../../artifacts/$ARCHIVE_NAME" .
+          
+          echo "Build Complete: $ARCHIVE_NAME"
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: open-profile-card-release
+          path: ./artifacts/*
+          retention-days: 1
+
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: [prepare-release, build]
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+
+      - name: Display Artifacts structure
+        run: ls -R ./artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.prepare-release.outputs.tag }}
+          name: ${{ needs.prepare-release.outputs.title }}
+          target_commitish: ${{ needs.prepare-release.outputs.commit_sha }}
+          draft: ${{ needs.prepare-release.outputs.is_draft }}
+          prerelease: ${{ needs.prepare-release.outputs.is_pre_release }}
+          generate_release_notes: false
+          body: |
+            ## What's Changed
+            
+            ${{ needs.prepare-release.outputs.whats_changed }}
+
+            ## Contributors
+            
+            ${{ needs.prepare-release.outputs.contributors }}
+
+            ---
+            
+            **Full Changelog**: https://github.com/${{ github.repository }}/compare/${{ needs.prepare-release.outputs.previous_tag }}...${{ needs.prepare-release.outputs.tag }}
+          files: ./artifacts/**/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
