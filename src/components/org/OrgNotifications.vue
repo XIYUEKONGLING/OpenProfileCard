@@ -109,6 +109,7 @@ watch(currentPage, fetchNotifications);
 onMounted(fetchNotifications);
 </script>
 
+
 <template>
   <div class="space-y-6">
     <div class="flex items-center justify-between gap-4">
@@ -123,12 +124,12 @@ onMounted(fetchNotifications);
     </div>
 
     <!-- List -->
-    <div class="space-y-4">
+    <div class="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
       <div v-if="isLoading" class="space-y-4">
         <div v-for="i in 3" :key="i" class="h-24 bg-muted rounded-xl animate-pulse"></div>
       </div>
 
-      <div v-else-if="notifications.length === 0" class="text-center py-12 border-2 border-dashed border-border rounded-xl bg-muted/10">
+      <div v-else-if="notifications.length === 0" class="text-center py-12 border-2 border-dashed border-border rounded-xl bg-muted/10 animate-in fade-in zoom-in-95 duration-300">
         <Bell class="size-12 mx-auto text-muted-foreground/20 mb-4" />
         <p class="font-bold">{{ t('notifications.empty') }}</p>
         <p class="text-sm text-muted-foreground">{{ t('notifications.emptyDesc') }}</p>
@@ -136,7 +137,7 @@ onMounted(fetchNotifications);
 
       <div v-else class="space-y-3">
         <Card v-for="notif in notifications" :key="notif.Id"
-              class="group transition-all hover:shadow-md"
+              class="group transition-all hover:shadow-md animate-in fade-in slide-in-from-left-2"
               :class="{'border-brand-blue/50 bg-brand-blue/5': !notif.IsRead}">
           <CardContent class="p-4 flex gap-4 items-start">
             <!-- Icon -->
@@ -179,7 +180,7 @@ onMounted(fetchNotifications);
     </div>
 
     <!-- Pagination -->
-    <div v-if="totalPages > 1" class="flex items-center justify-between gap-4 px-2 pt-4 border-t">
+    <div v-if="totalPages > 1" class="flex items-center justify-between gap-4 px-2 pt-4 border-t animate-in fade-in duration-300">
       <div class="text-xs font-black uppercase tracking-widest text-muted-foreground">
         {{ t('admin.currentPage') }}: <span class="text-foreground">{{ currentPage }}</span> / {{ totalPages }}
       </div>
