@@ -1,3 +1,4 @@
+// enums.ts
 // =============================================================================
 // VerificationType
 // =============================================================================
@@ -23,13 +24,15 @@ export type VerificationType = typeof VerificationType[keyof typeof Verification
 // Visibility
 // =============================================================================
 
-// export type Visibility = 'Public' | 'Private' | 'Protected' | 'MembersOnly';
+// export type Visibility = 'Public' | 'Private' | 'Protected' | 'MembersOnly' | 'FriendsOnly' | 'Authenticated';
 
 export const Visibility = {
     Public: 0,
     Private: 1,
     Protected: 2,
-    MembersOnly: 3
+    MembersOnly: 3,
+    FriendsOnly: 4,
+    Authenticated: 5
 } as const;
 
 export type Visibility = typeof Visibility[keyof typeof Visibility];
@@ -114,7 +117,7 @@ export type ContactType = typeof ContactType[keyof typeof ContactType];
 // AssetType
 // =============================================================================
 
-// export type AssetType = 'Text' | 'Image' | 'Remote' | 'Style' | 'Identifier';
+// export type AssetType = 'Text' | 'Image' | 'Remote' | 'Style' | 'Identifier' | 'System' | 'Library' | 'Resource';
 // export type AssetType = typeof AssetType[keyof typeof AssetType];
 
 export const AssetType = {
@@ -128,7 +131,20 @@ export const AssetType = {
     /** CSS classes (e.g., 'fa-solid fa-user', 'devicon-csharp-plain'). */
     Style: 4,
     /** Unique ID for an object storage resource (e.g., AWS S3 Key, Azure Blob ID). */
-    Identifier: 5
+    Identifier: 5,
+    /** System reserved, not available for user use. */
+    System: 6,
+    /**
+     * Reference to user asset library (AccountAsset.Id).
+     * When set, Asset.Value contains the UUID of the AccountAsset.
+     */
+    Library: 7,
+    /**
+     * Reference to system global asset library (SystemAsset.Id).
+     * System reserved, not available for user use.
+     * When set, Asset.Value contains the UUID of the SystemAsset.
+     */
+    Resource: 8
 } as const;
 
 export type AssetType = typeof AssetType[keyof typeof AssetType];
