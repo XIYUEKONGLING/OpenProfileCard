@@ -465,6 +465,14 @@ export const en = {
         typeLabel: 'Account Type',
         roleLabel: 'Initial Role',
 
+        // Organization Members Management
+        manageOrgMembers: 'Manage Organization Members',
+        orgMembersOnlyForOrg: 'Organization members can only be managed for organization accounts',
+        noOrgMembers: 'No members found in this organization',
+        memberAddedSuccess: 'Member added successfully',
+        memberKickedSuccess: 'Member removed successfully',
+        identityRequired: 'Username or email is required',
+        usernameOrEmail: 'Username or email',
     },
     organization: {
         manage: 'Manage Organization',

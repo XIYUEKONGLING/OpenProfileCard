@@ -461,6 +461,14 @@ export const zh = {
         typeLabel: '账户类型',
         roleLabel: '初始角色',
 
+        // Organization Members Management
+        manageOrgMembers: '管理组织成员',
+        orgMembersOnlyForOrg: '只能管理组织账户的成员',
+        noOrgMembers: '该组织暂无成员',
+        memberAddedSuccess: '成员添加成功',
+        memberKickedSuccess: '成员移除成功',
+        identityRequired: '用户名或邮箱为必填项',
+        usernameOrEmail: '用户名或邮箱',
     },
     organization: {
         manage: '管理组织',

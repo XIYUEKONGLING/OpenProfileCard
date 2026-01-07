@@ -13,7 +13,12 @@ import {
   type AddEmailRequestDto,
   type AdminUpdateEmailRequestDto,
   type AdminResetPasswordRequestDto, AccountRole, NotificationType, type CreateNotificationRequestDto,
-  type CreateUserRequestDto
+  type CreateUserRequestDto,
+  type OrganizationMemberDto,
+  MemberRole,
+  Visibility,
+  type InviteMemberRequestDto,
+  type UpdateMemberRequestDto
 } from '@/api/types';
 
 // UI Components
@@ -75,7 +80,7 @@ import {
   Loader2, Search, Shield, Ban, Trash2, CheckCircle,
   AlertTriangle, MoreHorizontal, Filter, ChevronDown, Mail, Key,
   ChevronLeft, ChevronsLeft, ChevronRight, RotateCcw, UserCircle,
-  Plus, X, Bell, UserPlus,
+  Plus, X, Bell, UserPlus, Building2, Crown, Eye, EyeOff, UserX,
 } from 'lucide-vue-next';
 
 const { t } = useI18n();
@@ -143,6 +148,28 @@ const createUserForm = ref<CreateUserRequestDto & { confirmPassword?: string }>(
   DisplayName: ''
 });
 
+// Organization Members Management State
+const showOrgMembersModal = ref(false);
+const orgMembers = ref<OrganizationMemberDto[]>([]);
+const orgMembersLoading = ref(false);
+const selectedOrgAccountName = ref('');
+const orgActionLoadingId = ref<string | null>(null);
+
+// Add Member to Org State
+const showAddMemberDialog = ref(false);
+const addMemberForm = ref<InviteMemberRequestDto>({
+  Identity: '',
+  Role: MemberRole.Member,
+  Title: ''
+});
+const isAddingMember = ref(false);
+
+// Edit Member Title State
+const showEditTitleDialog = ref(false);
+const editingMember = ref<OrganizationMemberDto | null>(null);
+const editMemberTitle = ref('');
+const isUpdatingTitle = ref(false);
+
 
 // --- Mappings ---
 const getStatusLabel = (s: number): string => {
@@ -177,6 +204,26 @@ const getStatusVariant = (s: number): "default" | "destructive" | "secondary" | 
   if (s === AccountStatus.Active) return 'default';
   if (s === AccountStatus.Banned || s === AccountStatus.PendingDeletion) return 'destructive';
   return 'secondary';
+};
+
+const getMemberRoleLabel = (role: MemberRole): string => {
+  switch (role) {
+    case MemberRole.Owner: return t('organization.roleOwner');
+    case MemberRole.Admin: return t('organization.roleAdmin');
+    case MemberRole.Member: return t('organization.roleMember');
+    case MemberRole.Guest: return t('organization.roleGuest');
+    default: return 'Unknown';
+  }
+};
+
+const getVisibilityLabel = (visibility: Visibility): string => {
+  switch (visibility) {
+    case Visibility.Public: return t('common.public');
+    case Visibility.Private: return t('common.private');
+    case Visibility.Protected: return t('common.protected');
+    case Visibility.MembersOnly: return t('common.membersOnly');
+    default: return 'Unknown';
+  }
 };
 
 // --- API Logic ---
@@ -527,6 +574,140 @@ const confirmDelete = async (): Promise<void> => {
   }
 };
 
+// --- API Logic: Organization Members Management ---
+
+const openOrgMembersModal = async (user: UserAdminDto): Promise<void> => {
+  if (user.Type !== AccountType.Organization) {
+    ui.notify(t('admin.orgMembersOnlyForOrg'), 'error');
+    return;
+  }
+  selectedUser.value = user;
+  selectedOrgAccountName.value = user.AccountName;
+  showOrgMembersModal.value = true;
+  await fetchOrgMembers();
+};
+
+const fetchOrgMembers = async (): Promise<void> => {
+  orgMembersLoading.value = true;
+  try {
+    orgMembers.value = await httpClient<OrganizationMemberDto[]>(`/admin/orgs/${selectedOrgAccountName.value}/members`);
+  } catch (e: any) {
+    ui.notify(e.message, 'error');
+  } finally {
+    orgMembersLoading.value = false;
+  }
+};
+
+const openAddMemberDialog = (): void => {
+  addMemberForm.value = {
+    Identity: '',
+    Role: MemberRole.Member,
+    Title: ''
+  };
+  showAddMemberDialog.value = true;
+};
+
+const handleAddMember = async (): Promise<void> => {
+  if (!selectedOrgAccountName.value) return;
+  if (!addMemberForm.value.Identity) {
+    ui.notify(t('admin.identityRequired'), 'error');
+    return;
+  }
+
+  isAddingMember.value = true;
+  try {
+    await httpClient(`/admin/orgs/${selectedOrgAccountName.value}/members`, {
+      method: 'POST',
+      body: JSON.stringify(addMemberForm.value)
+    });
+    ui.notify(t('admin.memberAddedSuccess'), 'success');
+    showAddMemberDialog.value = false;
+    fetchOrgMembers();
+  } catch (e: any) {
+    ui.notify(e.message, 'error');
+  } finally {
+    isAddingMember.value = false;
+  }
+};
+
+const updateMemberRole = async (member: OrganizationMemberDto, newRole: MemberRole): Promise<void> => {
+  if (!selectedOrgAccountName.value) return;
+  orgActionLoadingId.value = member.AccountId;
+  try {
+    const payload: UpdateMemberRequestDto = { Role: newRole };
+    await httpClient(`/admin/orgs/${selectedOrgAccountName.value}/members/@${member.AccountId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload)
+    });
+    member.Role = newRole;
+    ui.notify(t('common.success'), 'success');
+  } catch (e: any) {
+    ui.notify(e.message, 'error');
+  } finally {
+    orgActionLoadingId.value = null;
+  }
+};
+
+const updateMemberVisibility = async (member: OrganizationMemberDto, newVisibility: Visibility): Promise<void> => {
+  if (!selectedOrgAccountName.value) return;
+  orgActionLoadingId.value = member.AccountId;
+  try {
+    const payload: UpdateMemberRequestDto = { Visibility: newVisibility };
+    await httpClient(`/admin/orgs/${selectedOrgAccountName.value}/members/@${member.AccountId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload)
+    });
+    member.Visibility = newVisibility;
+    ui.notify(t('common.success'), 'success');
+  } catch (e: any) {
+    ui.notify(e.message, 'error');
+  } finally {
+    orgActionLoadingId.value = null;
+  }
+};
+
+const openEditTitleDialog = (member: OrganizationMemberDto): void => {
+  editingMember.value = member;
+  editMemberTitle.value = member.Title || '';
+  showEditTitleDialog.value = true;
+};
+
+const handleUpdateMemberTitle = async (): Promise<void> => {
+  if (!selectedOrgAccountName.value || !editingMember.value) return;
+
+  isUpdatingTitle.value = true;
+  try {
+    const payload: UpdateMemberRequestDto = { Title: editMemberTitle.value || undefined };
+    await httpClient(`/admin/orgs/${selectedOrgAccountName.value}/members/@${editingMember.value.AccountId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload)
+    });
+    editingMember.value.Title = editMemberTitle.value || undefined;
+    ui.notify(t('common.success'), 'success');
+    showEditTitleDialog.value = false;
+  } catch (e: any) {
+    ui.notify(e.message, 'error');
+  } finally {
+    isUpdatingTitle.value = false;
+  }
+};
+
+const kickMember = async (member: OrganizationMemberDto): Promise<void> => {
+  if (!selectedOrgAccountName.value) return;
+  orgActionLoadingId.value = member.AccountId;
+  try {
+    await httpClient(`/admin/orgs/${selectedOrgAccountName.value}/members/@${member.AccountId}`, {
+      method: 'DELETE'
+    });
+    orgMembers.value = orgMembers.value.filter(m => m.AccountId !== member.AccountId);
+    ui.notify(t('admin.memberKickedSuccess'), 'success');
+  } catch (e: any) {
+    ui.notify(e.message, 'error');
+  } finally {
+    orgActionLoadingId.value = null;
+  }
+};
+
 onMounted(fetchUsers);
 </script>
 
@@ -736,9 +917,16 @@ onMounted(fetchUsers);
                     </template>
 
                     <DropdownMenuSeparator />
-                    
+
                     <DropdownMenuItem @click="openEmailModal(user)">
                       <Mail class="mr-2 size-4" /> {{ t('admin.manageEmails') }}
+                    </DropdownMenuItem>
+
+                    <DropdownMenuItem
+                        v-if="user.Type === AccountType.Organization"
+                        @click="openOrgMembersModal(user)"
+                    >
+                      <Building2 class="mr-2 size-4" /> {{ t('admin.manageOrgMembers') }}
                     </DropdownMenuItem>
                     
                     <DropdownMenuItem @click="openResetPasswordModal(user)">
@@ -1185,6 +1373,225 @@ onMounted(fetchUsers);
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+
+    <!-- Modal: Organization Members Management -->
+    <Dialog v-model:open="showOrgMembersModal">
+      <DialogContent class="sm:max-w-3xl rounded-2xl max-h-[80vh] overflow-hidden flex flex-col">
+        <DialogHeader>
+          <DialogTitle class="text-xl font-black flex items-center gap-2">
+            <Building2 class="size-5 text-brand-blue" />
+            {{ t('admin.manageOrgMembers') }}: {{ selectedUser?.AccountName }}
+          </DialogTitle>
+        </DialogHeader>
+
+        <div class="flex-1 overflow-y-auto py-4 space-y-4">
+          <!-- Members List -->
+          <div v-if="orgMembersLoading" class="flex items-center justify-center py-8">
+            <Loader2 class="size-6 animate-spin text-muted-foreground" />
+          </div>
+
+          <div v-else-if="orgMembers.length === 0" class="text-center py-8 text-muted-foreground">
+            <Building2 class="size-10 mx-auto mb-2 opacity-50" />
+            <p class="text-sm font-medium">{{ t('admin.noOrgMembers') }}</p>
+          </div>
+
+          <div v-else class="rounded-xl border bg-muted/30 overflow-hidden">
+            <Table>
+              <TableBody>
+                <TableRow v-for="member in orgMembers" :key="member.AccountId" class="group">
+                  <TableCell>
+                    <div class="flex items-center gap-3">
+                      <div class="flex flex-col">
+                        <span class="font-bold text-sm flex items-center gap-2">
+                          {{ member.DisplayName }}
+                          <Crown v-if="member.Role === MemberRole.Owner" class="size-3 text-yellow-500 fill-yellow-500" />
+                        </span>
+                        <span class="text-xs text-muted-foreground">@{{ member.AccountName }}</span>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" class="text-[10px]">
+                      {{ getMemberRoleLabel(member.Role) }}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" class="text-[10px]">
+                      <Eye v-if="member.Visibility === Visibility.Public" class="size-3 mr-1" />
+                      <EyeOff v-else class="size-3 mr-1" />
+                      {{ getVisibilityLabel(member.Visibility) }}
+                    </Badge>
+                  </TableCell>
+                  <TableCell class="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger as-child>
+                        <Button variant="ghost" size="icon" :disabled="orgActionLoadingId === member.AccountId">
+                          <Loader2 v-if="orgActionLoadingId === member.AccountId" class="size-4 animate-spin" />
+                          <MoreHorizontal v-else class="size-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem @click="openEditTitleDialog(member)">
+                          {{ t('organization.editTitle') }}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuLabel class="text-xs opacity-50">{{ t('organization.role') }}</DropdownMenuLabel>
+                        <DropdownMenuItem @click="updateMemberRole(member, MemberRole.Owner)">
+                          {{ t('organization.setAsOwner') }}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem @click="updateMemberRole(member, MemberRole.Admin)">
+                          {{ t('organization.setAsAdmin') }}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem @click="updateMemberRole(member, MemberRole.Member)">
+                          {{ t('organization.setAsMember') }}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem @click="updateMemberRole(member, MemberRole.Guest)">
+                          {{ t('organization.setAsGuest') }}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuLabel class="text-xs opacity-50">{{ t('common.visibility') }}</DropdownMenuLabel>
+                        <DropdownMenuItem @click="updateMemberVisibility(member, Visibility.Public)">
+                          {{ t('common.public') }}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem @click="updateMemberVisibility(member, Visibility.Private)">
+                          {{ t('common.private') }}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem @click="updateMemberVisibility(member, Visibility.Protected)">
+                          {{ t('common.protected') }}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem @click="updateMemberVisibility(member, Visibility.MembersOnly)">
+                          {{ t('common.membersOnly') }}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem class="text-destructive" @click="kickMember(member)">
+                          <UserX class="size-4 mr-2" /> {{ t('organization.kick') }}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" @click="openAddMemberDialog" class="font-bold rounded-xl">
+            <UserPlus class="size-4 mr-2" />
+            {{ t('organization.inviteMember') }}
+          </Button>
+          <Button variant="default" @click="showOrgMembersModal = false" class="font-bold rounded-xl">
+            {{ t('common.close') }}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <!-- Dialog: Add Member to Organization -->
+    <Dialog v-model:open="showAddMemberDialog">
+      <DialogContent class="sm:max-w-md rounded-2xl">
+        <DialogHeader>
+          <DialogTitle class="text-xl font-black flex items-center gap-2">
+            <UserPlus class="size-5 text-brand-blue" />
+            {{ t('organization.inviteMember') }}
+          </DialogTitle>
+        </DialogHeader>
+
+        <div class="space-y-4 py-4">
+          <div class="space-y-2">
+            <Label class="text-xs font-bold uppercase tracking-wider opacity-60">
+              {{ t('organization.identity') }} <span class="text-destructive">*</span>
+            </Label>
+            <Input
+                v-model="addMemberForm.Identity"
+                :placeholder="t('admin.usernameOrEmail')"
+                class="h-10"
+            />
+          </div>
+
+          <div class="space-y-2">
+            <Label class="text-xs font-bold uppercase tracking-wider opacity-60">
+              {{ t('organization.role') }}
+            </Label>
+            <Select v-model.number="addMemberForm.Role">
+              <SelectTrigger class="h-10">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem :value="MemberRole.Member">{{ t('organization.roleMember') }}</SelectItem>
+                <SelectItem :value="MemberRole.Admin">{{ t('organization.roleAdmin') }}</SelectItem>
+                <SelectItem :value="MemberRole.Owner">{{ t('organization.roleOwner') }}</SelectItem>
+                <SelectItem :value="MemberRole.Guest">{{ t('organization.roleGuest') }}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div class="space-y-2">
+            <Label class="text-xs font-bold uppercase tracking-wider opacity-60">
+              {{ t('organization.title') }}
+            </Label>
+            <Input
+                v-model="addMemberForm.Title"
+                :placeholder="t('organization.titlePlaceholder')"
+                class="h-10"
+            />
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" @click="showAddMemberDialog = false" class="font-bold rounded-xl">
+            {{ t('common.cancel') }}
+          </Button>
+          <Button
+              :disabled="isAddingMember || !addMemberForm.Identity"
+              @click="handleAddMember"
+              class="font-bold rounded-xl bg-brand-blue hover:bg-brand-blue/90"
+          >
+            <Loader2 v-if="isAddingMember" class="size-4 animate-spin mr-2" />
+            {{ t('organization.inviteMember') }}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <!-- Dialog: Edit Member Title -->
+    <Dialog v-model:open="showEditTitleDialog">
+      <DialogContent class="sm:max-w-md rounded-2xl">
+        <DialogHeader>
+          <DialogTitle class="text-xl font-black">{{ t('organization.editTitle') }}</DialogTitle>
+        </DialogHeader>
+
+        <div class="space-y-4 py-4">
+          <p class="text-sm text-muted-foreground">
+            {{ t('organization.editTitleFor', { name: editingMember?.DisplayName || '' }) }}
+          </p>
+          <div class="space-y-2">
+            <Label class="text-xs font-bold uppercase tracking-wider opacity-60">
+              {{ t('organization.title') }}
+            </Label>
+            <Input
+                v-model="editMemberTitle"
+                :placeholder="t('organization.titlePlaceholder')"
+                class="h-10"
+            />
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" @click="showEditTitleDialog = false" class="font-bold rounded-xl">
+            {{ t('common.cancel') }}
+          </Button>
+          <Button
+              :disabled="isUpdatingTitle"
+              @click="handleUpdateMemberTitle"
+              class="font-bold rounded-xl bg-brand-blue hover:bg-brand-blue/90"
+          >
+            <Loader2 v-if="isUpdatingTitle" class="size-4 animate-spin mr-2" />
+            {{ t('common.save') }}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>
 
