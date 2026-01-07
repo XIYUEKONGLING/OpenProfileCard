@@ -15,7 +15,19 @@ const props = withDefaults(defineProps<Props>(), {
   neutral: false
 });
 
+const emit = defineEmits<{
+  (e: 'image-click', src: string): void;
+}>();
+
 const renderedHtml = computed(() => renderMarkdown(props.content));
+
+const handleImageClick = (event: Event) => {
+  const target = event.target as HTMLElement;
+  if (target.tagName === 'IMG') {
+    const src = (target as HTMLImageElement).src;
+    emit('image-click', src);
+  }
+};
 
 const sizeClasses = computed(() => {
   switch (props.size) {
@@ -37,6 +49,7 @@ const colorVariant = computed(() => {
     class="markdown-renderer prose dark:prose-invert max-w-none"
     :class="[sizeClasses, colorVariant]"
     v-html="renderedHtml"
+    @click="handleImageClick"
   />
   <div v-else class="text-muted-foreground italic py-4">
     <slot />
@@ -169,7 +182,7 @@ const colorVariant = computed(() => {
 
 /* Images */
 .markdown-renderer :deep(img) {
-  @apply my-6 rounded-xl shadow-md;
+  @apply my-6 rounded-xl shadow-md cursor-pointer transition-transform hover:scale-[1.02] hover:shadow-lg;
 }
 
 .markdown-renderer :deep(img[src*='="preview"']) {

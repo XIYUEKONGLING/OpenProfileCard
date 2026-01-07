@@ -415,6 +415,15 @@ const openImage = (asset?: AssetDto) => {
   }
 };
 
+const openImageByUrl = (url: string) => {
+  // Create a remote asset from URL
+  selectedImage.value = {
+    Type: AssetType.Remote,
+    Value: url
+  };
+  showImageViewer.value = true;
+};
+
 const openUrl = (url?: string) => {
   if (url) window.open(url, '_blank');
 };
@@ -713,7 +722,7 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
               <TabsContent value="overview" class="animate-in fade-in slide-in-from-bottom-2 space-y-10">
                 <Card class="border-none shadow-none bg-transparent">
                   <CardContent class="p-0">
-                    <MarkdownRenderer v-if="profile?.Content" :content="profile.Content" />
+                    <MarkdownRenderer v-if="profile?.Content" :content="profile.Content" @image-click="openImageByUrl" />
                     <div v-else class="text-muted-foreground italic py-10 border-2 border-dashed rounded-xl flex flex-col items-center justify-center"><BookOpen class="size-8 mb-2 opacity-20" /> {{ t('publicProfile.noDescription') }}</div>
                   </CardContent>
                 </Card>
