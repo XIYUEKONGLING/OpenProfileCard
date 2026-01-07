@@ -1,23 +1,51 @@
 <script setup lang="ts">
 import { useI18n } from '@/i18n';
-import type { SystemStatusDto } from '@/api/types';
+import {type SystemStatusDto} from '@/api/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, Bell, Key, Activity, Shield, Image } from 'lucide-vue-next';
-import { AccountStatus, AccountRole } from '@/api/types/enums';
 
 defineProps<{ status: SystemStatusDto }>();
 const { t } = useI18n();
 
-const statusLabel = (statusValue: number): string => {
-  const key = Object.keys(AccountStatus).find(k => AccountStatus[k as keyof typeof AccountStatus] === statusValue);
-  if (!key) return String(statusValue);
-  return t(`common.accountStatus${key}`);
+// const typeLabel = (statusKey: string): string => {
+//   switch (statusKey) {
+//     case 'Personal': return t('admin.typePersonal');
+//     case 'Organization': return t('admin.typeOrganization');
+//     case 'Application': return t('admin.typeApplication');
+//     case 'System': return t('admin.typeSystem');
+//     case 'Service': return t('admin.typeService');
+//   }
+//   return t(`${statusKey}`);
+// };
+
+const statusLabel = (statusKey: string): string => {
+  switch (statusKey) {
+    case 'Active': return t('admin.statusActive');
+    case 'PendingDeletion': return t('admin.statusPendingDeletion');
+    case 'Banned': return t('admin.statusBanned');
+    case 'Suspended': return t('admin.statusSuspended');
+    case 'Deactivated': return t('admin.statusDeactivated');
+  }
+  return t(`${statusKey}`);
 };
 
-const roleLabel = (roleValue: number): string => {
-  const key = Object.keys(AccountRole).find(k => AccountRole[k as keyof typeof AccountRole] === roleValue);
-  if (!key) return String(roleValue);
-  return t(`common.accountRole${key}`);
+const visibilityLabel = (statusKey: string): string => {
+  switch (statusKey) {
+    case 'Public': return t('common.public');
+    case 'Private': return t('common.private');
+    case 'Protected': return t('common.protected');
+    case 'MembersOnly': return t('common.membersOnly');
+  }
+  return t(`${statusKey}`);
+};
+
+const roleLabel = (roleKey: string): string => {
+  switch (roleKey) {
+    case 'Root': return t('admin.roleRoot');
+    case 'Admin': return t('admin.roleAdmin');
+    case 'User': return t('admin.roleUser');
+  }
+  return t(`${roleKey}`);
 };
 </script>
 
@@ -121,7 +149,7 @@ const roleLabel = (roleValue: number): string => {
             <div v-if="status.AccountAssetsByVisibility" class="pt-2 border-t space-y-1">
               <div class="text-xs text-muted-foreground mb-1">{{ t('admin.byVisibility') }}:</div>
               <div v-for="(count, visibility) in status.AccountAssetsByVisibility" :key="visibility" class="flex justify-between">
-                <span class="text-muted-foreground">{{ visibility }}</span>
+                <span class="text-muted-foreground">{{ visibilityLabel(visibility) }}</span>
                 <span class="font-medium">{{ count }}</span>
               </div>
             </div>
