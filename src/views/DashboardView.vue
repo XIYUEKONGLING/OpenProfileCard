@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, computed, watch } from 'vue';
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useI18n } from '@/i18n';
 import { httpClient } from '@/api/client';
@@ -71,6 +71,8 @@ const sponsorships = ref<SponsorshipItemDto[]>([]);
 
 const copiedId = ref<string | null>(null);
 const deletionCountdown = ref<DeletionCountdownDto | null>(null);
+const remainingSeconds = ref<number | null>(null);
+let countdownInterval: ReturnType<typeof setInterval> | null = null;
 
 // --- Computed ---
 const isPersonal = computed(() => {
@@ -118,13 +120,17 @@ const contactSupportUrl = computed(() => {
 });
 
 const countdownDisplay = computed(() => {
-  if (!deletionCountdown.value) return null;
-  const { Days, Hours, Minutes, Seconds } = deletionCountdown.value;
+  if (remainingSeconds.value === null || remainingSeconds.value < 0) return null;
+  const days = Math.floor(remainingSeconds.value / 86400);
+  const hours = Math.floor((remainingSeconds.value % 86400) / 3600);
+  const minutes = Math.floor((remainingSeconds.value % 3600) / 60);
+  const seconds = remainingSeconds.value % 60;
+
   const parts: string[] = [];
-  if (Days > 0) parts.push(t('dashboard.countdownDaysPart', { days: Days }));
-  if (Hours > 0 || Days > 0) parts.push(t('dashboard.countdownHoursPart', { hours: Hours }));
-  parts.push(t('dashboard.countdownMinutesPart', { minutes: Minutes }));
-  parts.push(t('dashboard.countdownSecondsPart', { seconds: Seconds }));
+  if (days > 0) parts.push(t('dashboard.countdownDaysPart', { days }));
+  if (hours > 0 || days > 0) parts.push(t('dashboard.countdownHoursPart', { hours }));
+  parts.push(t('dashboard.countdownMinutesPart', { minutes }));
+  parts.push(t('dashboard.countdownSecondsPart', { seconds }));
   return parts.join(' ');
 });
 
@@ -196,11 +202,47 @@ const blockReason = computed(() => {
 });
 
 // --- Data Fetching ---
+const startCountdownTimer = () => {
+  // Clear existing interval
+  if (countdownInterval) {
+    clearInterval(countdownInterval);
+    countdownInterval = null;
+  }
+
+  // Calculate initial remaining seconds
+  if (deletionCountdown.value) {
+    const { Days, Hours, Minutes, Seconds } = deletionCountdown.value;
+    remainingSeconds.value = Days * 86400 + Hours * 3600 + Minutes * 60 + Seconds;
+
+    // Start interval to update every second
+    countdownInterval = setInterval(() => {
+      if (remainingSeconds.value !== null && remainingSeconds.value > 0) {
+        remainingSeconds.value--;
+      } else {
+        // Stop countdown when it reaches zero
+        if (countdownInterval) {
+          clearInterval(countdownInterval);
+          countdownInterval = null;
+        }
+      }
+    }, 1000);
+  }
+};
+
 const fetchDeletionCountdown = async () => {
-  if (auth.user?.Status !== AccountStatus.PendingDeletion) return;
+  if (auth.user?.Status !== AccountStatus.PendingDeletion) {
+    // Clear countdown and stop timer if not in PendingDeletion status
+    remainingSeconds.value = null;
+    if (countdownInterval) {
+      clearInterval(countdownInterval);
+      countdownInterval = null;
+    }
+    return;
+  }
   try {
     const data = await httpClient<DeletionCountdownDto>('/me/deletion-countdown');
     deletionCountdown.value = data;
+    startCountdownTimer();
   } catch (error) {
     console.error('Failed to fetch deletion countdown', error);
   }
@@ -261,6 +303,14 @@ onMounted(() => {
   fetchData();
 });
 
+onUnmounted(() => {
+  // Clear countdown interval when component is unmounted
+  if (countdownInterval) {
+    clearInterval(countdownInterval);
+    countdownInterval = null;
+  }
+});
+
 // Watch for route changes to refresh data when returning from edit pages
 watch(
   () => route.path,
@@ -308,6 +358,12 @@ const copyToClipboard = async (text: string, id: string) => {
     console.error(e);
   }
 };
+
+const contactSupport = () => {
+  if (contactSupportUrl.value) {
+    window.location.href = contactSupportUrl.value;
+  }
+};
 </script>
 
 <template>
@@ -341,7 +397,7 @@ const copyToClipboard = async (text: string, id: string) => {
           <Button v-if="auth.user?.Status === AccountStatus.PendingDeletion" class="w-full font-bold" variant="default">
             {{ t('dashboard.restoreAccount') }}
           </Button>
-          <Button v-if="contactSupportUrl" variant="outline" class="w-full font-bold" as="a" :href="contactSupportUrl">
+          <Button v-if="contactSupportUrl" variant="outline" class="w-full font-bold" @click="contactSupport">
             {{ t('dashboard.contactSupport') }}
           </Button>
           <Button v-else variant="outline" class="w-full font-bold" disabled>

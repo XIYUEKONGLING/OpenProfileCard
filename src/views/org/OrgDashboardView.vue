@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, watch, defineAsyncComponent } from 'vue';
+import { ref, computed, watch, defineAsyncComponent, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useI18n } from '@/i18n';
 import { httpClient } from '@/api/client';
@@ -80,6 +80,8 @@ const certificates = ref<CertificateDto[]>([]);
 const showUserList = ref(false);
 const userListType = ref<'followers' | 'following'>('followers');
 const copiedId = ref<string | null>(null);
+const remainingSeconds = ref<number | null>(null);
+let countdownInterval: ReturnType<typeof setInterval> | null = null;
 
 const showLeaveModal = ref(false);
 
@@ -99,13 +101,17 @@ const contactSupportUrl = computed(() => {
 });
 
 const countdownDisplay = computed(() => {
-  if (!deletionCountdown.value) return null;
-  const { Days, Hours, Minutes, Seconds } = deletionCountdown.value;
+  if (remainingSeconds.value === null || remainingSeconds.value < 0) return null;
+  const days = Math.floor(remainingSeconds.value / 86400);
+  const hours = Math.floor((remainingSeconds.value % 86400) / 3600);
+  const minutes = Math.floor((remainingSeconds.value % 3600) / 60);
+  const seconds = remainingSeconds.value % 60;
+
   const parts: string[] = [];
-  if (Days > 0) parts.push(t('dashboard.countdownDaysPart', { days: Days }));
-  if (Hours > 0 || Days > 0) parts.push(t('dashboard.countdownHoursPart', { hours: Hours }));
-  parts.push(t('dashboard.countdownMinutesPart', { minutes: Minutes }));
-  parts.push(t('dashboard.countdownSecondsPart', { seconds: Seconds }));
+  if (days > 0) parts.push(t('dashboard.countdownDaysPart', { days }));
+  if (hours > 0 || days > 0) parts.push(t('dashboard.countdownHoursPart', { hours }));
+  parts.push(t('dashboard.countdownMinutesPart', { minutes }));
+  parts.push(t('dashboard.countdownSecondsPart', { seconds }));
   return parts.join(' ');
 });
 
@@ -172,11 +178,47 @@ const blockReason = computed(() => {
 
 
 // --- Actions ---
+const startCountdownTimer = () => {
+  // Clear existing interval
+  if (countdownInterval) {
+    clearInterval(countdownInterval);
+    countdownInterval = null;
+  }
+
+  // Calculate initial remaining seconds
+  if (deletionCountdown.value) {
+    const { Days, Hours, Minutes, Seconds } = deletionCountdown.value;
+    remainingSeconds.value = Days * 86400 + Hours * 3600 + Minutes * 60 + Seconds;
+
+    // Start interval to update every second
+    countdownInterval = setInterval(() => {
+      if (remainingSeconds.value !== null && remainingSeconds.value > 0) {
+        remainingSeconds.value--;
+      } else {
+        // Stop countdown when it reaches zero
+        if (countdownInterval) {
+          clearInterval(countdownInterval);
+          countdownInterval = null;
+        }
+      }
+    }, 1000);
+  }
+};
+
 const fetchDeletionCountdown = async () => {
-  if (org.value?.Status !== AccountStatus.PendingDeletion) return;
+  if (org.value?.Status !== AccountStatus.PendingDeletion) {
+    // Clear countdown and stop timer if not in PendingDeletion status
+    remainingSeconds.value = null;
+    if (countdownInterval) {
+      clearInterval(countdownInterval);
+      countdownInterval = null;
+    }
+    return;
+  }
   try {
     const data = await httpClient<DeletionCountdownDto>(`/orgs/${props.accountName}/deletion-countdown`);
     deletionCountdown.value = data;
+    startCountdownTimer();
   } catch (error) {
     console.error('Failed to fetch deletion countdown', error);
   }
@@ -286,6 +328,12 @@ const getContactIcon = (type: any) => {
   }
 };
 
+const contactSupport = () => {
+  if (contactSupportUrl.value) {
+    window.location.href = contactSupportUrl.value;
+  }
+};
+
 // const formatDate = (dateString?: string) => {
 //   if (!dateString) return t('common.present');
 //   const date = new Date(dateString);
@@ -326,6 +374,14 @@ watch(
     }
   }
 );
+
+onUnmounted(() => {
+  // Clear countdown interval when component is unmounted
+  if (countdownInterval) {
+    clearInterval(countdownInterval);
+    countdownInterval = null;
+  }
+});
 </script>
 
 <template>
@@ -362,7 +418,7 @@ watch(
           <Button v-if="org?.Status === AccountStatus.PendingDeletion && isOwner" class="w-full font-bold" variant="default" @click="restoreOrg">
             {{ t('dashboard.restoreAccount') }}
           </Button>
-          <Button v-if="contactSupportUrl" variant="outline" class="w-full font-bold" as="a" :href="contactSupportUrl">
+          <Button v-if="contactSupportUrl" variant="outline" class="w-full font-bold" @click="contactSupport">
             {{ t('dashboard.contactSupport') }}
           </Button>
           <Button v-else variant="outline" class="w-full font-bold" disabled>
