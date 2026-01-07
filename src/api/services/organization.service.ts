@@ -454,9 +454,10 @@ export const organizationApi = {
      * List notifications
      * GET /api/orgs/{org}/notifications
      */
-    getNotifications: (org: string, params: { page?: number; unreadOnly?: boolean } = {}): Promise<PagedResponse<NotificationDto>> => {
+    getNotifications: (org: string, params: { page?: number; pageSize?: number; unreadOnly?: boolean } = {}): Promise<PagedResponse<NotificationDto>> => {
         const queryParams = new URLSearchParams();
         if (params.page !== undefined) queryParams.append('page', params.page.toString());
+        if (params.pageSize !== undefined) queryParams.append('pageSize', params.pageSize.toString());
         if (params.unreadOnly !== undefined) queryParams.append('unreadOnly', params.unreadOnly.toString());
         const queryString = queryParams.toString();
         return httpClient<PagedResponse<NotificationDto>>(`/orgs/${org}/notifications${queryString ? `?${queryString}` : ''}`);

@@ -55,6 +55,7 @@ const fetchNotifications = async () => {
   try {
     const response = await organizationApi.getNotifications(props.accountName, {
       page: currentPage.value,
+      pageSize: pageSize,
       unreadOnly: false
     });
 
