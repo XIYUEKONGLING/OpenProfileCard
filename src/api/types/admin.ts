@@ -1,4 +1,4 @@
-import type { AccountType, AccountRole, AccountStatus, NotificationType } from './enums';
+import type {AccountType, AccountRole, AccountStatus, NotificationType, Visibility} from './enums';
 
 // --- Users ---
 
@@ -71,7 +71,7 @@ export interface SystemStatusDto {
     TotalNotificationCount: number;
 
     TotalAccountAssetCount: number;
-    AccountAssetsByVisibility: Record<string, number>;
+    AccountAssetsByVisibility: Record<Visibility, number>;
     TotalSystemAssetCount: number;
 
     ServerTimeUtc: string; // DateTime
