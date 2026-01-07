@@ -385,7 +385,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="relative min-h-[80vh] w-full pb-20">
+  <div class="min-h-[80vh] w-full pb-20">
 
     <!-- User List Dialog -->
     <UserListDialog
@@ -397,7 +397,7 @@ onUnmounted(() => {
     />
 
     <!-- BLOCKER OVERLAY -->
-    <div v-if="blockReason" class="absolute inset-0 z-50 backdrop-blur-xl bg-background/50 flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-500">
+    <div v-if="blockReason" class="fixed inset-0 z-40 backdrop-blur-xl bg-background/50 flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-500 pt-20 md:absolute md:inset-0 md:left-0 md:pt-6">
       <div class="max-w-md w-full bg-background border border-border shadow-2xl rounded-3xl p-8 flex flex-col items-center">
         <div class="size-20 rounded-full bg-muted flex items-center justify-center mb-6">
           <component :is="blockReason.icon" class="size-10" :class="blockReason.color" />
