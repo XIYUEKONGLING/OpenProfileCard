@@ -101,13 +101,12 @@ const contactSupportUrl = computed(() => {
 const countdownDisplay = computed(() => {
   if (!deletionCountdown.value) return null;
   const { Days, Hours, Minutes, Seconds } = deletionCountdown.value;
-  if (Days > 0) {
-    return t('dashboard.countdownDays', { days: Days, hours: Hours });
-  } else if (Hours > 0) {
-    return t('dashboard.countdownHours', { hours: Hours, minutes: Minutes });
-  } else {
-    return t('dashboard.countdownMinutes', { minutes: Minutes, seconds: Seconds });
-  }
+  const parts: string[] = [];
+  if (Days > 0) parts.push(t('dashboard.countdownDaysPart', { days: Days }));
+  if (Hours > 0 || Days > 0) parts.push(t('dashboard.countdownHoursPart', { hours: Hours }));
+  parts.push(t('dashboard.countdownMinutesPart', { minutes: Minutes }));
+  parts.push(t('dashboard.countdownSecondsPart', { seconds: Seconds }));
+  return parts.join(' ');
 });
 
 const timeZoneDisplay = computed(() => {
