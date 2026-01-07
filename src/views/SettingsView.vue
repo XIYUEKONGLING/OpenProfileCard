@@ -114,7 +114,7 @@ const userToUnblock = ref<BlockDto | null>(null);
 // --- Computed ---
 const isPersonal = computed(() => auth.user?.Type === AccountType.Personal);
 const isEmailServiceEnabled = computed(() => server.features?.Email === true);
-const requiresVerification = computed(() => server.features?.EmailAddVerification === true);
+const requiresVerification = computed(() => server.features?.Email && server.features?.EmailAddVerification === true);
 const isPendingDeletion = computed(() => auth.user?.Status === AccountStatus.PendingDeletion);
 
 const canDeleteAccount = computed(() => {
