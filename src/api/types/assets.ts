@@ -43,3 +43,16 @@ export interface BatchUpdateVisibilityRequestDto {
     AssetIds: string[]; // Guid[]
     Visibility: Visibility;
 }
+
+// --- Lookup Asset ---
+
+export interface LookupAssetDto {
+    Id: string; // Guid
+    AccountId?: string; // Guid (nullable)
+    Category?: string;
+    Notes?: string;
+    Asset: AssetDto;
+    Visibility: Visibility;
+    CreatedAt: string; // DateTime
+    UpdatedAt: string; // DateTime
+}
