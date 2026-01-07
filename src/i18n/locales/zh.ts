@@ -37,6 +37,8 @@ export const zh = {
         identifier: '系统标识符',
         library: '账户资源库',
         resource: '系统资源库',
+        libraryUuidPlaceholder: '输入您账户资源库中资源的 UUID',
+        resourceUuidPlaceholder: '输入系统资源的 UUID',
         systemAsset: '系统资源',
         selectType: '选择类型',
         uploadImage: '点击上传图片',

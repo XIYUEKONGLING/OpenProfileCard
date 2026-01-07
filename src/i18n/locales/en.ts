@@ -37,6 +37,8 @@ export const en = {
         identifier: 'System ID',
         library: 'Account Resource Library',
         resource: 'System Resource Library',
+        libraryUuidPlaceholder: 'Enter the UUID of an asset from your account library',
+        resourceUuidPlaceholder: 'Enter the UUID of a system resource',
         systemAsset: 'System Asset',
         selectType: 'Select Type',
         uploadImage: 'Upload Image',

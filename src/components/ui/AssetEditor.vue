@@ -229,13 +229,13 @@ const handleFileUpload = (event: Event) => {
           <!-- Input: Library (Asset UUID) -->
           <div v-else-if="currentType === AssetType.Library">
             <Input v-model="currentValue" @input="update" placeholder="550e8400-e29b-41d4-a716-446655440000" class="font-mono text-xs min-w-0 break-all" />
-            <p class="text-[10px] text-muted-foreground mt-1 break-all">Enter the UUID of an asset from your account library</p>
+            <p class="text-[10px] text-muted-foreground mt-1 break-all">{{ t('common.libraryUuidPlaceholder') }}</p>
           </div>
 
           <!-- Input: Resource (System Asset UUID) -->
           <div v-else-if="currentType === AssetType.Resource">
             <Input v-model="currentValue" @input="update" placeholder="550e8400-e29b-41d4-a716-446655440000" class="font-mono text-xs min-w-0 break-all" />
-            <p class="text-[10px] text-muted-foreground mt-1 break-all">Enter the UUID of a system resource</p>
+            <p class="text-[10px] text-muted-foreground mt-1 break-all">{{ t('common.resourceUuidPlaceholder') }}</p>
           </div>
 
           <!-- Input: Empty (No controls) -->
