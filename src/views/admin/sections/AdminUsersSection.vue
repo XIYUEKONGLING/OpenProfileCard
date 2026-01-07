@@ -279,15 +279,18 @@ const fetchUserEmails = async (userId: string): Promise<void> => {
     userEmails.value = await httpClient<AccountEmailDto[]>(`/admin/users/${userId}/emails`);
   } catch (e: any) {
     ui.notify(e.message, 'error');
+    // Close the modal if fetching emails fails (e.g., permission error)
+    showEmailModal.value = false;
+    userEmails.value = [];
   } finally {
     isEmailsLoading.value = false;
   }
 };
 
-const openEmailModal = (user: UserAdminDto): void => {
+const openEmailModal = async (user: UserAdminDto): Promise<void> => {
   selectedUser.value = user;
   showEmailModal.value = true;
-  fetchUserEmails(user.Id);
+  await fetchUserEmails(user.Id);
 };
 
 const handleAddEmail = async (): Promise<void> => {
