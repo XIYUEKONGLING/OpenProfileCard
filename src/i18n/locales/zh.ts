@@ -87,15 +87,6 @@ export const zh = {
         statusSuspended: '已暂停',
         statusDeactivated: '已停用',
         send: '发送',
-
-        accountStatusActive: '活跃',
-        accountStatusPendingDeletion: '等待删除',
-        accountStatusBanned: '已封禁',
-        accountStatusSuspended: '已暂停',
-        accountStatusDeactivated: '已停用',
-        accountRoleUser: '普通用户',
-        accountRoleAdmin: '管理员',
-        accountRoleRoot: '超级管理员',
     },
     auth: {
         loginTitle: 'Open Profile Card',

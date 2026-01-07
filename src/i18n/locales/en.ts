@@ -87,15 +87,6 @@ export const en = {
         statusSuspended: 'Suspended',
         statusDeactivated: 'Deactivated',
         send: 'Send',
-
-        accountStatusActive: 'Active',
-        accountStatusPendingDeletion: 'Pending Deletion',
-        accountStatusBanned: 'Banned',
-        accountStatusSuspended: 'Suspended',
-        accountStatusDeactivated: 'Deactivated',
-        accountRoleUser: 'User',
-        accountRoleAdmin: 'Admin',
-        accountRoleRoot: 'Root',
     },
     auth: {
         loginTitle: 'Open Profile Card',
