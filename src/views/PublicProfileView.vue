@@ -946,7 +946,7 @@ watch(() => route.params.id, fetchPublicData, { immediate: true });
               <TabsContent value="resources" class="animate-in fade-in slide-in-from-bottom-2 space-y-10">
                 <!-- Gallery -->
                 <div v-if="gallery.length > 0">
-                  <h3 class="font-bold text-lg mb-4">{{ t('publicProfile.gallery') }}</h3>
+                  <h3 class="font-bold text-lg mb-4 flex items-center gap-2"><ImageIcon class="size-5" /> {{ t('publicProfile.gallery') }}</h3>
                   <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div v-for="item in gallery" :key="item.Id" class="group relative aspect-video rounded-xl overflow-hidden border border-border bg-muted cursor-pointer" @click="openImage(item.Image)">
                       <AssetView :asset="item.Image" class-name="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
