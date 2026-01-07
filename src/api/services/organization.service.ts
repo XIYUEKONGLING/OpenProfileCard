@@ -273,13 +273,28 @@ export const organizationApi = {
         httpClient<ProjectDto[]>(`/orgs/${org}/projects`),
 
     /**
-     * POST /api/orgs/{org}/projects
+     * POST /api/orgs/{org}/projects (Full Update)
      */
-    createProject: (org: string, data: UpdateProjectRequestDto): Promise<MessageResponse> =>
+    updateProject: (org: string, data: UpdateProjectRequestDto): Promise<MessageResponse> =>
         httpClient<MessageResponse>(`/orgs/${org}/projects`, {
             method: 'POST',
             body: JSON.stringify(data)
         }),
+
+    /**
+     * PATCH /api/orgs/{org}/projects/{id} (Partial Update)
+     */
+    patchProject: (org: string, id: string, data: UpdateProjectRequestDto): Promise<MessageResponse> =>
+        httpClient<MessageResponse>(`/orgs/${org}/projects/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(data)
+        }),
+
+    /**
+     * DELETE /api/orgs/{org}/projects/{id}
+     */
+    deleteProject: (org: string, id: string): Promise<MessageResponse> =>
+        httpClient<MessageResponse>(`/orgs/${org}/projects/${id}`, { method: 'DELETE' }),
 
     /**
      * GET /api/orgs/{org}/socials
@@ -288,13 +303,28 @@ export const organizationApi = {
         httpClient<SocialLinkDto[]>(`/orgs/${org}/socials`),
 
     /**
-     * POST /api/orgs/{org}/socials
+     * POST /api/orgs/{org}/socials (Full Update)
      */
-    createSocial: (org: string, data: UpdateSocialLinkRequestDto): Promise<MessageResponse> =>
+    updateSocial: (org: string, data: UpdateSocialLinkRequestDto): Promise<MessageResponse> =>
         httpClient<MessageResponse>(`/orgs/${org}/socials`, {
             method: 'POST',
             body: JSON.stringify(data)
         }),
+
+    /**
+     * PATCH /api/orgs/{org}/socials/{id} (Partial Update)
+     */
+    patchSocial: (org: string, id: string, data: UpdateSocialLinkRequestDto): Promise<MessageResponse> =>
+        httpClient<MessageResponse>(`/orgs/${org}/socials/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(data)
+        }),
+
+    /**
+     * DELETE /api/orgs/{org}/socials/{id}
+     */
+    deleteSocial: (org: string, id: string): Promise<MessageResponse> =>
+        httpClient<MessageResponse>(`/orgs/${org}/socials/${id}`, { method: 'DELETE' }),
 
     /**
      * GET /api/orgs/{org}/contacts
@@ -303,13 +333,28 @@ export const organizationApi = {
         httpClient<ContactMethodDto[]>(`/orgs/${org}/contacts`),
 
     /**
-     * POST /api/orgs/{org}/contacts
+     * POST /api/orgs/{org}/contacts (Full Update)
      */
-    createContact: (org: string, data: UpdateContactMethodRequestDto): Promise<MessageResponse> =>
+    updateContact: (org: string, data: UpdateContactMethodRequestDto): Promise<MessageResponse> =>
         httpClient<MessageResponse>(`/orgs/${org}/contacts`, {
             method: 'POST',
             body: JSON.stringify(data)
         }),
+
+    /**
+     * PATCH /api/orgs/{org}/contacts/{id} (Partial Update)
+     */
+    patchContact: (org: string, id: string, data: UpdateContactMethodRequestDto): Promise<MessageResponse> =>
+        httpClient<MessageResponse>(`/orgs/${org}/contacts/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(data)
+        }),
+
+    /**
+     * DELETE /api/orgs/{org}/contacts/{id}
+     */
+    deleteContact: (org: string, id: string): Promise<MessageResponse> =>
+        httpClient<MessageResponse>(`/orgs/${org}/contacts/${id}`, { method: 'DELETE' }),
 
     /**
      * GET /api/orgs/{org}/gallery
@@ -318,13 +363,28 @@ export const organizationApi = {
         httpClient<GalleryItemDto[]>(`/orgs/${org}/gallery`),
 
     /**
-     * POST /api/orgs/{org}/gallery
+     * POST /api/orgs/{org}/gallery (Full Update)
      */
-    createGallery: (org: string, data: UpdateGalleryItemRequestDto): Promise<MessageResponse> =>
+    updateGallery: (org: string, data: UpdateGalleryItemRequestDto): Promise<MessageResponse> =>
         httpClient<MessageResponse>(`/orgs/${org}/gallery`, {
             method: 'POST',
             body: JSON.stringify(data)
         }),
+
+    /**
+     * PATCH /api/orgs/{org}/gallery/{id} (Partial Update)
+     */
+    patchGallery: (org: string, id: string, data: UpdateGalleryItemRequestDto): Promise<MessageResponse> =>
+        httpClient<MessageResponse>(`/orgs/${org}/gallery/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(data)
+        }),
+
+    /**
+     * DELETE /api/orgs/{org}/gallery/{id}
+     */
+    deleteGallery: (org: string, id: string): Promise<MessageResponse> =>
+        httpClient<MessageResponse>(`/orgs/${org}/gallery/${id}`, { method: 'DELETE' }),
 
     /**
      * GET /api/orgs/{org}/certificates
@@ -333,13 +393,28 @@ export const organizationApi = {
         httpClient<CertificateDto[]>(`/orgs/${org}/certificates`),
 
     /**
-     * POST /api/orgs/{org}/certificates
+     * POST /api/orgs/{org}/certificates (Full Update)
      */
-    createCertificate: (org: string, data: UpdateCertificateRequestDto): Promise<MessageResponse> =>
+    updateCertificate: (org: string, data: UpdateCertificateRequestDto): Promise<MessageResponse> =>
         httpClient<MessageResponse>(`/orgs/${org}/certificates`, {
             method: 'POST',
             body: JSON.stringify(data)
         }),
+
+    /**
+     * PATCH /api/orgs/{org}/certificates/{id} (Partial Update)
+     */
+    patchCertificate: (org: string, id: string, data: UpdateCertificateRequestDto): Promise<MessageResponse> =>
+        httpClient<MessageResponse>(`/orgs/${org}/certificates/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(data)
+        }),
+
+    /**
+     * DELETE /api/orgs/{org}/certificates/{id}
+     */
+    deleteCertificate: (org: string, id: string): Promise<MessageResponse> =>
+        httpClient<MessageResponse>(`/orgs/${org}/certificates/${id}`, { method: 'DELETE' }),
 
     /**
      * GET /api/orgs/{org}/sponsorships
@@ -348,13 +423,28 @@ export const organizationApi = {
         httpClient<SponsorshipItemDto[]>(`/orgs/${org}/sponsorships`),
 
     /**
-     * POST /api/orgs/{org}/sponsorships
+     * POST /api/orgs/{org}/sponsorships (Full Update)
      */
-    createSponsorship: (org: string, data: UpdateSponsorshipItemRequestDto): Promise<MessageResponse> =>
+    updateSponsorship: (org: string, data: UpdateSponsorshipItemRequestDto): Promise<MessageResponse> =>
         httpClient<MessageResponse>(`/orgs/${org}/sponsorships`, {
             method: 'POST',
             body: JSON.stringify(data)
         }),
+
+    /**
+     * PATCH /api/orgs/{org}/sponsorships/{id} (Partial Update)
+     */
+    patchSponsorship: (org: string, id: string, data: UpdateSponsorshipItemRequestDto): Promise<MessageResponse> =>
+        httpClient<MessageResponse>(`/orgs/${org}/sponsorships/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(data)
+        }),
+
+    /**
+     * DELETE /api/orgs/{org}/sponsorships/{id}
+     */
+    deleteSponsorship: (org: string, id: string): Promise<MessageResponse> =>
+        httpClient<MessageResponse>(`/orgs/${org}/sponsorships/${id}`, { method: 'DELETE' }),
 
     /**
      * Notifications (Inbox)

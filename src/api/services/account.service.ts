@@ -257,13 +257,28 @@ export const accountApi = {
         httpClient<WorkExperienceDto[]>('/me/work'),
 
     /**
-     * POST /api/me/work
+     * POST /api/me/work (Full Update)
      */
-    createWork: (data: UpdateWorkExperienceRequestDto): Promise<MessageResponse> =>
+    updateWork: (data: UpdateWorkExperienceRequestDto): Promise<MessageResponse> =>
         httpClient<MessageResponse>('/me/work', {
             method: 'POST',
             body: JSON.stringify(data)
         }),
+
+    /**
+     * PATCH /api/me/work/{id} (Partial Update)
+     */
+    patchWork: (id: string, data: UpdateWorkExperienceRequestDto): Promise<MessageResponse> =>
+        httpClient<MessageResponse>(`/me/work/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(data)
+        }),
+
+    /**
+     * DELETE /api/me/work/{id}
+     */
+    deleteWork: (id: string): Promise<MessageResponse> =>
+        httpClient<MessageResponse>(`/me/work/${id}`, { method: 'DELETE' }),
 
     /**
      * GET /api/me/education
@@ -272,13 +287,28 @@ export const accountApi = {
         httpClient<EducationExperienceDto[]>('/me/education'),
 
     /**
-     * POST /api/me/education
+     * POST /api/me/education (Full Update)
      */
-    createEducation: (data: UpdateEducationExperienceRequestDto): Promise<MessageResponse> =>
+    updateEducation: (data: UpdateEducationExperienceRequestDto): Promise<MessageResponse> =>
         httpClient<MessageResponse>('/me/education', {
             method: 'POST',
             body: JSON.stringify(data)
         }),
+
+    /**
+     * PATCH /api/me/education/{id} (Partial Update)
+     */
+    patchEducation: (id: string, data: UpdateEducationExperienceRequestDto): Promise<MessageResponse> =>
+        httpClient<MessageResponse>(`/me/education/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(data)
+        }),
+
+    /**
+     * DELETE /api/me/education/{id}
+     */
+    deleteEducation: (id: string): Promise<MessageResponse> =>
+        httpClient<MessageResponse>(`/me/education/${id}`, { method: 'DELETE' }),
 
     /**
      * GET /api/me/projects
@@ -287,13 +317,28 @@ export const accountApi = {
         httpClient<ProjectDto[]>('/me/projects'),
 
     /**
-     * POST /api/me/projects
+     * POST /api/me/projects (Full Update)
      */
-    createProject: (data: UpdateProjectRequestDto): Promise<MessageResponse> =>
+    updateProject: (data: UpdateProjectRequestDto): Promise<MessageResponse> =>
         httpClient<MessageResponse>('/me/projects', {
             method: 'POST',
             body: JSON.stringify(data)
         }),
+
+    /**
+     * PATCH /api/me/projects/{id} (Partial Update)
+     */
+    patchProject: (id: string, data: UpdateProjectRequestDto): Promise<MessageResponse> =>
+        httpClient<MessageResponse>(`/me/projects/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(data)
+        }),
+
+    /**
+     * DELETE /api/me/projects/{id}
+     */
+    deleteProject: (id: string): Promise<MessageResponse> =>
+        httpClient<MessageResponse>(`/me/projects/${id}`, { method: 'DELETE' }),
 
     /**
      * GET /api/me/socials
@@ -302,13 +347,28 @@ export const accountApi = {
         httpClient<SocialLinkDto[]>('/me/socials'),
 
     /**
-     * POST /api/me/socials
+     * POST /api/me/socials (Full Update)
      */
-    createSocial: (data: UpdateSocialLinkRequestDto): Promise<MessageResponse> =>
+    updateSocial: (data: UpdateSocialLinkRequestDto): Promise<MessageResponse> =>
         httpClient<MessageResponse>('/me/socials', {
             method: 'POST',
             body: JSON.stringify(data)
         }),
+
+    /**
+     * PATCH /api/me/socials/{id} (Partial Update)
+     */
+    patchSocial: (id: string, data: UpdateSocialLinkRequestDto): Promise<MessageResponse> =>
+        httpClient<MessageResponse>(`/me/socials/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(data)
+        }),
+
+    /**
+     * DELETE /api/me/socials/{id}
+     */
+    deleteSocial: (id: string): Promise<MessageResponse> =>
+        httpClient<MessageResponse>(`/me/socials/${id}`, { method: 'DELETE' }),
 
     /**
      * GET /api/me/contacts
@@ -317,13 +377,28 @@ export const accountApi = {
         httpClient<ContactMethodDto[]>('/me/contacts'),
 
     /**
-     * POST /api/me/contacts
+     * POST /api/me/contacts (Full Update)
      */
-    createContact: (data: UpdateContactMethodRequestDto): Promise<MessageResponse> =>
+    updateContact: (data: UpdateContactMethodRequestDto): Promise<MessageResponse> =>
         httpClient<MessageResponse>('/me/contacts', {
             method: 'POST',
             body: JSON.stringify(data)
         }),
+
+    /**
+     * PATCH /api/me/contacts/{id} (Partial Update)
+     */
+    patchContact: (id: string, data: UpdateContactMethodRequestDto): Promise<MessageResponse> =>
+        httpClient<MessageResponse>(`/me/contacts/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(data)
+        }),
+
+    /**
+     * DELETE /api/me/contacts/{id}
+     */
+    deleteContact: (id: string): Promise<MessageResponse> =>
+        httpClient<MessageResponse>(`/me/contacts/${id}`, { method: 'DELETE' }),
 
     /**
      * GET /api/me/gallery
@@ -332,13 +407,28 @@ export const accountApi = {
         httpClient<GalleryItemDto[]>('/me/gallery'),
 
     /**
-     * POST /api/me/gallery
+     * POST /api/me/gallery (Full Update)
      */
-    createGallery: (data: UpdateGalleryItemRequestDto): Promise<MessageResponse> =>
+    updateGallery: (data: UpdateGalleryItemRequestDto): Promise<MessageResponse> =>
         httpClient<MessageResponse>('/me/gallery', {
             method: 'POST',
             body: JSON.stringify(data)
         }),
+
+    /**
+     * PATCH /api/me/gallery/{id} (Partial Update)
+     */
+    patchGallery: (id: string, data: UpdateGalleryItemRequestDto): Promise<MessageResponse> =>
+        httpClient<MessageResponse>(`/me/gallery/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(data)
+        }),
+
+    /**
+     * DELETE /api/me/gallery/{id}
+     */
+    deleteGallery: (id: string): Promise<MessageResponse> =>
+        httpClient<MessageResponse>(`/me/gallery/${id}`, { method: 'DELETE' }),
 
     /**
      * GET /api/me/certificates
@@ -347,13 +437,28 @@ export const accountApi = {
         httpClient<CertificateDto[]>('/me/certificates'),
 
     /**
-     * POST /api/me/certificates
+     * POST /api/me/certificates (Full Update)
      */
-    createCertificate: (data: UpdateCertificateRequestDto): Promise<MessageResponse> =>
+    updateCertificate: (data: UpdateCertificateRequestDto): Promise<MessageResponse> =>
         httpClient<MessageResponse>('/me/certificates', {
             method: 'POST',
             body: JSON.stringify(data)
         }),
+
+    /**
+     * PATCH /api/me/certificates/{id} (Partial Update)
+     */
+    patchCertificate: (id: string, data: UpdateCertificateRequestDto): Promise<MessageResponse> =>
+        httpClient<MessageResponse>(`/me/certificates/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(data)
+        }),
+
+    /**
+     * DELETE /api/me/certificates/{id}
+     */
+    deleteCertificate: (id: string): Promise<MessageResponse> =>
+        httpClient<MessageResponse>(`/me/certificates/${id}`, { method: 'DELETE' }),
 
     /**
      * GET /api/me/sponsorships
@@ -362,13 +467,28 @@ export const accountApi = {
         httpClient<SponsorshipItemDto[]>('/me/sponsorships'),
 
     /**
-     * POST /api/me/sponsorships
+     * POST /api/me/sponsorships (Full Update)
      */
-    createSponsorship: (data: UpdateSponsorshipItemRequestDto): Promise<MessageResponse> =>
+    updateSponsorship: (data: UpdateSponsorshipItemRequestDto): Promise<MessageResponse> =>
         httpClient<MessageResponse>('/me/sponsorships', {
             method: 'POST',
             body: JSON.stringify(data)
         }),
+
+    /**
+     * PATCH /api/me/sponsorships/{id} (Partial Update)
+     */
+    patchSponsorship: (id: string, data: UpdateSponsorshipItemRequestDto): Promise<MessageResponse> =>
+        httpClient<MessageResponse>(`/me/sponsorships/${id}`, {
+            method: 'PATCH',
+            body: JSON.stringify(data)
+        }),
+
+    /**
+     * DELETE /api/me/sponsorships/{id}
+     */
+    deleteSponsorship: (id: string): Promise<MessageResponse> =>
+        httpClient<MessageResponse>(`/me/sponsorships/${id}`, { method: 'DELETE' }),
 
     /**
      * Notifications (Inbox)
