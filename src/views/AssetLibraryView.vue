@@ -46,7 +46,7 @@ import {
 import {
   ChevronLeft, ChevronRight, ChevronsLeft,
   Search, Eye, EyeOff, Filter, Copy, Trash2,
-  MoreHorizontal, Edit2, Plus, Layers
+  MoreHorizontal, Edit2, Plus, Layers, Check
 } from 'lucide-vue-next';
 
 const { t } = useI18n();
@@ -64,6 +64,8 @@ const selectedCategory = ref<string | undefined>(undefined);
 const categories = ref<string[]>([]);
 const selectedVisibility = ref<Visibility | undefined>(undefined);
 const selectedAssets = ref<Set<string>>(new Set());
+const showBatchVisibilityDialog = ref(false);
+const batchVisibility = ref<Visibility>(Visibility.Private);
 
 // Dialog states
 const showCreateDialog = ref(false);
@@ -268,6 +270,37 @@ const resetFilters = () => {
   currentPage.value = 1;
 };
 
+// Batch operations
+const handleBatchDelete = async () => {
+  if (selectedAssets.value.size === 0) return;
+
+  try {
+    await assetsApi.batchDeletePersonalAssets({ AssetIds: Array.from(selectedAssets.value) });
+    ui.notify(t('common.deleteSuccess'), 'success');
+    selectedAssets.value.clear();
+    fetchAssets();
+  } catch (e: any) {
+    ui.notify(e.message || 'Failed to delete assets', 'error');
+  }
+};
+
+const handleBatchVisibility = async () => {
+  if (selectedAssets.value.size === 0) return;
+
+  try {
+    await assetsApi.batchUpdatePersonalVisibility({
+      AssetIds: Array.from(selectedAssets.value),
+      Visibility: batchVisibility.value
+    });
+    ui.notify(t('common.success'), 'success');
+    selectedAssets.value.clear();
+    showBatchVisibilityDialog.value = false;
+    fetchAssets();
+  } catch (e: any) {
+    ui.notify(e.message || 'Failed to update visibility', 'error');
+  }
+};
+
 const getVisibilityLabel = (visibility: Visibility) => {
   switch (visibility) {
     case Visibility.Public: return t('common.visibilityPublic');
@@ -396,10 +429,10 @@ onMounted(fetchAssets);
           </Button>
         </div>
         <div class="flex items-center gap-2">
-          <Button variant="outline" size="sm" class="h-7 text-xs">
-            {{ t('assetLibrary.batchUpdateVisibility') }}
+          <Button variant="outline" size="sm" class="h-7 text-xs" @click="showBatchVisibilityDialog = true">
+            <Eye class="size-3 mr-1" /> {{ t('assetLibrary.batchUpdateVisibility') }}
           </Button>
-          <Button variant="destructive" size="sm" class="h-7 text-xs">
+          <Button variant="destructive" size="sm" class="h-7 text-xs" @click="handleBatchDelete">
             <Trash2 class="size-3 mr-1" /> {{ t('common.delete') }}
           </Button>
         </div>
@@ -427,21 +460,27 @@ onMounted(fetchAssets);
       </div>
 
       <!-- Grid -->
-      <div v-else class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+      <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         <Card
           v-for="item in assets"
           :key="item.Id"
-          class="group overflow-hidden hover:shadow-lg transition-all animate-in fade-in relative"
-          :class="{ 'ring-2 ring-brand-blue': selectedAssets.has(item.Id) }"
+          class="group overflow-hidden transition-all animate-in fade-in relative"
+          :class="{
+            'ring-2 ring-brand-blue shadow-lg': selectedAssets.has(item.Id),
+            'hover:shadow-lg': !selectedAssets.has(item.Id)
+          }"
+          @click="copyUuid(item.Id)"
         >
           <!-- Checkbox -->
-          <div class="absolute top-2 left-2 z-10">
-            <input
-              type="checkbox"
-              :checked="selectedAssets.has(item.Id)"
-              @change="toggleSelect(item.Id)"
-              class="size-4 rounded border-border cursor-pointer"
-            />
+          <div
+            class="absolute top-2 left-2 z-10 size-5 rounded cursor-pointer flex items-center justify-center transition-all"
+            :class="{
+              'bg-background border-2 border-brand-blue': selectedAssets.has(item.Id),
+              'bg-black/20 border-2 border-transparent hover:border-background/80': !selectedAssets.has(item.Id)
+            }"
+            @click.stop="toggleSelect(item.Id)"
+          >
+            <Check v-if="selectedAssets.has(item.Id)" class="size-3 text-brand-blue" />
           </div>
 
           <div class="relative aspect-square bg-muted">
@@ -460,29 +499,37 @@ onMounted(fetchAssets);
 
             <!-- Hover Actions -->
             <div class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger as-child>
-                  <Button size="icon" variant="secondary" class="size-9 rounded-full">
-                    <MoreHorizontal class="size-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="center">
-                  <DropdownMenuItem @click="copyUuid(item.Id)">
-                    <Copy class="size-4 mr-2" /> {{ t('common.copy') }}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem @click="openEditDialog(item)">
-                    <Edit2 class="size-4 mr-2" /> {{ t('common.edit') }}
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem class="text-destructive focus:text-destructive" @click="confirmDelete(item)">
-                    <Trash2 class="size-4 mr-2" /> {{ t('common.delete') }}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Button
+                size="icon"
+                variant="secondary"
+                class="size-9 rounded-full"
+                @click.stop="copyUuid(item.Id)"
+                :title="t('common.copy')"
+              >
+                <Copy class="size-4" />
+              </Button>
+              <Button
+                size="icon"
+                variant="secondary"
+                class="size-9 rounded-full"
+                @click.stop="openEditDialog(item)"
+                :title="t('common.edit')"
+              >
+                <Edit2 class="size-4" />
+              </Button>
+              <Button
+                size="icon"
+                variant="destructive"
+                class="size-9 rounded-full"
+                @click.stop="confirmDelete(item)"
+                :title="t('common.delete')"
+              >
+                <Trash2 class="size-4" />
+              </Button>
             </div>
           </div>
 
-          <CardContent class="p-3 space-y-2">
+          <CardContent class="p-4 space-y-2">
             <div v-if="item.Category" class="truncate font-bold text-sm">
               {{ item.Category }}
             </div>
@@ -662,5 +709,38 @@ onMounted(fetchAssets);
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+
+    <!-- Batch Visibility Dialog -->
+    <Dialog v-model:open="showBatchVisibilityDialog">
+      <DialogContent class="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{{ t('assetLibrary.batchUpdateVisibility') }}</DialogTitle>
+          <DialogDescription>
+            {{ t('assetLibrary.selected') }}: {{ selectedCount }}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div class="space-y-4 py-4">
+          <Label>{{ t('common.visibility') }}</Label>
+          <Select v-model="batchVisibility">
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem :value="Visibility.Public">{{ t('common.visibilityPublic') }}</SelectItem>
+              <SelectItem :value="Visibility.Authenticated">{{ t('common.visibilityAuthenticated') }}</SelectItem>
+              <SelectItem :value="Visibility.Protected">{{ t('common.visibilityProtected') }}</SelectItem>
+              <SelectItem :value="Visibility.Private">{{ t('common.visibilityPrivate') }}</SelectItem>
+              <SelectItem :value="Visibility.FriendsOnly">{{ t('common.visibilityFriendsOnly') }}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div class="flex justify-end gap-2">
+          <Button variant="outline" @click="showBatchVisibilityDialog = false">{{ t('common.cancel') }}</Button>
+          <Button @click="handleBatchVisibility">{{ t('common.save') }}</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>
