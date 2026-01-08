@@ -45,14 +45,14 @@ export const adminApi = {
      * List users
      * GET /api/admin/users
      */
-    getUsers: (params: UserFilterDto): Promise<PagedResponse<UserAdminDto>> => {
+    getUsers: (params: UserFilterDto & { page?: number; pageSize?: number }): Promise<PagedResponse<UserAdminDto>> => {
         const queryParams = new URLSearchParams();
         if (params.page !== undefined) queryParams.append('page', params.page.toString());
         if (params.pageSize !== undefined) queryParams.append('pageSize', params.pageSize.toString());
-        if (params.status !== undefined) queryParams.append('status', params.status.toString());
-        if (params.role !== undefined) queryParams.append('role', params.role.toString());
-        if (params.type !== undefined) queryParams.append('type', params.type.toString());
-        if (params.search !== undefined) queryParams.append('search', params.search);
+        if (params.Status !== undefined) queryParams.append('status', params.Status.toString());
+        if (params.Role !== undefined) queryParams.append('role', params.Role.toString());
+        if (params.Type !== undefined) queryParams.append('type', params.Type.toString());
+        if (params.Search !== undefined) queryParams.append('search', params.Search);
         const queryString = queryParams.toString();
         return httpClient<PagedResponse<UserAdminDto>>(`/admin/users${queryString ? `?${queryString}` : ''}`);
     },

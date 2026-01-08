@@ -13,9 +13,7 @@ import type {
     ContactMethodDto,
     GalleryItemDto,
     CertificateDto,
-    SponsorshipItemDto,
-    FollowStatusDto,
-    MessageResponse
+    SponsorshipItemDto
 } from '../types';
 
 /**
@@ -129,41 +127,6 @@ export const profileApi = {
         httpClient<SponsorshipItemDto[]>(`/profiles/${profile}/sponsorships`, { requiresAuth: false }),
 
     /**
-     * Social actions
+     * Note: Social actions (follow, block, etc.) are handled by social.service.ts
      */
-
-    /**
-     * Follow target user/org
-     * POST /api/profiles/{profile}/follow
-     */
-    follow: (profile: string): Promise<MessageResponse> =>
-        httpClient<MessageResponse>(`/profiles/${profile}/follow`, { method: 'POST' }),
-
-    /**
-     * Unfollow
-     * DELETE /api/profiles/{profile}/follow
-     */
-    unfollow: (profile: string): Promise<MessageResponse> =>
-        httpClient<MessageResponse>(`/profiles/${profile}/follow`, { method: 'DELETE' }),
-
-    /**
-     * Check follow status
-     * GET /api/profiles/{profile}/follow
-     */
-    getFollowStatus: (profile: string): Promise<FollowStatusDto> =>
-        httpClient<FollowStatusDto>(`/profiles/${profile}/follow`, { requiresAuth: false }),
-
-    /**
-     * Block target
-     * POST /api/profiles/{profile}/block
-     */
-    block: (profile: string): Promise<MessageResponse> =>
-        httpClient<MessageResponse>(`/profiles/${profile}/block`, { method: 'POST' }),
-
-    /**
-     * Unblock target
-     * DELETE /api/profiles/{profile}/block
-     */
-    unblock: (profile: string): Promise<MessageResponse> =>
-        httpClient<MessageResponse>(`/profiles/${profile}/block`, { method: 'DELETE' })
 };
