@@ -187,24 +187,24 @@ watch(() => [props.resource, props.apiPrefix], fetchItems, { immediate: true });
       <Button variant="link" @click="openCreate">{{ t('common.create') }}</Button>
     </div>
 
-    <div v-else class="grid gap-4">
-      <Card v-for="item in items" :key="item.Id" class="group">
-        <CardContent class="p-4 flex items-center gap-4">
+    <div v-else class="grid gap-4 min-w-0">
+      <Card v-for="item in items" :key="item.Id" class="group min-w-0">
+        <CardContent class="p-4 flex items-center gap-4 min-w-0">
           <div v-if="item.Logo || item.Icon || item.Image" class="size-12 rounded-lg bg-muted border flex items-center justify-center shrink-0 overflow-hidden">
             <AssetView :asset="item.Logo || item.Icon || item.Image" class-name="w-full h-full object-contain" />
           </div>
 
-          <div class="flex-1 min-w-0">
+          <div class="flex-1 min-w-0 overflow-hidden">
             <h3 class="font-bold truncate">
               {{ item.Label || item.Name || item.CompanyName || item.Platform || 'Item' }}
             </h3>
-            <p class="text-sm text-muted-foreground truncate">
+            <p class="text-sm text-muted-foreground wrap-break-word line-clamp-2">
               {{ item.Value || item.Position || item.Summary || item.Url }}
             </p>
           </div>
 
           <!-- Edit/Delete Actions -->
-          <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
             <Button variant="ghost" size="icon" @click="openEdit(item)">
               <Edit2 class="size-4" />
             </Button>
