@@ -224,12 +224,6 @@ const handleDelete = async () => {
     ui.notify(e.message || 'Failed to delete asset', 'error');
   }
 };
-
-const confirmBatchVisibility = () => {
-  if (selectedAssets.value.size === 0) return;
-  showBatchVisibilityDialog.value = true;
-};
-
 const handleBatchVisibility = async () => {
   if (selectedAssets.value.size === 0) return;
 
