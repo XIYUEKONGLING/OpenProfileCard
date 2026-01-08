@@ -3,7 +3,7 @@ import { ref, computed, watch } from 'vue';
 import { Loader2 } from 'lucide-vue-next';
 import { type AssetDto, AssetType } from '@/api/types';
 import { useAuthStore } from '@/stores/auth';
-import { lookupApi, publicAssetsApi, assetsApi } from '@/api/services';
+import { lookupApi, publicAssetsApi } from '@/api/services';
 
 const props = defineProps<{
   asset?: AssetDto | null;
@@ -71,7 +71,7 @@ const fallbackChar = computed(() => {
 });
 
 // Load library/resource asset with fallback chain
-async function loadAsset(uuid: string, isResource: boolean): Promise<AssetDto | null> {
+async function loadAsset(uuid: string, _isResource: boolean): Promise<AssetDto | null> {
   const MAX_REDIRECTS = 3;
   const visitedUuids = new Set<string>();
 
