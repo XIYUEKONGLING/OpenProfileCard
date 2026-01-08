@@ -53,9 +53,9 @@ const pageSize = 12;
 const totalPages = ref(0);
 const totalItems = ref(0);
 const searchQuery = ref('');
-const selectedCategory = ref<string>('');
+const selectedCategory = ref<string>('__all__');
 const categories = ref<string[]>([]);
-const selectedVisibility = ref<string>('');
+const selectedVisibility = ref<string>('__all__');
 const selectedAssets = ref<Set<string>>(new Set());
 const showBatchVisibilityDialog = ref(false);
 const showBatchDeleteDialog = ref(false);
@@ -97,8 +97,8 @@ const fetchAssets = async () => {
     const response = await assetsApi.getPersonalAssets({
       page: currentPage.value,
       pageSize: pageSize,
-      category: selectedCategory.value || undefined,
-      visibility: selectedVisibility.value ? parseInt(selectedVisibility.value) as Visibility : undefined,
+      category: selectedCategory.value && selectedCategory.value !== '__all__' ? selectedCategory.value : undefined,
+      visibility: selectedVisibility.value && selectedVisibility.value !== '__all__' ? parseInt(selectedVisibility.value) as Visibility : undefined,
       search: searchQuery.value || undefined,
     });
 
@@ -250,8 +250,8 @@ const toggleSelectAll = () => {
 
 const resetFilters = () => {
   searchQuery.value = '';
-  selectedCategory.value = '';
-  selectedVisibility.value = '';
+  selectedCategory.value = '__all__';
+  selectedVisibility.value = '__all__';
   currentPage.value = 1;
 };
 
@@ -366,7 +366,7 @@ onMounted(fetchAssets);
             <SelectValue :placeholder="t('assetLibrary.allCategories')" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">{{ t('assetLibrary.allCategories') }}</SelectItem>
+            <SelectItem value="__all__">{{ t('assetLibrary.allCategories') }}</SelectItem>
             <SelectItem v-for="cat in categories" :key="cat" :value="cat">
               {{ cat }}
             </SelectItem>
@@ -379,7 +379,7 @@ onMounted(fetchAssets);
             <SelectValue :placeholder="t('common.all')" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">{{ t('common.all') }}</SelectItem>
+            <SelectItem value="__all__">{{ t('common.all') }}</SelectItem>
             <SelectItem :value="String(Visibility.Public)">{{ t('common.visibilityPublic') }}</SelectItem>
             <SelectItem :value="String(Visibility.Authenticated)">{{ t('common.visibilityAuthenticated') }}</SelectItem>
             <SelectItem :value="String(Visibility.Protected)">{{ t('common.visibilityProtected') }}</SelectItem>
