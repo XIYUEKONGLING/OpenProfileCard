@@ -510,7 +510,7 @@ onUnmounted(() => {
               <!-- Actions -->
               <div class="space-y-3">
                 <Button v-if="canEdit" variant="outline" class="w-full font-bold shadow-sm rounded-xl" @click="goToEditProfile('basic')">
-                  {{ t('profile.editProfile') }}
+                  <Edit2 class="size-4 mr-2" /> {{ t('profile.editProfile') }}
                 </Button>
 
                 <Button v-if="canEdit" variant="outline" class="w-full font-bold shadow-sm rounded-xl" @click="goToAssets">
