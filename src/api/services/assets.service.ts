@@ -258,12 +258,13 @@ export const systemAssetsApi = {
      * List all system assets
      * GET /api/admin/assets
      */
-    getSystemAssets: (params?: { page?: number; pageSize?: number; category?: string; visibility?: number }): Promise<PagedResponse<SystemAssetDto>> => {
+    getSystemAssets: (params?: { page?: number; pageSize?: number; category?: string; visibility?: number; search?: string }): Promise<PagedResponse<SystemAssetDto>> => {
         const queryParams = new URLSearchParams();
         if (params?.page !== undefined) queryParams.append('page', params.page.toString());
         if (params?.pageSize !== undefined) queryParams.append('pageSize', params.pageSize.toString());
         if (params?.category !== undefined) queryParams.append('category', params.category);
         if (params?.visibility !== undefined) queryParams.append('visibility', params.visibility.toString());
+        if (params?.search !== undefined) queryParams.append('search', params.search);
         const queryString = queryParams.toString();
         return httpClient<PagedResponse<SystemAssetDto>>(`/admin/assets${queryString ? `?${queryString}` : ''}`);
     },

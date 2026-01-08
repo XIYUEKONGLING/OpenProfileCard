@@ -230,7 +230,7 @@ const handleBatchVisibility = async () => {
   try {
     // Batch visibility updates for system assets - using individual API calls
     const promises = Array.from(selectedAssets.value).map(id =>
-      systemAssetsApi.updateSystemAsset(id, { Visibility: parseInt(batchVisibility.value) as Visibility })
+      systemAssetsApi.patchSystemAsset(id, { Visibility: parseInt(batchVisibility.value) as Visibility })
     );
     await Promise.all(promises);
     ui.notify(t('common.updateSuccess'), 'success');
