@@ -22,11 +22,12 @@ const resolvedAsset = ref<AssetDto | null>(null);
 
 // Helper: Check type safely
 const isType = (type: AssetType) => {
+  const currentAsset = displayAsset.value;
   if (type === AssetType.Empty) {
     // It's empty if asset is null, or Type is explicitly 0 (Empty)
-    return !props.asset || props.asset.Type === AssetType.Empty;
+    return !currentAsset || currentAsset.Type === AssetType.Empty;
   }
-  return props.asset?.Type === type;
+  return currentAsset?.Type === type;
 };
 
 // Check if asset is effectively empty (no value to display)
