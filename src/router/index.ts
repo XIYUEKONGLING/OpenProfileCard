@@ -66,6 +66,12 @@ const router = createRouter({
                         apiPrefix: `/orgs/${route.params.accountName}`
                     })
                 },
+                {
+                    path: 'orgs/:accountName/assets',
+                    name: 'org-assets',
+                    component: () => import('@/views/org/OrgAssetLibraryView.vue'),
+                    props: true
+                },
 
                 // Admin
                 {

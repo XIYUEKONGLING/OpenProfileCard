@@ -303,6 +303,10 @@ const goToSettings = () => {
   router.push({ name: 'org-settings', params: { accountName: props.accountName } });
 };
 
+const goToAssets = () => {
+  router.push({ name: 'org-assets', params: { accountName: props.accountName } });
+};
+
 const goToManage = (resource: string) => {
   router.push(`/dashboard/orgs/${props.accountName}/manage/${resource}`);
 };
@@ -507,6 +511,10 @@ onUnmounted(() => {
               <div class="space-y-3">
                 <Button v-if="canEdit" variant="outline" class="w-full font-bold shadow-sm rounded-xl" @click="goToEditProfile('basic')">
                   {{ t('profile.editProfile') }}
+                </Button>
+
+                <Button v-if="canEdit" variant="outline" class="w-full font-bold shadow-sm rounded-xl" @click="goToAssets">
+                  <ImageIcon class="size-4 mr-2" /> {{ t('assetLibrary.title') || 'Asset Library' }}
                 </Button>
 
                 <Button v-if="isOwner" variant="outline" class="w-full font-bold shadow-sm rounded-xl border-dashed" @click="goToSettings">

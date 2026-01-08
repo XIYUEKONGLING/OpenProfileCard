@@ -8,13 +8,14 @@ import type { SystemStatusDto, SystemSettingDto, SiteMetadataDto } from '@/api/t
 // Components
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
-import { Loader2, ShieldCheck, BarChart3, Globe, Settings2, Users } from 'lucide-vue-next';
+import { Loader2, ShieldCheck, BarChart3, Globe, Settings2, Users, Layers } from 'lucide-vue-next';
 
 // Sub-components
 import AdminStatsSection from '@/views/admin/sections/AdminStatsSection.vue';
 import AdminMetaSection from '@/views/admin/sections/AdminMetaSection.vue';
 import AdminSettingsSection from '@/views/admin/sections/AdminSettingsSection.vue';
 import AdminUsersSection from '@/views/admin/sections/AdminUsersSection.vue';
+import AdminAssetsSection from '@/views/admin/sections/AdminAssetsSection.vue';
 
 const { t } = useI18n();
 const ui = useUIStore();
@@ -64,11 +65,12 @@ onMounted(fetchData);
     </div>
 
     <Tabs default-value="stats" class="w-full">
-      <TabsList class="grid w-full grid-cols-4 lg:w-200">
+      <TabsList class="grid w-full grid-cols-5 lg:w-auto">
         <TabsTrigger value="stats"><BarChart3 class="size-4 mr-2" /> {{ t('admin.stats') }}</TabsTrigger>
         <TabsTrigger value="meta"><Globe class="size-4 mr-2" /> {{ t('admin.siteMeta') }}</TabsTrigger>
         <TabsTrigger value="settings"><Settings2 class="size-4 mr-2" /> {{ t('admin.systemSettings') }}</TabsTrigger>
         <TabsTrigger value="users"><Users class="size-4 mr-2" /> {{ t('admin.userManagement') }}</TabsTrigger>
+        <TabsTrigger value="assets"><Layers class="size-4 mr-2" /> {{ t('admin.systemAssets') || 'System Assets' }}</TabsTrigger>
       </TabsList>
 
       <div v-if="isLoading" class="py-20 flex justify-center">
@@ -90,6 +92,10 @@ onMounted(fetchData);
 
         <TabsContent value="users" class="mt-6">
           <AdminUsersSection />
+        </TabsContent>
+
+        <TabsContent value="assets" class="mt-6">
+          <AdminAssetsSection />
         </TabsContent>
       </template>
     </Tabs>
