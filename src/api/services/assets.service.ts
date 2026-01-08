@@ -7,7 +7,7 @@ import type {
     BatchUpdateVisibilityRequestDto,
     LookupAssetDto,
     PagedResponse,
-    MessageResponse
+    MessageResponse, SystemAssetDto, AssetDto
 } from '../types';
 
 /**
@@ -247,4 +247,68 @@ export const lookupApi = {
      */
     lookupAsset: (uuid: string): Promise<LookupAssetDto> =>
         httpClient<LookupAssetDto>(`/lookup/${uuid}`)
+};
+
+/**
+ * System Assets (Admin Only)
+ * Manage system-wide global assets reserved for system use only
+ */
+export const systemAssetsApi = {
+    /**
+     * List all system assets
+     * GET /api/admin/assets
+     */
+    getSystemAssets: (params?: { page?: number; pageSize?: number; category?: string; visibility?: number }): Promise<PagedResponse<SystemAssetDto>> => {
+        const queryParams = new URLSearchParams();
+        if (params?.page !== undefined) queryParams.append('page', params.page.toString());
+        if (params?.pageSize !== undefined) queryParams.append('pageSize', params.pageSize.toString());
+        if (params?.category !== undefined) queryParams.append('category', params.category);
+        if (params?.visibility !== undefined) queryParams.append('visibility', params.visibility.toString());
+        const queryString = queryParams.toString();
+        return httpClient<PagedResponse<SystemAssetDto>>(`/admin/assets${queryString ? `?${queryString}` : ''}`);
+    },
+
+    /**
+     * Get specific system asset
+     * GET /api/admin/assets/{uuid}
+     */
+    getSystemAsset: (uuid: string): Promise<SystemAssetDto> =>
+        httpClient<SystemAssetDto>(`/admin/assets/${uuid}`),
+
+    /**
+     * Create system asset
+     * POST /api/admin/assets
+     */
+    createSystemAsset: (data: { Asset: AssetDto; Visibility: number; Category?: string; Notes?: string }): Promise<SystemAssetDto> =>
+        httpClient<SystemAssetDto>('/admin/assets', {
+            method: 'POST',
+            body: JSON.stringify(data)
+        }),
+
+    /**
+     * Full update system asset
+     * PUT /api/admin/assets/{uuid}
+     */
+    updateSystemAsset: (uuid: string, data: { Asset: AssetDto; Visibility: number; Category?: string; Notes?: string }): Promise<SystemAssetDto> =>
+        httpClient<SystemAssetDto>(`/admin/assets/${uuid}`, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+        }),
+
+    /**
+     * Partial update system asset
+     * PATCH /api/admin/assets/{uuid}
+     */
+    patchSystemAsset: (uuid: string, data: { Asset?: AssetDto; Visibility?: number; Category?: string; Notes?: string }): Promise<SystemAssetDto> =>
+        httpClient<SystemAssetDto>(`/admin/assets/${uuid}`, {
+            method: 'PATCH',
+            body: JSON.stringify(data)
+        }),
+
+    /**
+     * Delete system asset
+     * DELETE /api/admin/assets/{uuid}
+     */
+    deleteSystemAsset: (uuid: string): Promise<MessageResponse> =>
+        httpClient<MessageResponse>(`/admin/assets/${uuid}`, { method: 'DELETE' })
 };
