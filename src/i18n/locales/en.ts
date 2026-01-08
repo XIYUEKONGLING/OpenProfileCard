@@ -513,6 +513,13 @@ export const en = {
         memberKickedSuccess: 'Member removed successfully',
         identityRequired: 'Username or email is required',
         usernameOrEmail: 'Username or email',
+
+        // System Assets
+        systemAssets: 'System Assets',
+        systemAssetsDesc: 'Manage system-wide assets for default avatars, icons, etc.',
+        noSystemAssetsDesc: 'Create system assets that will be available across the platform.',
+        createSystemAssetDesc: 'Create a new system asset',
+        editSystemAssetDesc: 'Edit system asset details',
     },
     organization: {
         manage: 'Manage Organization',
@@ -577,6 +584,10 @@ export const en = {
         revokeConfirm: 'Are you sure you want to revoke this invitation?',
         noPendingInvites: 'No pending invitations.',
         pendingInvitesDesc: 'View and manage invitations you have sent to users.',
+
+        // Organization Assets
+        orgAssetsTitle: 'Organization Asset Library',
+        orgAssetsSubtitle: 'Manage organization assets for members to use.',
     },
     assetLibrary: {
         title: 'Asset Library',

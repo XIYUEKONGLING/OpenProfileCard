@@ -510,6 +510,13 @@ export const zh = {
         memberKickedSuccess: '成员移除成功',
         identityRequired: '用户名或邮箱为必填项',
         usernameOrEmail: '用户名或邮箱',
+
+        // System Assets
+        systemAssets: '系统资源',
+        systemAssetsDesc: '管理系统范围的资源，如默认头像、图标等。',
+        noSystemAssetsDesc: '创建可在整个平台使用的系统资源。',
+        createSystemAssetDesc: '创建新的系统资源',
+        editSystemAssetDesc: '编辑系统资源详情',
     },
     organization: {
         manage: '管理组织',
@@ -574,6 +581,10 @@ export const zh = {
         revokeConfirm: '确定要撤销此邀请吗？',
         noPendingInvites: '暂无待处理的邀请。',
         pendingInvitesDesc: '查看并管理您发送给用户的邀请。',
+
+        // Organization Assets
+        orgAssetsTitle: '组织资源库',
+        orgAssetsSubtitle: '管理组织资源供成员使用。',
     },
     assetLibrary: {
         title: '资源库',
