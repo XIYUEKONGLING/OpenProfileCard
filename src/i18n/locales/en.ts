@@ -104,6 +104,10 @@ export const en = {
         send: 'Send',
         selectAll: 'Select All',
         deselectAll: 'Deselect All',
+        createSuccess: 'Created successfully',
+        updateSuccess: 'Updated successfully',
+        updateConfirm: 'Are you sure you want to update',
+        selectVisibility: 'Select visibility',
     },
     auth: {
         loginTitle: 'Open Profile Card',
@@ -575,6 +579,7 @@ export const en = {
         pendingInvitesDesc: 'View and manage invitations you have sent to users.',
     },
     assetLibrary: {
+        title: 'Asset Library',
         subtitle: 'Manage your reusable resources and media.',
         allCategories: 'All Categories',
         noAssets: 'No assets found',

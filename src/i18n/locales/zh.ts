@@ -104,6 +104,10 @@ export const zh = {
         send: '发送',
         selectAll: '全选',
         deselectAll: '取消全选',
+        createSuccess: '创建成功',
+        updateSuccess: '更新成功',
+        updateConfirm: '确定要更新',
+        selectVisibility: '选择可见性',
     },
     auth: {
         loginTitle: 'Open Profile Card',
@@ -572,6 +576,7 @@ export const zh = {
         pendingInvitesDesc: '查看并管理您发送给用户的邀请。',
     },
     assetLibrary: {
+        title: '资源库',
         subtitle: '管理您的可复用资源和媒体。',
         allCategories: '全部分类',
         noAssets: '暂无资源',
