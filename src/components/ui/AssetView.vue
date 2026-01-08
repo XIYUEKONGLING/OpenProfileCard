@@ -30,6 +30,17 @@ const isType = (type: AssetType) => {
   return currentAsset?.Type === type;
 };
 
+// Check if we need to show loading state (for Library/Resource types)
+const isLibraryOrResourceLoading = computed(() => {
+  const originalAsset = props.asset;
+  if (!originalAsset) return false;
+  const type = originalAsset.Type;
+  // Show loading if original is Library/Resource but we haven't resolved it yet
+  return (type === AssetType.Library || type === AssetType.Resource) &&
+         !resolvedAsset.value &&
+         isLoading.value;
+});
+
 // Check if asset is effectively empty (no value to display)
 const isEffectivelyEmpty = computed(() => {
   const currentAsset = resolvedAsset.value ?? props.asset;
@@ -180,7 +191,7 @@ watch(
     </div>
 
     <!-- Loading State (for Library/Resource) -->
-    <div v-if="isLoading" class="absolute inset-0 flex items-center justify-center">
+    <div v-if="isLibraryOrResourceLoading" class="absolute inset-0 flex items-center justify-center">
       <Loader2 class="animate-spin text-muted-foreground size-1/2" />
     </div>
 
