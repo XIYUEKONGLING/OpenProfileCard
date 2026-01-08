@@ -61,6 +61,7 @@ export const zh = {
         visibilityProtected: '受保护',
         visibilityPrivate: '私有',
         visibilityFriendsOnly: '仅好友',
+        visibilityMembersOnly: '仅成员',
         deleteConfirm: '确定要删除此项目吗？',
         contact: '联系方式',
         prev: '上一页',

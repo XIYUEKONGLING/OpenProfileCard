@@ -61,6 +61,7 @@ export const en = {
         visibilityProtected: 'Protected',
         visibilityPrivate: 'Private',
         visibilityFriendsOnly: 'Friends Only',
+        visibilityMembersOnly: 'Members Only',
         deleteConfirm: 'Are you sure you want to delete this item?',
         contact: 'Contact',
         prev: 'Previous',

@@ -38,8 +38,8 @@ import {
 } from '@/components/ui/alert-dialog';
 import {
   ChevronLeft, ChevronRight, ChevronsLeft,
-  Search, Eye, EyeOff, Trash2, ChevronsRight,
-  Edit2, Plus, Layers, Check, Lock, Users, Loader2
+  Search, Eye, EyeOff, Filter, Copy, Trash2,
+  Edit2, Plus, Layers, Check, Lock, Loader2, ChevronsRight
 } from 'lucide-vue-next';
 import {assetsApi} from "@/api/services";
 
@@ -147,6 +147,13 @@ const toggleSelectAll = () => {
   } else {
     assets.value.forEach(item => selectedAssets.value.add(item.Id));
   }
+};
+
+const resetFilters = () => {
+  searchQuery.value = '';
+  selectedCategory.value = '__all__';
+  selectedVisibility.value = '__all__';
+  currentPage.value = 1;
 };
 
 const copyUuid = async (uuid: string) => {
@@ -286,7 +293,8 @@ const getVisibilityIcon = (visibility: Visibility) => {
     case Visibility.Authenticated:
     case Visibility.Protected: return EyeOff;
     case Visibility.Private: return Lock;
-    case Visibility.FriendsOnly: return Users;
+    case Visibility.FriendsOnly:
+    case Visibility.MembersOnly: return Eye;
     default: return Eye;
   }
 };
@@ -298,6 +306,7 @@ const getVisibilityColor = (visibility: Visibility) => {
     case Visibility.Protected: return 'text-yellow-500';
     case Visibility.Private: return 'text-red-500';
     case Visibility.FriendsOnly: return 'text-purple-500';
+    case Visibility.MembersOnly: return 'text-orange-500';
     default: return 'text-gray-500';
   }
 };
@@ -309,6 +318,7 @@ const getVisibilityLabel = (visibility: Visibility) => {
     case Visibility.Protected: return t('common.visibilityProtected');
     case Visibility.Private: return t('common.visibilityPrivate');
     case Visibility.FriendsOnly: return t('common.visibilityFriendsOnly');
+    case Visibility.MembersOnly: return t('common.visibilityMembersOnly');
     default: return String(visibility);
   }
 };
@@ -341,73 +351,96 @@ watch([selectedCategory, selectedVisibility, searchQuery], () => {
 });
 </script>
 
+
 <template>
   <div class="space-y-6">
     <!-- Header -->
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-3xl font-black tracking-tight">{{ t('assetLibrary.title') }}</h1>
-        <p class="text-muted-foreground text-sm">{{ t('assetLibrary.subtitle') }}</p>
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="size-10 rounded-xl bg-brand-blue/10 flex items-center justify-center">
+          <Layers class="size-5 text-brand-blue" />
+        </div>
+        <div>
+          <h1 class="text-3xl font-black tracking-tight">{{ t('organization.orgAssetsTitle') }}</h1>
+          <p class="text-muted-foreground text-sm">{{ t('organization.orgAssetsSubtitle') }}</p>
+        </div>
       </div>
-      <Button v-if="canEdit" @click="openCreateDialog" class="font-bold shadow-sm">
-        <Plus class="size-4 mr-2" /> {{ t('assetLibrary.createAsset') }}
+      <Button v-if="canEdit" @click="openCreateDialog" class="font-bold gap-2">
+        <Plus class="size-4" /> {{ t('common.create') }}
       </Button>
     </div>
 
     <!-- Filters -->
-    <div class="flex flex-wrap items-center gap-3">
-      <div class="relative flex-1 min-w-64">
-        <Search class="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
-        <Input
-          v-model="searchQuery"
-          :placeholder="t('common.search') || 'Search...'"
-          class="pl-10 h-10"
-        />
+    <div class="bg-muted/30 p-4 rounded-xl border border-border/50 space-y-4">
+      <div class="flex flex-wrap items-center gap-3">
+        <!-- Search -->
+        <div class="relative flex-1 min-w-50">
+          <Search class="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
+          <Input
+            v-model="searchQuery"
+            :placeholder="t('common.search')"
+            class="pl-9"
+          />
+        </div>
+
+        <!-- Category Filter -->
+        <Select v-model="selectedCategory">
+          <SelectTrigger class="w-40 h-9">
+            <SelectValue :placeholder="t('assetLibrary.allCategories')" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">{{ t('assetLibrary.allCategories') }}</SelectItem>
+            <SelectItem v-for="cat in categories" :key="cat" :value="cat">
+              {{ cat }}
+            </SelectItem>
+          </SelectContent>
+        </Select>
+
+        <!-- Visibility Filter -->
+        <Select v-model="selectedVisibility">
+          <SelectTrigger class="w-40 h-9">
+            <SelectValue :placeholder="t('common.all')" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">{{ t('common.all') }}</SelectItem>
+            <SelectItem :value="String(Visibility.Public)">{{ t('common.visibilityPublic') }}</SelectItem>
+            <SelectItem :value="String(Visibility.Authenticated)">{{ t('common.visibilityAuthenticated') }}</SelectItem>
+            <SelectItem :value="String(Visibility.Protected)">{{ t('common.visibilityProtected') }}</SelectItem>
+            <SelectItem :value="String(Visibility.Private)">{{ t('common.visibilityPrivate') }}</SelectItem>
+            <SelectItem :value="String(Visibility.FriendsOnly)">{{ t('common.visibilityFriendsOnly') }}</SelectItem>
+            <SelectItem :value="String(Visibility.MembersOnly)">{{ t('common.visibilityMembersOnly') }}</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <!-- Reset -->
+        <Button
+          v-if="searchQuery || selectedCategory !== '__all__' || selectedVisibility !== '__all__'"
+          variant="ghost"
+          size="sm"
+          @click="resetFilters"
+        >
+          <Filter class="mr-2 size-4" />
+          {{ t('admin.resetFilters') }}
+        </Button>
       </div>
 
-      <Select v-model="selectedCategory">
-        <SelectTrigger class="w-40 h-10">
-          <SelectValue :placeholder="t('assetLibrary.allCategories')" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="__all__">{{ t('assetLibrary.allCategories') }}</SelectItem>
-          <SelectItem v-for="cat in categories" :key="cat" :value="cat">
-            {{ cat }}
-          </SelectItem>
-        </SelectContent>
-      </Select>
-
-      <Select v-model="selectedVisibility">
-        <SelectTrigger class="w-40 h-10">
-          <SelectValue :placeholder="t('common.all') || 'All'" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="__all__">{{ t('common.all') || 'All' }}</SelectItem>
-          <SelectItem :value="String(Visibility.Public)">{{ t('common.visibilityPublic') }}</SelectItem>
-          <SelectItem :value="String(Visibility.Authenticated)">{{ t('common.visibilityAuthenticated') }}</SelectItem>
-          <SelectItem :value="String(Visibility.Protected)">{{ t('common.visibilityProtected') }}</SelectItem>
-          <SelectItem :value="String(Visibility.Private)">{{ t('common.visibilityPrivate') }}</SelectItem>
-          <SelectItem :value="String(Visibility.FriendsOnly)">{{ t('common.visibilityFriendsOnly') }}</SelectItem>
-        </SelectContent>
-      </Select>
-    </div>
-
-    <!-- Batch Actions -->
-    <div v-if="canEdit && hasSelected" class="flex items-center gap-3 p-3 bg-muted/50 rounded-lg border">
-      <Button variant="outline" size="sm" @click="toggleSelectAll">
-        <Check v-if="allSelected" class="size-4 mr-2" />
-        {{ allSelected ? t('common.deselectAll') : t('common.selectAll') }}
-      </Button>
-      <span class="text-sm text-muted-foreground">
-        {{ selectedCount }} {{ t('assetLibrary.selected') }}
-      </span>
-      <div class="flex-1" />
-      <Button variant="outline" size="sm" @click="confirmBatchVisibility">
-        <Eye class="size-4 mr-2" /> {{ t('assetLibrary.batchUpdateVisibility') }}
-      </Button>
-      <Button variant="destructive" size="sm" @click="confirmBatchDelete">
-        <Trash2 class="size-4 mr-2" /> {{ t('common.delete') }}
-      </Button>
+      <!-- Batch Actions Bar -->
+      <div v-if="canEdit && hasSelected" class="flex items-center justify-between p-3 bg-brand-blue/10 rounded-lg border border-brand-blue/20 animate-in fade-in slide-in-from-bottom-2">
+        <div class="flex items-center gap-2">
+          <span class="text-sm font-bold">{{ selectedCount }} {{ t('assetLibrary.selected') }}</span>
+          <Button variant="ghost" size="sm" class="h-7 text-xs" @click="toggleSelectAll">
+            {{ allSelected ? t('common.deselectAll') : t('common.selectAll') }}
+          </Button>
+        </div>
+        <div class="flex items-center gap-2">
+          <Button variant="outline" size="sm" class="h-7 text-xs" @click="showBatchVisibilityDialog = true">
+            <Eye class="size-3 mr-1" /> {{ t('assetLibrary.batchUpdateVisibility') }}
+          </Button>
+          <Button variant="destructive" size="sm" class="h-7 text-xs" @click="confirmBatchDelete">
+            <Trash2 class="size-3 mr-1" /> {{ t('common.delete') }}
+          </Button>
+        </div>
+      </div>
     </div>
 
     <!-- Loading State -->
@@ -416,17 +449,17 @@ watch([selectedCategory, selectedVisibility, searchQuery], () => {
     </div>
 
     <!-- Empty State -->
-    <div v-else-if="!isLoading && assets.length === 0" class="text-center py-20 border-2 border-dashed rounded-xl">
-      <Layers class="size-12 mx-auto mb-4 text-muted-foreground opacity-50" />
-      <h3 class="text-lg font-semibold mb-2">{{ t('assetLibrary.noAssets') }}</h3>
-      <p class="text-muted-foreground mb-6">{{ t('assetLibrary.noAssetsDesc') }}</p>
-      <Button v-if="canEdit" @click="openCreateDialog">
-        <Plus class="size-4 mr-2" /> {{ t('assetLibrary.createAsset') }}
+    <div v-else-if="!isLoading && assets.length === 0" class="text-center py-20 border-2 border-dashed border-border rounded-xl bg-muted/10 animate-in fade-in zoom-in-95 duration-300">
+      <Layers class="size-12 mx-auto text-muted-foreground/20 mb-4" />
+      <p class="font-bold">{{ t('assetLibrary.noAssets') }}</p>
+      <p class="text-sm text-muted-foreground mb-4">{{ t('assetLibrary.noAssetsDesc') }}</p>
+      <Button v-if="canEdit" variant="outline" @click="openCreateDialog">
+        <Plus class="size-4 mr-2" /> {{ t('common.create') }}
       </Button>
     </div>
 
     <!-- Asset Grid -->
-    <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+    <div v-else class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300">
       <Card
         v-for="item in assets"
         :key="item.Id"
@@ -450,7 +483,6 @@ watch([selectedCategory, selectedVisibility, searchQuery], () => {
           <Check v-if="selectedAssets.has(item.Id)" class="size-3 text-brand-blue" />
         </div>
 
-        <!-- Asset Preview -->
         <div class="relative aspect-square bg-muted">
           <AssetView :asset="item.Asset" class-name="w-full h-full object-cover" />
 
@@ -462,201 +494,290 @@ watch([selectedCategory, selectedVisibility, searchQuery], () => {
 
           <!-- Hover Actions -->
           <div v-if="canEdit" class="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-            <Button size="icon" variant="secondary" class="h-8 w-8" @click.stop="openEditDialog(item)">
+            <Button
+              size="icon"
+              variant="secondary"
+              class="size-9 rounded-full"
+              @click.stop="copyUuid(item.Id)"
+              :title="t('common.copy')"
+            >
+              <Copy class="size-4" />
+            </Button>
+            <Button
+              size="icon"
+              variant="secondary"
+              class="size-9 rounded-full"
+              @click.stop="openEditDialog(item)"
+              :title="t('common.edit')"
+            >
               <Edit2 class="size-4" />
             </Button>
-            <Button size="icon" variant="destructive" class="h-8 w-8" @click.stop="openDeleteDialog(item)">
+            <Button
+              size="icon"
+              variant="destructive"
+              class="size-9 rounded-full"
+              @click.stop="openDeleteDialog(item)"
+              :title="t('common.delete')"
+            >
               <Trash2 class="size-4" />
             </Button>
           </div>
         </div>
 
-        <!-- Asset Info -->
-        <CardContent class="p-4">
-          <div v-if="item.Category" class="text-xs text-muted-foreground mb-1 truncate">
+        <CardContent class="p-4 space-y-2">
+          <div v-if="item.Category" class="truncate font-bold text-sm">
             {{ item.Category }}
           </div>
-          <div v-if="item.Notes" class="text-sm font-medium line-clamp-2">
+          <div v-if="item.Notes" class="text-xs text-muted-foreground truncate">
             {{ item.Notes }}
+          </div>
+          <div class="flex items-center gap-1 text-[10px] text-muted-foreground font-mono">
+            <span class="opacity-50">#</span>
+            <span class="truncate">{{ item.Id.slice(0, 8) }}...</span>
           </div>
         </CardContent>
       </Card>
     </div>
 
     <!-- Pagination -->
-    <div v-if="totalPages > 1" class="flex items-center justify-center gap-2">
-      <Button variant="outline" size="icon" :disabled="currentPage === 1" @click="currentPage = 1">
-        <ChevronsLeft class="size-4" />
-      </Button>
-      <Button variant="outline" size="icon" :disabled="currentPage === 1" @click="currentPage--">
-        <ChevronLeft class="size-4" />
-      </Button>
-      <span class="text-sm text-muted-foreground px-4">
-        {{ currentPage }} / {{ totalPages }} ({{ totalItems }} {{ t('assetLibrary.total') }})
-      </span>
-      <Button variant="outline" size="icon" :disabled="currentPage === totalPages" @click="currentPage++">
-        <ChevronRight class="size-4" />
-      </Button>
-      <Button variant="outline" size="icon" :disabled="currentPage === totalPages" @click="currentPage = totalPages">
-        <ChevronsRight class="size-4" />
-      </Button>
+    <div v-if="totalPages > 1" class="flex items-center justify-between gap-4 px-2 pt-4 border-t animate-in fade-in duration-300">
+      <div class="text-xs font-black uppercase tracking-widest text-muted-foreground">
+        {{ t('admin.currentPage') }}: <span class="text-foreground">{{ currentPage }}</span> / {{ totalPages }}
+        <span class="ml-2">({{ totalItems }} {{ t('assetLibrary.total') }})</span>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="icon"
+          class="size-9 rounded-lg"
+          :disabled="currentPage === 1"
+          @click="currentPage = 1"
+        >
+          <ChevronsLeft class="size-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          class="size-9 rounded-lg"
+          :disabled="currentPage === 1"
+          @click="currentPage--"
+        >
+          <ChevronLeft class="size-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          class="size-9 rounded-lg"
+          :disabled="currentPage >= totalPages"
+          @click="currentPage++"
+        >
+          <ChevronRight class="size-4" />
+        </Button>
+        <Button
+          variant="outline"
+          size="icon"
+          class="size-9 rounded-lg"
+          :disabled="currentPage >= totalPages"
+          @click="currentPage = totalPages"
+        >
+          <ChevronsRight class="size-4" />
+        </Button>
+      </div>
     </div>
-  </div>
 
-  <!-- Create Dialog -->
-  <Dialog v-model:open="showCreateDialog">
-    <DialogContent class="max-w-2xl max-h-[90vh] overflow-y-auto">
-      <DialogHeader>
-        <DialogTitle>{{ t('assetLibrary.createAsset') }}</DialogTitle>
-        <DialogDescription>{{ t('assetLibrary.createAssetDesc') }}</DialogDescription>
-      </DialogHeader>
-      <div class="space-y-4 py-4">
-        <AssetEditor
-          v-model="formData.Asset"
-          :label="t('assetLibrary.assetFile')"
-          :description="t('assetLibrary.assetFileDesc')"
-        />
-        <div class="space-y-2">
-          <Label>{{ t('common.visibility') }}</Label>
-          <Select v-model="formData.Visibility">
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem :value="Visibility.Public">{{ t('common.visibilityPublic') }}</SelectItem>
-              <SelectItem :value="Visibility.Authenticated">{{ t('common.visibilityAuthenticated') }}</SelectItem>
-              <SelectItem :value="Visibility.Protected">{{ t('common.visibilityProtected') }}</SelectItem>
-              <SelectItem :value="Visibility.Private">{{ t('common.visibilityPrivate') }}</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div class="space-y-2">
-          <Label>{{ t('assetLibrary.category') }}</Label>
-          <Input v-model="formData.Category" :placeholder="t('assetLibrary.categoryPlaceholder')" />
-        </div>
-        <div class="space-y-2">
-          <Label>{{ t('assetLibrary.notes') }}</Label>
-          <Input v-model="formData.Notes" :placeholder="t('assetLibrary.notesPlaceholder')" />
-        </div>
-      </div>
-      <div class="flex justify-end gap-2">
-        <Button variant="outline" @click="showCreateDialog = false">{{ t('common.cancel') }}</Button>
-        <Button @click="handleCreate">{{ t('common.create') }}</Button>
-      </div>
-    </DialogContent>
-  </Dialog>
 
-  <!-- Edit Dialog -->
-  <Dialog v-model:open="showEditDialog">
-    <DialogContent class="max-w-2xl max-h-[90vh] overflow-y-auto">
-      <DialogHeader>
-        <DialogTitle>{{ t('assetLibrary.editAsset') }}</DialogTitle>
-        <DialogDescription>{{ t('assetLibrary.editAssetDesc') }}</DialogDescription>
-      </DialogHeader>
-      <div class="space-y-4 py-4">
-        <AssetEditor
-          v-model="formData.Asset"
-          :label="t('assetLibrary.assetFile')"
-          :description="t('assetLibrary.assetFileDesc')"
-        />
-        <div class="space-y-2">
-          <Label>{{ t('common.visibility') }}</Label>
-          <Select v-model="formData.Visibility">
-            <SelectTrigger>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem :value="Visibility.Public">{{ t('common.visibilityPublic') }}</SelectItem>
-              <SelectItem :value="Visibility.Authenticated">{{ t('common.visibilityAuthenticated') }}</SelectItem>
-              <SelectItem :value="Visibility.Protected">{{ t('common.visibilityProtected') }}</SelectItem>
-              <SelectItem :value="Visibility.Private">{{ t('common.visibilityPrivate') }}</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div class="space-y-2">
-          <Label>{{ t('assetLibrary.category') }}</Label>
-          <Input v-model="formData.Category" :placeholder="t('assetLibrary.categoryPlaceholder')" />
-        </div>
-        <div class="space-y-2">
-          <Label>{{ t('assetLibrary.notes') }}</Label>
-          <Input v-model="formData.Notes" :placeholder="t('assetLibrary.notesPlaceholder')" />
-        </div>
-      </div>
-      <div class="flex justify-end gap-2">
-        <Button variant="outline" @click="showEditDialog = false">{{ t('common.cancel') }}</Button>
-        <Button @click="handleUpdate">{{ t('common.update') }}</Button>
-      </div>
-    </DialogContent>
-  </Dialog>
-
-  <!-- Delete Confirmation -->
-  <AlertDialog v-model:open="showDeleteDialog">
-    <AlertDialogContent>
-      <AlertDialogHeader>
-        <AlertDialogTitle>{{ t('assetLibrary.deleteConfirm') }}</AlertDialogTitle>
-        <AlertDialogDescription>
+    <!-- Create Dialog -->
+    <Dialog v-model:open="showCreateDialog">
+      <DialogContent class="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{{ t('assetLibrary.createAsset') }}</DialogTitle>
+          <DialogDescription>{{ t('assetLibrary.createAssetDesc') }}</DialogDescription>
+        </DialogHeader>
+  
+        <div class="space-y-4 py-4">
+          <!-- Asset Editor -->
+          <AssetEditor
+            v-model="formData.Asset"
+            :label="t('assetLibrary.assetFile')"
+            :description="t('assetLibrary.assetFileDesc')"
+          />
+  
+          <!-- Visibility -->
           <div class="space-y-2">
-            <p>{{ t('common.deleteConfirm') }}</p>
-            <div v-if="assetToDelete" class="mt-4 p-3 bg-muted rounded-lg space-y-1 text-sm font-mono">
-              <div><span class="text-muted-foreground">ID:</span> {{ assetToDelete.Id }}</div>
-              <div v-if="assetToDelete.Category"><span class="text-muted-foreground">Category:</span> {{ assetToDelete.Category }}</div>
-            </div>
+            <Label>{{ t('common.visibility') }}</Label>
+            <Select v-model="formData.Visibility">
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem :value="Visibility.Public">{{ t('common.visibilityPublic') }}</SelectItem>
+                <SelectItem :value="Visibility.Authenticated">{{ t('common.visibilityAuthenticated') }}</SelectItem>
+                <SelectItem :value="Visibility.Protected">{{ t('common.visibilityProtected') }}</SelectItem>
+                <SelectItem :value="Visibility.Private">{{ t('common.visibilityPrivate') }}</SelectItem>
+                <SelectItem :value="Visibility.FriendsOnly">{{ t('common.visibilityFriendsOnly') }}</SelectItem>
+                <SelectItem :value="Visibility.MembersOnly">{{ t('common.visibilityMembersOnly') }}</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-        </AlertDialogDescription>
-      </AlertDialogHeader>
-      <AlertDialogFooter>
-        <AlertDialogCancel>{{ t('common.cancel') }}</AlertDialogCancel>
-        <AlertDialogAction @click="handleDelete" class="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-          {{ t('common.delete') }}
-        </AlertDialogAction>
-      </AlertDialogFooter>
-    </AlertDialogContent>
-  </AlertDialog>
-
-  <!-- Batch Visibility Dialog -->
-  <AlertDialog v-model:open="showBatchVisibilityDialog">
-    <AlertDialogContent>
-      <AlertDialogHeader>
-        <AlertDialogTitle>{{ t('assetLibrary.batchUpdateVisibility') }}</AlertDialogTitle>
-        <AlertDialogDescription>
-          {{ t('common.updateConfirm') }} {{ selectedCount }} {{ t('assetLibrary.selected') }}
-        </AlertDialogDescription>
-      </AlertDialogHeader>
-      <div class="space-y-4 py-4">
-        <Select v-model="batchVisibility">
-          <SelectTrigger>
-            <SelectValue :placeholder="t('common.selectVisibility')" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem :value="Visibility.Public">{{ t('common.visibilityPublic') }}</SelectItem>
-            <SelectItem :value="Visibility.Authenticated">{{ t('common.visibilityAuthenticated') }}</SelectItem>
-            <SelectItem :value="Visibility.Protected">{{ t('common.visibilityProtected') }}</SelectItem>
-            <SelectItem :value="Visibility.Private">{{ t('common.visibilityPrivate') }}</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-      <AlertDialogFooter>
-        <AlertDialogCancel @click="showBatchVisibilityDialog = false">{{ t('common.cancel') }}</AlertDialogCancel>
-        <AlertDialogAction @click="handleBatchVisibility">{{ t('common.update') }}</AlertDialogAction>
-      </AlertDialogFooter>
-    </AlertDialogContent>
-  </AlertDialog>
-
-  <!-- Batch Delete Dialog -->
-  <AlertDialog v-model:open="showBatchDeleteDialog">
-    <AlertDialogContent>
-      <AlertDialogHeader>
-        <AlertDialogTitle>{{ t('common.delete') }}</AlertDialogTitle>
-        <AlertDialogDescription>
-          {{ t('common.deleteConfirm') }} {{ selectedCount }} {{ t('assetLibrary.selected') }}?
-        </AlertDialogDescription>
-      </AlertDialogHeader>
-      <AlertDialogFooter>
-        <AlertDialogCancel @click="showBatchDeleteDialog = false">{{ t('common.cancel') }}</AlertDialogCancel>
-        <AlertDialogAction @click="handleBatchDelete" class="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-          {{ t('common.delete') }}
-        </AlertDialogAction>
-      </AlertDialogFooter>
-    </AlertDialogContent>
-  </AlertDialog>
+  
+          <!-- Category -->
+          <div class="space-y-2">
+            <Label>{{ t('assetLibrary.category') }}</Label>
+            <Input v-model="formData.Category" :placeholder="t('assetLibrary.categoryPlaceholder')" />
+          </div>
+  
+          <!-- Notes -->
+          <div class="space-y-2">
+            <Label>{{ t('assetLibrary.notes') }}</Label>
+            <Input v-model="formData.Notes" :placeholder="t('assetLibrary.notesPlaceholder')" />
+          </div>
+        </div>
+  
+        <div class="flex justify-end gap-2">
+          <Button variant="outline" @click="showCreateDialog = false">{{ t('common.cancel') }}</Button>
+          <Button @click="handleCreate">{{ t('common.create') }}</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  
+    <!-- Edit Dialog -->
+    <Dialog v-model:open="showEditDialog">
+      <DialogContent class="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{{ t('assetLibrary.editAsset') }}</DialogTitle>
+          <DialogDescription>{{ t('assetLibrary.editAssetDesc') }}</DialogDescription>
+        </DialogHeader>
+  
+        <div class="space-y-4 py-4">
+          <!-- Asset Editor -->
+          <AssetEditor
+            v-model="formData.Asset"
+            :label="t('assetLibrary.assetFile')"
+            :description="t('assetLibrary.assetFileDesc')"
+          />
+  
+          <!-- Visibility -->
+          <div class="space-y-2">
+            <Label>{{ t('common.visibility') }}</Label>
+            <Select v-model="formData.Visibility">
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem :value="Visibility.Public">{{ t('common.visibilityPublic') }}</SelectItem>
+                <SelectItem :value="Visibility.Authenticated">{{ t('common.visibilityAuthenticated') }}</SelectItem>
+                <SelectItem :value="Visibility.Protected">{{ t('common.visibilityProtected') }}</SelectItem>
+                <SelectItem :value="Visibility.Private">{{ t('common.visibilityPrivate') }}</SelectItem>
+                <SelectItem :value="Visibility.FriendsOnly">{{ t('common.visibilityFriendsOnly') }}</SelectItem>
+                <SelectItem :value="Visibility.MembersOnly">{{ t('common.visibilityMembersOnly') }}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+  
+          <!-- Category -->
+          <div class="space-y-2">
+            <Label>{{ t('assetLibrary.category') }}</Label>
+            <Input v-model="formData.Category" :placeholder="t('assetLibrary.categoryPlaceholder')" />
+          </div>
+  
+          <!-- Notes -->
+          <div class="space-y-2">
+            <Label>{{ t('assetLibrary.notes') }}</Label>
+            <Input v-model="formData.Notes" :placeholder="t('assetLibrary.notesPlaceholder')" />
+          </div>
+        </div>
+  
+        <div class="flex justify-end gap-2">
+          <Button variant="outline" @click="showEditDialog = false">{{ t('common.cancel') }}</Button>
+          <Button @click="handleUpdate">{{ t('common.save') }}</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  
+    <!-- Delete Confirmation Dialog -->
+    <AlertDialog v-model:open="showDeleteDialog">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{{ t('common.delete') }}</AlertDialogTitle>
+          <AlertDialogDescription v-if="assetToDelete">
+            {{ t('assetLibrary.deleteConfirm') }}
+            <div class="mt-2 p-2 bg-muted rounded-md text-sm font-mono break-all">
+              {{ assetToDelete.Id }}
+            </div>
+            <div v-if="assetToDelete.Category" class="mt-1 text-sm">
+              <span class="font-semibold">{{ t('assetLibrary.category') }}:</span> {{ assetToDelete.Category }}
+            </div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>{{ t('common.cancel') }}</AlertDialogCancel>
+          <AlertDialogAction
+            @click="handleDelete"
+            class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            {{ t('common.delete') }}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  
+    <!-- Batch Visibility Dialog -->
+    <Dialog v-model:open="showBatchVisibilityDialog">
+      <DialogContent class="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{{ t('assetLibrary.batchUpdateVisibility') }}</DialogTitle>
+          <DialogDescription>
+            {{ t('assetLibrary.selected') }}: {{ selectedCount }}
+          </DialogDescription>
+        </DialogHeader>
+  
+        <div class="space-y-4 py-4">
+          <Label>{{ t('common.visibility') }}</Label>
+          <Select v-model="batchVisibility">
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem :value="Visibility.Public">{{ t('common.visibilityPublic') }}</SelectItem>
+              <SelectItem :value="Visibility.Authenticated">{{ t('common.visibilityAuthenticated') }}</SelectItem>
+              <SelectItem :value="Visibility.Protected">{{ t('common.visibilityProtected') }}</SelectItem>
+              <SelectItem :value="Visibility.Private">{{ t('common.visibilityPrivate') }}</SelectItem>
+              <SelectItem :value="Visibility.FriendsOnly">{{ t('common.visibilityFriendsOnly') }}</SelectItem>
+              <SelectItem :value="Visibility.MembersOnly">{{ t('common.visibilityMembersOnly') }}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+  
+        <div class="flex justify-end gap-2">
+          <Button variant="outline" @click="showBatchVisibilityDialog = false">{{ t('common.cancel') }}</Button>
+          <Button @click="handleBatchVisibility">{{ t('common.save') }}</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  
+    <!-- Batch Delete Confirmation Dialog -->
+    <AlertDialog v-model:open="showBatchDeleteDialog">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{{ t('common.delete') }}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {{ t('assetLibrary.deleteConfirm') }}
+            <div class="mt-2 p-2 bg-muted rounded-md text-sm">
+              {{ t('assetLibrary.selected') }}: <span class="font-bold">{{ selectedCount }}</span>
+            </div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel @click="showBatchDeleteDialog = false">{{ t('common.cancel') }}</AlertDialogCancel>
+          <AlertDialogAction
+            @click="handleBatchDelete"
+            class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            {{ t('common.delete') }}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  </div>
 </template>
