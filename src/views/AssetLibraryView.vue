@@ -37,16 +37,9 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu';
-import {
   ChevronLeft, ChevronRight, ChevronsLeft,
   Search, Eye, EyeOff, Filter, Copy, Trash2,
-  MoreHorizontal, Edit2, Plus, Layers, Check
+  Edit2, Plus, Layers, Check
 } from 'lucide-vue-next';
 
 const { t } = useI18n();
@@ -60,11 +53,12 @@ const pageSize = 12;
 const totalPages = ref(0);
 const totalItems = ref(0);
 const searchQuery = ref('');
-const selectedCategory = ref<string | undefined>(undefined);
+const selectedCategory = ref<string>('');
 const categories = ref<string[]>([]);
-const selectedVisibility = ref<Visibility | undefined>(undefined);
+const selectedVisibility = ref<string>('');
 const selectedAssets = ref<Set<string>>(new Set());
 const showBatchVisibilityDialog = ref(false);
+const showBatchDeleteDialog = ref(false);
 const batchVisibility = ref<Visibility>(Visibility.Private);
 
 // Dialog states
@@ -87,15 +81,6 @@ const formData = ref<{
   Notes: undefined,
 });
 
-const visibilityOptions = [
-  { value: undefined as Visibility | undefined, label: t('common.all') },
-  { value: Visibility.Public, label: t('common.visibilityPublic') },
-  { value: Visibility.Authenticated, label: t('common.visibilityAuthenticated') },
-  { value: Visibility.Protected, label: t('common.visibilityProtected') },
-  { value: Visibility.Private, label: t('common.visibilityPrivate') },
-  { value: Visibility.FriendsOnly, label: t('common.visibilityFriendsOnly') },
-];
-
 // --- Computed ---
 const allSelected = computed(() => {
   return assets.value.length > 0 && selectedAssets.value.size === assets.value.length;
@@ -112,8 +97,8 @@ const fetchAssets = async () => {
     const response = await assetsApi.getPersonalAssets({
       page: currentPage.value,
       pageSize: pageSize,
-      category: selectedCategory.value,
-      visibility: selectedVisibility.value,
+      category: selectedCategory.value || undefined,
+      visibility: selectedVisibility.value ? parseInt(selectedVisibility.value) as Visibility : undefined,
       search: searchQuery.value || undefined,
     });
 
@@ -265,12 +250,17 @@ const toggleSelectAll = () => {
 
 const resetFilters = () => {
   searchQuery.value = '';
-  selectedCategory.value = undefined;
-  selectedVisibility.value = undefined;
+  selectedCategory.value = '';
+  selectedVisibility.value = '';
   currentPage.value = 1;
 };
 
 // Batch operations
+const confirmBatchDelete = () => {
+  if (selectedAssets.value.size === 0) return;
+  showBatchDeleteDialog.value = true;
+};
+
 const handleBatchDelete = async () => {
   if (selectedAssets.value.size === 0) return;
 
@@ -278,6 +268,7 @@ const handleBatchDelete = async () => {
     await assetsApi.batchDeletePersonalAssets({ AssetIds: Array.from(selectedAssets.value) });
     ui.notify(t('common.deleteSuccess'), 'success');
     selectedAssets.value.clear();
+    showBatchDeleteDialog.value = false;
     fetchAssets();
   } catch (e: any) {
     ui.notify(e.message || 'Failed to delete assets', 'error');
@@ -308,19 +299,6 @@ const getVisibilityLabel = (visibility: Visibility) => {
     case Visibility.Protected: return t('common.visibilityProtected');
     case Visibility.Private: return t('common.visibilityPrivate');
     case Visibility.FriendsOnly: return t('common.visibilityFriendsOnly');
-    default: return 'Unknown';
-  }
-};
-
-const getAssetTypeLabel = (type: AssetType) => {
-  switch (type) {
-    case AssetType.Text: return t('common.text');
-    case AssetType.Image: return t('common.image');
-    case AssetType.Remote: return t('common.remote');
-    case AssetType.Style: return t('common.style');
-    case AssetType.Identifier: return t('common.identifier');
-    case AssetType.Library: return t('common.library');
-    case AssetType.Resource: return t('common.resource');
     default: return 'Unknown';
   }
 };
@@ -388,7 +366,7 @@ onMounted(fetchAssets);
             <SelectValue :placeholder="t('assetLibrary.allCategories')" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem :value="undefined">{{ t('assetLibrary.allCategories') }}</SelectItem>
+            <SelectItem value="">{{ t('assetLibrary.allCategories') }}</SelectItem>
             <SelectItem v-for="cat in categories" :key="cat" :value="cat">
               {{ cat }}
             </SelectItem>
@@ -401,18 +379,18 @@ onMounted(fetchAssets);
             <SelectValue :placeholder="t('common.all')" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem :value="undefined">{{ t('common.all') }}</SelectItem>
-            <SelectItem :value="Visibility.Public">{{ t('common.visibilityPublic') }}</SelectItem>
-            <SelectItem :value="Visibility.Authenticated">{{ t('common.visibilityAuthenticated') }}</SelectItem>
-            <SelectItem :value="Visibility.Protected">{{ t('common.visibilityProtected') }}</SelectItem>
-            <SelectItem :value="Visibility.Private">{{ t('common.visibilityPrivate') }}</SelectItem>
-            <SelectItem :value="Visibility.FriendsOnly">{{ t('common.visibilityFriendsOnly') }}</SelectItem>
+            <SelectItem value="">{{ t('common.all') }}</SelectItem>
+            <SelectItem :value="String(Visibility.Public)">{{ t('common.visibilityPublic') }}</SelectItem>
+            <SelectItem :value="String(Visibility.Authenticated)">{{ t('common.visibilityAuthenticated') }}</SelectItem>
+            <SelectItem :value="String(Visibility.Protected)">{{ t('common.visibilityProtected') }}</SelectItem>
+            <SelectItem :value="String(Visibility.Private)">{{ t('common.visibilityPrivate') }}</SelectItem>
+            <SelectItem :value="String(Visibility.FriendsOnly)">{{ t('common.visibilityFriendsOnly') }}</SelectItem>
           </SelectContent>
         </Select>
 
         <!-- Reset -->
         <Button
-          v-if="searchQuery || selectedCategory !== undefined || selectedVisibility !== undefined"
+          v-if="searchQuery || selectedCategory || selectedVisibility"
           variant="ghost"
           size="sm"
           @click="resetFilters"
@@ -434,7 +412,7 @@ onMounted(fetchAssets);
           <Button variant="outline" size="sm" class="h-7 text-xs" @click="showBatchVisibilityDialog = true">
             <Eye class="size-3 mr-1" /> {{ t('assetLibrary.batchUpdateVisibility') }}
           </Button>
-          <Button variant="destructive" size="sm" class="h-7 text-xs" @click="handleBatchDelete">
+          <Button variant="destructive" size="sm" class="h-7 text-xs" @click="confirmBatchDelete">
             <Trash2 class="size-3 mr-1" /> {{ t('common.delete') }}
           </Button>
         </div>
@@ -492,11 +470,6 @@ onMounted(fetchAssets);
             <div class="absolute top-2 right-2 flex items-center gap-1.5 bg-black/50 backdrop-blur-sm rounded-full px-2 py-1">
               <component :is="getVisibilityIcon(item.Visibility)" class="size-3" :class="getVisibilityColor(item.Visibility)" />
               <span class="text-[10px] font-bold text-white">{{ getVisibilityLabel(item.Visibility) }}</span>
-            </div>
-
-            <!-- Asset Type Badge -->
-            <div class="absolute bottom-2 left-2 bg-black/50 backdrop-blur-sm rounded-md px-2 py-0.5">
-              <span class="text-[10px] font-bold text-white">{{ getAssetTypeLabel(item.Asset.Type) }}</span>
             </div>
 
             <!-- Hover Actions -->
@@ -750,5 +723,29 @@ onMounted(fetchAssets);
         </div>
       </DialogContent>
     </Dialog>
+
+    <!-- Batch Delete Confirmation Dialog -->
+    <AlertDialog v-model:open="showBatchDeleteDialog">
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{{ t('common.delete') }}</AlertDialogTitle>
+          <AlertDialogDescription>
+            {{ t('assetLibrary.deleteConfirm') }}
+            <div class="mt-2 p-2 bg-muted rounded-md text-sm">
+              {{ t('assetLibrary.selected') }}: <span class="font-bold">{{ selectedCount }}</span>
+            </div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel @click="showBatchDeleteDialog = false">{{ t('common.cancel') }}</AlertDialogCancel>
+          <AlertDialogAction
+            @click="handleBatchDelete"
+            class="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            {{ t('common.delete') }}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   </div>
 </template>
