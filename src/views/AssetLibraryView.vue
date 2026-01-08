@@ -388,7 +388,7 @@ onMounted(fetchAssets);
             <SelectValue :placeholder="t('assetLibrary.allCategories')" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">{{ t('assetLibrary.allCategories') }}</SelectItem>
+            <SelectItem :value="undefined">{{ t('assetLibrary.allCategories') }}</SelectItem>
             <SelectItem v-for="cat in categories" :key="cat" :value="cat">
               {{ cat }}
             </SelectItem>
@@ -401,10 +401,12 @@ onMounted(fetchAssets);
             <SelectValue :placeholder="t('common.all')" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">{{ t('common.all') }}</SelectItem>
-            <SelectItem v-for="opt in visibilityOptions" :key="opt.value ?? ''" :value="opt.value ?? ''">
-              {{ opt.label }}
-            </SelectItem>
+            <SelectItem :value="undefined">{{ t('common.all') }}</SelectItem>
+            <SelectItem :value="Visibility.Public">{{ t('common.visibilityPublic') }}</SelectItem>
+            <SelectItem :value="Visibility.Authenticated">{{ t('common.visibilityAuthenticated') }}</SelectItem>
+            <SelectItem :value="Visibility.Protected">{{ t('common.visibilityProtected') }}</SelectItem>
+            <SelectItem :value="Visibility.Private">{{ t('common.visibilityPrivate') }}</SelectItem>
+            <SelectItem :value="Visibility.FriendsOnly">{{ t('common.visibilityFriendsOnly') }}</SelectItem>
           </SelectContent>
         </Select>
 
@@ -694,8 +696,14 @@ onMounted(fetchAssets);
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>{{ t('common.delete') }}</AlertDialogTitle>
-          <AlertDialogDescription>
+          <AlertDialogDescription v-if="assetToDelete">
             {{ t('assetLibrary.deleteConfirm') }}
+            <div class="mt-2 p-2 bg-muted rounded-md text-sm font-mono break-all">
+              {{ assetToDelete.Id }}
+            </div>
+            <div v-if="assetToDelete.Category" class="mt-1 text-sm">
+              <span class="font-semibold">{{ t('assetLibrary.category') }}:</span> {{ assetToDelete.Category }}
+            </div>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
