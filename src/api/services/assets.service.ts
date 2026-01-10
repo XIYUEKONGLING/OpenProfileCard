@@ -1,13 +1,17 @@
 import { httpClient } from '../client';
 import type {
     AccountAssetDto,
+    PublicAssetDto,
     CreateAccountAssetRequestDto,
     UpdateAccountAssetRequestDto,
+    CreateSystemAssetRequestDto,
+    UpdateSystemAssetRequestDto,
     BatchDeleteRequestDto,
     BatchUpdateVisibilityRequestDto,
     LookupAssetDto,
     PagedResponse,
-    MessageResponse, SystemAssetDto, AssetDto
+    MessageResponse,
+    SystemAssetDto
 } from '../types';
 
 /**
@@ -225,15 +229,15 @@ export const publicAssetsApi = {
      * Get public asset by UUID
      * GET /api/assets/{uuid}
      */
-    getAsset: (uuid: string): Promise<AccountAssetDto> =>
-        httpClient<AccountAssetDto>(`/assets/${uuid}`, { requiresAuth: false }),
+    getAsset: (uuid: string): Promise<PublicAssetDto> =>
+        httpClient<PublicAssetDto>(`/assets/${uuid}`, { requiresAuth: false }),
 
     /**
      * Alias for static generator compatibility
      * GET /api/assets/{uuid}.json
      */
-    getAssetJson: (uuid: string): Promise<AccountAssetDto> =>
-        httpClient<AccountAssetDto>(`/assets/${uuid}.json`, { requiresAuth: false })
+    getAssetJson: (uuid: string): Promise<PublicAssetDto> =>
+        httpClient<PublicAssetDto>(`/assets/${uuid}.json`, { requiresAuth: false })
 };
 
 /**
@@ -280,7 +284,7 @@ export const systemAssetsApi = {
      * Create system asset
      * POST /api/admin/assets
      */
-    createSystemAsset: (data: { Asset: AssetDto; Visibility: number; Category?: string; Notes?: string }): Promise<SystemAssetDto> =>
+    createSystemAsset: (data: CreateSystemAssetRequestDto): Promise<SystemAssetDto> =>
         httpClient<SystemAssetDto>('/admin/assets', {
             method: 'POST',
             body: JSON.stringify(data)
@@ -290,7 +294,7 @@ export const systemAssetsApi = {
      * Full update system asset
      * PUT /api/admin/assets/{uuid}
      */
-    updateSystemAsset: (uuid: string, data: { Asset: AssetDto; Visibility: number; Category?: string; Notes?: string }): Promise<SystemAssetDto> =>
+    updateSystemAsset: (uuid: string, data: CreateSystemAssetRequestDto): Promise<SystemAssetDto> =>
         httpClient<SystemAssetDto>(`/admin/assets/${uuid}`, {
             method: 'PUT',
             body: JSON.stringify(data)
@@ -300,7 +304,7 @@ export const systemAssetsApi = {
      * Partial update system asset
      * PATCH /api/admin/assets/{uuid}
      */
-    patchSystemAsset: (uuid: string, data: { Asset?: AssetDto; Visibility?: number; Category?: string; Notes?: string }): Promise<SystemAssetDto> =>
+    patchSystemAsset: (uuid: string, data: UpdateSystemAssetRequestDto): Promise<SystemAssetDto> =>
         httpClient<SystemAssetDto>(`/admin/assets/${uuid}`, {
             method: 'PATCH',
             body: JSON.stringify(data)

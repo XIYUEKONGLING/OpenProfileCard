@@ -34,13 +34,27 @@ export interface AccountAssetDto {
     UpdatedAt: string; // DateTime
 }
 
+export interface PublicAssetDto {
+    Id: string; // Guid
+    AccountId?: string; // Guid (nullable, null for system assets)
+    Category?: string;
+    Notes?: string;
+    Asset: AssetDto;
+    Visibility: Visibility;
+    CreatedAt: string; // DateTime
+    UpdatedAt: string; // DateTime
+}
+
 export interface ApiResponse<T> {
     Status: boolean;
     Message: string | null;
     Data?: T;
 }
 
-export interface PagedResponse<T> extends ApiResponse<T[]> {
+export interface PagedResponse<T> {
+    Status: boolean;
+    Message: string | null;
+    Data?: T[];
     PageNumber: number;
     PageSize: number;
     TotalPages: number;
