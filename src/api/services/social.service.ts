@@ -32,9 +32,7 @@ export const socialApi = {
      * GET /api/profiles/{profile}/follow
      */
     getFollowStatus: (profile: string): Promise<FollowStatusDto> =>
-        httpClient<FollowStatusDto>(`/profiles/${profile}/follow`, {
-            requiresAuth: false
-        }),
+        httpClient<FollowStatusDto>(`/profiles/${profile}/follow`),
 
     /**
      * Block target
